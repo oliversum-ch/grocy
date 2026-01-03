@@ -1,0 +1,48 @@
+name: Create Patch Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessary to see previous tags
+
+      - name: Generate Changed Files Zip
+        run: |
+          # 1. Get the current and previous tags
+          CURRENT_TAG=${{ github.event.release.tag_name }}
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $CURRENT_TAG^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found. Zipping all files."
+            zip -r patch-$CURRENT_TAG.zip . -x "*.git*" ".github*"
+          else
+            echo "Comparing $CURRENT_TAG with $PREVIOUS_TAG"
+            # 2. Get list of changed/added files (ignoring deletions)
+            DIFF_FILES=$(git diff --name-only --diff-filter=ACMRT $PREVIOUS_TAG $CURRENT_TAG)
+            
+            if [ -z "$DIFF_FILES" ]; then
+              echo "No files changed."
+              touch no_changes.txt
+              zip patch-$CURRENT_TAG.zip no_changes.txt
+            else
+              # 3. Zip the specific files
+              zip patch-$CURRENT_TAG.zip $DIFF_FILES
+            fi
+          fi
+
+      - name: Upload Patch Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: patch-${{ github.event.release.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
