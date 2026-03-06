@@ -265,9 +265,9 @@ function require_frontend_packages(array $packages)
 
 function EmptyFolder($folderPath)
 {
-	foreach(glob("{$folderPath}/*") as $item)
+	foreach (glob("{$folderPath}/*") as $item)
 	{
-		if(is_dir($item))
+		if (is_dir($item))
 		{
 			EmptyFolder($item);
 			rmdir($item);
