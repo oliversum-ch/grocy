@@ -1,10 +1,20 @@
-@php require_frontend_packages(['chartjs']); @endphp
+@php require_frontend_packages(['chartjs', 'bwipjs']); @endphp
 
 @once
 @push('componentScripts')
 <script src="{{ $U('/viewjs/components/productcard.js', true) }}?v={{ $version }}"></script>
 @endpush
 @endonce
+
+@push('pageStyles')
+<style>
+	#productcard-product-barcodes img {
+		background-color: #fff;
+		padding: 0.35rem;
+		border-radius: 0.25rem;
+	}
+</style>
+@endpush
 
 @php if(!isset($asModal)) { $asModal = false; } @endphp
 
@@ -100,6 +110,11 @@
 
 						@if(GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)<strong>{{ $__t('Average shelf life') }}:</strong> <span id="productcard-product-average-shelf-life"></span><br>@endif
 						<strong>{{ $__t('Spoil rate') }}:</strong> <span id="productcard-product-spoil-rate"></span>
+						<div id="productcard-product-barcodes-wrapper"
+							class="mt-3 d-none">
+							<h5 class="mb-2">{{ $__t('Barcode') }}</h5>
+							<div id="productcard-product-barcodes"></div>
+						</div>
 
 						<p class="w-75 mt-3 mx-auto">
 							<img id="productcard-product-picture"

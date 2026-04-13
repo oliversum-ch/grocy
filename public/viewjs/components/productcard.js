@@ -1,5 +1,94 @@
 Grocy.Components.ProductCard = {};
 
+Grocy.Components.ProductCard.GetBarcodeData = function(barcode)
+{
+	var trimmedBarcode = barcode.toString().trim();
+	var numericBarcode = trimmedBarcode.replace(/\D/g, "");
+
+	if (numericBarcode.length == 8)
+	{
+		return {
+			type: "ean8",
+			value: numericBarcode
+		};
+	}
+	else if (numericBarcode.length == 13)
+	{
+		return {
+			type: "ean13",
+			value: numericBarcode
+		};
+	}
+
+	return {
+		type: "code128",
+		value: trimmedBarcode
+	};
+};
+
+Grocy.Components.ProductCard.RenderBarcodes = function(barcodes)
+{
+	var barcodeContainer = $("#productcard-product-barcodes");
+	var barcodeWrapper = $("#productcard-product-barcodes-wrapper");
+
+	barcodeContainer.empty();
+
+	if (!Array.isArray(barcodes) || barcodes.length === 0)
+	{
+		barcodeWrapper.addClass("d-none");
+		return;
+	}
+
+	barcodes.forEach((barcodeItem) =>
+	{
+		if (!barcodeItem.barcode)
+		{
+			return;
+		}
+
+		var barcodeValue = barcodeItem.barcode.toString().trim();
+		if (barcodeValue.length === 0)
+		{
+			return;
+		}
+
+		var barcodeData = Grocy.Components.ProductCard.GetBarcodeData(barcodeValue);
+		var dummyCanvas = document.createElement("canvas");
+		var barcodeFigure = $("<figure class=\"mb-3\"></figure>");
+		var barcodeImage = $("<img class=\"img-fluid\" alt=\"\">");
+		var barcodeText = $("<figcaption class=\"small text-muted mt-2\"></figcaption>");
+
+		try
+		{
+			bwipjs.toCanvas(dummyCanvas, {
+				bcid: barcodeData.type,
+				text: barcodeData.value,
+				height: 8,
+				includetext: false
+			});
+
+			barcodeImage.attr("src", dummyCanvas.toDataURL("image/png"));
+			barcodeImage.attr("alt", __t("Barcode") + ": " + barcodeValue);
+			barcodeText.text(barcodeValue);
+			barcodeFigure.append(barcodeImage).append(barcodeText);
+			barcodeContainer.append(barcodeFigure);
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
+	});
+
+	if (barcodeContainer.children().length > 0)
+	{
+		barcodeWrapper.removeClass("d-none");
+	}
+	else
+	{
+		barcodeWrapper.addClass("d-none");
+	}
+};
+
 Grocy.Components.ProductCard.Refresh = function(productId)
 {
 	Grocy.Api.Get('stock/products/' + productId,
@@ -17,6 +106,7 @@ Grocy.Components.ProductCard.Refresh = function(productId)
 			$('#productcard-product-last-purchased-timeago').attr("datetime", productDetails.last_purchased || '2999-12-31');
 			$('#productcard-product-last-used').text((productDetails.last_used || '2999-12-31').substring(0, 10));
 			$('#productcard-product-last-used-timeago').attr("datetime", productDetails.last_used || '2999-12-31');
+			Grocy.Components.ProductCard.RenderBarcodes(productDetails.product_barcodes);
 			if (productDetails.location != null)
 			{
 				$('#productcard-product-location').text(productDetails.location.name);
@@ -113,6 +203,7 @@ Grocy.Components.ProductCard.Refresh = function(productId)
 			}
 			else
 			{
+				$("#productcard-product-picture").attr("src", "");
 				$("#productcard-product-picture").addClass("d-none");
 			}
 
@@ -313,4 +404,9 @@ $(document).on("click", ".productcard-trigger", function(e)
 		Grocy.Components.ProductCard.Refresh(productId);
 		$("#productcard-modal").modal("show");
 	}
+});
+
+$("#productcard-product-picture").on("error", function()
+{
+	$(this).attr("src", "").addClass("d-none");
 });
