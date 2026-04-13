@@ -110,9 +110,10 @@
 			</div>
 			<select class="custom-control custom-select"
 				id="daterange-filter">
+				<option value="0"
+					selected>{{ $__t('Today') }}</option>
 				<option value="1">{{ $__n(1, '%s month', '%s months') }}</option>
-				<option value="6"
-					selected>{{ $__n(6, '%s month', '%s months') }}</option>
+				<option value="6">{{ $__n(6, '%s month', '%s months') }}</option>
 				<option value="12">{{ $__n(1, '%s year', '%s years') }}</option>
 				<option value="24">{{ $__n(2, '%s month', '%s years') }}</option>
 				<option value="9999">{{ $__t('All') }}</option>

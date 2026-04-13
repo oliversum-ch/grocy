@@ -82,7 +82,7 @@ $("#clear-filter-button").on("click", function()
 	$("#transaction-type-filter").val("all");
 	$("#location-filter").val("all");
 	$("#user-filter").val("all");
-	$("#daterange-filter").val("6");
+	$("#daterange-filter").val("0");
 	RemoveUriParam("months");
 
 	if (GetUriParam("embedded") === undefined)

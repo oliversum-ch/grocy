@@ -60,12 +60,19 @@ class StockController extends BaseController
 		if (isset($request->getQueryParams()['months']) && filter_var($request->getQueryParams()['months'], FILTER_VALIDATE_INT) !== false)
 		{
 			$months = $request->getQueryParams()['months'];
-			$where = "row_created_timestamp > DATE(DATE('now', 'localtime'), '-$months months')";
+			if (intval($months) === 0)
+			{
+				$where = "row_created_timestamp >= DATE('now', 'localtime')";
+			}
+			else
+			{
+				$where = "row_created_timestamp > DATE(DATE('now', 'localtime'), '-$months months')";
+			}
 		}
 		else
 		{
-			// Default 6 months
-			$where = "row_created_timestamp > DATE(DATE('now', 'localtime'), '-6 months')";
+			// Default today
+			$where = "row_created_timestamp >= DATE('now', 'localtime')";
 		}
 
 		if (isset($request->getQueryParams()['product']) && filter_var($request->getQueryParams()['product'], FILTER_VALIDATE_INT) !== false)
