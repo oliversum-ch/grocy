@@ -621,7 +621,7 @@ class StockService extends BaseService
 
 				// Add product to database and include new product id in output
 				$productData = $pluginOutput;
-				unset($productData['__barcode'], $productData['__qu_factor_purchase_to_stock'], $productData['__image_url']); // Virtual lookup plugin properties
+				unset($productData['__barcode'], $productData['__qu_factor_purchase_to_stock'], $productData['__image_url'], $productData['__userfields']); // Virtual lookup plugin properties
 
 				// Download and save image if provided
 				if (isset($pluginOutput['__image_url']) && !empty($pluginOutput['__image_url']))
@@ -666,6 +666,16 @@ class StockService extends BaseService
 
 				$newProductRow = $this->getDatabase()->products()->createRow($productData);
 				$newProductRow->save();
+
+				if (isset($pluginOutput['__userfields']) && is_array($pluginOutput['__userfields']) && count($pluginOutput['__userfields']) > 0)
+				{
+					$productUserfieldNames = array_column(UserfieldsService::getInstance()->GetFields('products'), 'name');
+					$userfields = array_intersect_key($pluginOutput['__userfields'], array_flip($productUserfieldNames));
+					if (count($userfields) > 0)
+					{
+						UserfieldsService::getInstance()->SetValues('products', $newProductRow->id, $userfields);
+					}
+				}
 
 				$this->getDatabase()->product_barcodes()->createRow([
 					'product_id' => $newProductRow->id,

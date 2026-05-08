@@ -17,7 +17,7 @@ class OpenFoodFactsBarcodeLookupPlugin extends BaseBarcodeLookupPlugin
 		$productNameFieldLocalized = 'product_name_' . substr(GROCY_LOCALE, 0, 2);
 
 		$webClient = new Client(['http_errors' => false]);
-		$response = $webClient->request('GET', 'https://world.openfoodfacts.org/api/v2/product/' . preg_replace('/[^0-9]/', '', $barcode) . '?fields=product_name,image_url,' . $productNameFieldLocalized, ['headers' => ['User-Agent' => 'GrocyOpenFoodFactsBarcodeLookupPlugin/1.0 (https://grocy.info)']]);
+		$response = $webClient->request('GET', 'https://world.openfoodfacts.org/api/v2/product/' . preg_replace('/[^0-9]/', '', $barcode) . '?fields=product_name,image_url,nutriments,' . $productNameFieldLocalized, ['headers' => ['User-Agent' => 'GrocyOpenFoodFactsBarcodeLookupPlugin/1.0 (https://grocy.info)']]);
 		$statusCode = $response->getStatusCode();
 
 		// Guzzle throws exceptions for connection errors, so nothing to do on that here
@@ -57,7 +57,7 @@ class OpenFoodFactsBarcodeLookupPlugin extends BaseBarcodeLookupPlugin
 				$name = $data->product->$productNameFieldLocalized;
 			}
 
-			return [
+			$product = [
 				'name' => $name,
 				'location_id' => $locationId,
 				'qu_id_purchase' => $quId,
@@ -66,6 +66,33 @@ class OpenFoodFactsBarcodeLookupPlugin extends BaseBarcodeLookupPlugin
 				'__barcode' => $barcode,
 				'__image_url' => $imageUrl
 			];
+
+			$userfields = [];
+			$nutriments = $data->product->nutriments ?? null;
+			if ($nutriments !== null)
+			{
+				$nutrimentUserfieldMapping = [
+					'carbs' => 'carbohydrates_100g',
+					'fat' => 'fat_100g',
+					'fiber' => 'fiber_100g',
+					'protein' => 'proteins_100g'
+				];
+
+				foreach ($nutrimentUserfieldMapping as $userfieldName => $nutrimentName)
+				{
+					if (isset($nutriments->$nutrimentName) && is_numeric($nutriments->$nutrimentName))
+					{
+						$userfields[$userfieldName] = $nutriments->$nutrimentName;
+					}
+				}
+			}
+
+			if (count($userfields) > 0)
+			{
+				$product['__userfields'] = $userfields;
+			}
+
+			return $product;
 		}
 	}
 }
