@@ -75,6 +75,7 @@ class OpenFoodFactsBarcodeLookupPlugin extends BaseBarcodeLookupPlugin
 					'carbs' => 'carbohydrates_100g',
 					'fat' => 'fat_100g',
 					'fiber' => 'fiber_100g',
+					'kcal100g' => 'energy-kcal_100g',
 					'protein' => 'proteins_100g'
 				];
 
@@ -84,6 +85,11 @@ class OpenFoodFactsBarcodeLookupPlugin extends BaseBarcodeLookupPlugin
 					{
 						$userfields[$userfieldName] = $nutriments->$nutrimentName;
 					}
+				}
+
+				if (!isset($userfields['kcal100g']) && isset($nutriments->{'energy_100g'}) && is_numeric($nutriments->{'energy_100g'}))
+				{
+					$userfields['kcal100g'] = round($nutriments->{'energy_100g'} / 4.184, 2);
 				}
 			}
 
