@@ -6,7 +6,13 @@
 <h3>Grocy is a web-based self-hosted groceries & household management solution for your home</h3>
 <em><h4>This is a hobby project by <a href="https://berrnd.de">Bernd Bestel</a></h4></em>
 </div>
+-----
 
+## Give it a try
+My changes:
+- Added a location dropdown to equipment
+- Added barcode to product popup (so that it's easier to scan it with Waistline)
+- OpenFoodFacts-Plugin queries kcal per 100g, protein, fat, fiber, carbs
 -----
 
 ## Give it a try
