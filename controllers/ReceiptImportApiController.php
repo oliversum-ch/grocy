@@ -94,4 +94,10 @@ class ReceiptImportApiController extends BaseApiController
 		User::checkPermission($request, User::PERMISSION_STOCK_PURCHASE);
 		return $this->ApiResponse($response, $this->getReceiptImportService()->GetHistory());
 	}
+
+	public function Products(Request $request, Response $response, array $args)
+	{
+		User::checkPermission($request, User::PERMISSION_STOCK_PURCHASE);
+		return $this->ApiResponse($response, $this->getReceiptImportService()->GetProductCatalog());
+	}
 }

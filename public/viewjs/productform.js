@@ -3,6 +3,47 @@
 	var productId = Grocy.EditObjectId || result.created_object_id;
 	Grocy.EditObjectId = productId; // Grocy.EditObjectId is not yet set when adding a product
 
+	function finishReceiptImportProductFlow()
+	{
+		if (GetUriParam("flow") !== "ReceiptImportProduct")
+		{
+			return false;
+		}
+
+		function notifyAndClose()
+		{
+			if (window.opener)
+			{
+				window.opener.postMessage({
+					Message: "ReceiptImportProductCreated",
+					product_id: Number(productId),
+					product_name: $('#name').val()
+				}, window.location.origin);
+			}
+			window.close();
+		}
+
+		var barcode = GetUriParam("barcode");
+		if (barcode)
+		{
+			Grocy.Api.Post('objects/product_barcodes', {
+				product_id: Number(productId),
+				barcode: barcode,
+				qu_id: Number($('#qu_id_purchase').val()) || null,
+				amount: 1
+			}, notifyAndClose, function(xhr)
+			{
+				Grocy.FrontendHelpers.EndUiBusy("product-form");
+				Grocy.FrontendHelpers.ShowGenericError('The product was created, but its barcode could not be saved', xhr.response);
+			});
+		}
+		else
+		{
+			notifyAndClose();
+		}
+		return true;
+	}
+
 	Grocy.Components.UserfieldsForm.Save(() =>
 	{
 		if (jsonData.hasOwnProperty("picture_file_name") && !Grocy.DeleteProductPictureOnSave)
@@ -19,7 +60,7 @@
 					var returnTo = GetUriParam('returnto');
 					if (GetUriParam("closeAfterCreation") !== undefined)
 					{
-						window.close();
+						if (!finishReceiptImportProductFlow()) window.close();
 					}
 					else if (returnTo !== undefined)
 					{
@@ -57,7 +98,7 @@
 			var returnTo = GetUriParam('returnto');
 			if (GetUriParam("closeAfterCreation") !== undefined)
 			{
-				window.close();
+				if (!finishReceiptImportProductFlow()) window.close();
 			}
 			else if (returnTo !== undefined)
 			{
@@ -139,7 +180,7 @@ $('.save-product-button').on('click', function(e)
 	);
 });
 
-if (GetUriParam("flow") == "InplaceNewProductWithName")
+if (GetUriParam("flow") == "InplaceNewProductWithName" || GetUriParam("flow") == "ReceiptImportProduct")
 {
 	$('#name').val(GetUriParam("name"));
 }

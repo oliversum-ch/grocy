@@ -48,6 +48,14 @@ assertCondition($product !== false, 'The test database needs one active stock pr
 $productId = (int)$product['id'];
 $stockBefore = (float)$db->query("SELECT IFNULL(SUM(amount), 0) FROM stock WHERE product_id = $productId")->fetchColumn();
 
+$catalog = requestJson('GET', $baseUrl . '/api/receipt-import/products');
+assertCondition($catalog['status'] === 200, 'Product catalogue refresh should return HTTP 200: ' . $catalog['raw']);
+assertCondition(count($catalog['data'] ?? []) > 0, 'Product catalogue refresh should return active stock products');
+assertCondition(
+	count(array_filter($catalog['data'], fn(array $catalogProduct): bool => (int)$catalogProduct['id'] === $productId)) === 1,
+	'Product catalogue refresh should contain the selected product'
+);
+
 $preview = requestJson('POST', $baseUrl . '/api/receipt-import/preview', [
 	'raw_text' => $rawText,
 	'receipt_hash' => $receiptHash
@@ -104,4 +112,4 @@ $db->exec("DELETE FROM receipt_import_aliases WHERE retailer_key = 'lidl_ch' AND
 $db->exec("DELETE FROM receipt_import_lines WHERE receipt_import_id = $receiptImportId");
 $db->exec("DELETE FROM receipt_imports WHERE id = $receiptImportId");
 
-echo "ReceiptImportHTTP: preview, commit, duplicate protection and undo passed\n";
+echo "ReceiptImportHTTP: catalogue refresh, preview, commit, duplicate protection and undo passed\n";

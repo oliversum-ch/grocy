@@ -194,6 +194,7 @@ $app->group('/api', function (RouteCollectorProxy $group)
 	$group->post('/receipt-import/commit', '\Grocy\Controllers\ReceiptImportApiController:Commit');
 	$group->post('/receipt-import/{receiptImportId}/undo', '\Grocy\Controllers\ReceiptImportApiController:Undo');
 	$group->get('/receipt-import/history', '\Grocy\Controllers\ReceiptImportApiController:History');
+	$group->get('/receipt-import/products', '\Grocy\Controllers\ReceiptImportApiController:Products');
 	$group->get('/stock/locations/{locationId}/entries', '\Grocy\Controllers\StockApiController:LocationStockEntries');
 	$group->get('/stock/bookings/{bookingId}', '\Grocy\Controllers\StockApiController:StockBooking');
 	$group->post('/stock/bookings/{bookingId}/undo', '\Grocy\Controllers\StockApiController:UndoBooking');

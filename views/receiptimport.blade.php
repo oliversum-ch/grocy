@@ -1,5 +1,9 @@
 @extends('layout.default')
 
+@if($canCreateProducts && !empty($externalBarcodeLookupPluginName))
+@include('components.camerabarcodescanner')
+@endif
+
 @section('title', $__t('Receipt import'))
 
 @push('pageStyles')
@@ -17,6 +21,8 @@
 		products: {!! json_encode($products, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!},
 		shoppingLocations: {!! json_encode($shoppingLocations, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!},
 		history: {!! json_encode($importHistory, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!},
+		canCreateProducts: {{ BoolToString($canCreateProducts) }},
+		externalBarcodeLookupPluginName: {!! json_encode($externalBarcodeLookupPluginName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!},
 		assets: {
 			pdfModule: "{{ $U('/packages/pdfjs-dist/build/pdf.mjs', true) }}",
 			pdfWorker: "{{ $U('/packages/pdfjs-dist/build/pdf.worker.mjs', true) }}",
@@ -210,6 +216,35 @@
 				<div id="receipt-product-suggestions" class="receipt-product-suggestions"></div>
 				<div id="receipt-product-results" class="receipt-product-results"></div>
 			</div>
+			@if($canCreateProducts)
+			<div class="modal-footer receipt-product-create">
+				<div class="receipt-product-create-copy">
+					<strong>{{ $__t('Product not in Grocy?') }}</strong>
+					<span>{{ $__t('Create it without losing this receipt review.') }}</span>
+				</div>
+				@if(!empty($externalBarcodeLookupPluginName))
+				<div class="receipt-barcode-create">
+					<div class="receipt-barcode-input-wrap">
+						<label class="sr-only" for="receipt-new-product-barcode">{{ $__t('New product barcode') }}</label>
+						<input id="receipt-new-product-barcode"
+							class="form-control barcodescanner-input"
+							type="text"
+							inputmode="numeric"
+							autocomplete="off"
+							data-target="@receiptimportnewproduct"
+							placeholder="{{ $__t('Scan or enter barcode') }}">
+					</div>
+					<button id="receipt-barcode-lookup-button" class="btn btn-dark" type="button">
+						<i class="fa-solid fa-barcode mr-1"></i>{{ $__t('Look up') }}
+					</button>
+				</div>
+				<small>{{ $__t('Barcode lookup via %s', $externalBarcodeLookupPluginName) }}</small>
+				@endif
+				<button id="receipt-create-product-button" class="btn btn-outline-primary" type="button">
+					<i class="fa-solid fa-plus mr-1"></i>{{ $__t('Create product manually') }}
+				</button>
+			</div>
+			@endif
 		</div>
 	</div>
 </div>

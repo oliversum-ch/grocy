@@ -9,6 +9,8 @@ The receipt importer adds reviewed Lidl Switzerland purchases to Grocy stock fro
 - Parses Lidl Switzerland line items, quantities, weighted produce, item discounts, date, store label, currency, and total.
 - Rejects receipts whose parsed line total does not reconcile with the printed receipt total.
 - Matches exact Grocy product names and previously learned retailer aliases.
+- Lets users with master-data permission scan an unknown product barcode, create it through Grocy's configured external barcode lookup, and return to the same receipt review.
+- Opens a prefilled product form in a second tab when barcode data is unavailable; saving refreshes the importer in place without losing existing mappings.
 - Requires every enabled receipt line to have a reviewed Grocy product and positive stock amount.
 - Adds selected lines through Grocy's stock service inside one database transaction.
 - Verifies each resulting stock transaction before completing the import.
@@ -41,8 +43,9 @@ For a dedicated household importer account, grant only the existing Grocy areas 
 3. Wait for local extraction. A digital Lidl PDF normally uses its embedded text; photographs run local OCR in the browser.
 4. Review the receipt date, total, discounts, Grocy store, product mapping, stock amount, and stock unit.
 5. Disable any line which should not be tracked in Grocy.
-6. Select **Add to Grocy** only after every enabled line is resolved.
-7. Use **Undo entire receipt** if the complete import should be reversed. Undo can fail after a stock entry has dependent later bookings, matching Grocy's existing transaction-undo rules.
+6. For an unknown product, open its product chooser and either scan its barcode or select **Create product manually**. Finish the product in the second tab; the importer retains the receipt and all completed mappings.
+7. Select **Add to Grocy** only after every enabled line is resolved.
+8. Use **Undo entire receipt** if the complete import should be reversed. Undo can fail after a stock entry has dependent later bookings, matching Grocy's existing transaction-undo rules.
 
 Each accepted product mapping is stored as a retailer-specific alias. A future receipt with the same normalized Lidl label proposes the same Grocy product and quantity multiplier.
 

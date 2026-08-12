@@ -6,6 +6,7 @@
 	--receipt-muted: #66706a;
 	--receipt-line: #dfe5e1;
 	--receipt-warning: #a86408;
+	--receipt-paper: #f5f8f6;
 }
 
 .receipt-import-shell {
@@ -34,6 +35,7 @@ body.night-mode .receipt-product-modal {
 	--receipt-muted: #aebbb3;
 	--receipt-line: #4a514d;
 	--receipt-warning: #f2bf71;
+	--receipt-paper: #343936;
 }
 
 body.night-mode .receipt-capture {
@@ -578,6 +580,46 @@ body.night-mode .receipt-commit-bar {
 	white-space: nowrap;
 }
 
+.receipt-product-create {
+	display: block;
+	padding: 1rem 1.25rem;
+	border-top: 1px solid var(--receipt-line);
+	background: var(--receipt-paper);
+}
+
+.receipt-product-create-copy {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+}
+
+.receipt-product-create-copy span,
+.receipt-product-create small {
+	color: var(--receipt-muted);
+}
+
+.receipt-barcode-create {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 0.5rem;
+	margin-bottom: 0.35rem;
+}
+
+.receipt-barcode-input-wrap {
+	position: relative;
+}
+
+.receipt-barcode-input-wrap input {
+	padding-right: 2.75rem;
+}
+
+.receipt-product-create > .btn {
+	width: 100%;
+	margin-top: 0.85rem;
+}
+
 @media (max-width: 991.98px) {
 	.receipt-review {
 		grid-template-columns: 1fr;
@@ -698,6 +740,15 @@ body.night-mode .receipt-commit-bar {
 	.receipt-product-modal .modal-content {
 		max-height: 82vh;
 		border-radius: 12px 12px 0 0;
+	}
+
+	.receipt-product-create-copy {
+		display: block;
+	}
+
+	.receipt-product-create-copy span {
+		display: block;
+		margin-top: 0.2rem;
 	}
 }
 

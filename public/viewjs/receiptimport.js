@@ -11,22 +11,32 @@
 		lines: new Map(),
 		activeLineIndex: null,
 		objectUrl: null,
-		lastImportId: null
+		lastImportId: null,
+		productWindow: null
 	};
-	const Products = (Grocy.ReceiptImport.products || []).map(function(product)
+	let Products = [];
+	const ProductsById = new Map();
+
+	function setProductCatalog(products)
 	{
-		return {
-			id: Number(product.id),
-			name: product.name,
-			stockUnitName: product.stock_unit_name,
-			stockUnitNamePlural: product.stock_unit_name_plural,
-			purchaseUnitName: product.purchase_unit_name,
-			purchaseUnitNamePlural: product.purchase_unit_name_plural,
-			purchaseToStockFactor: Number(product.purchase_to_stock_factor) || 1,
-			searchName: normalizeSearch(product.name)
-		};
-	});
-	const ProductsById = new Map(Products.map(product => [product.id, product]));
+		Products = (products || []).map(function(product)
+		{
+			return {
+				id: Number(product.id),
+				name: product.name,
+				stockUnitName: product.stock_unit_name,
+				stockUnitNamePlural: product.stock_unit_name_plural,
+				purchaseUnitName: product.purchase_unit_name,
+				purchaseUnitNamePlural: product.purchase_unit_name_plural,
+				purchaseToStockFactor: Number(product.purchase_to_stock_factor) || 1,
+				searchName: normalizeSearch(product.name)
+			};
+		});
+		ProductsById.clear();
+		Products.forEach(product => ProductsById.set(product.id, product));
+	}
+
+	setProductCatalog(Grocy.ReceiptImport.products || []);
 
 	function postApi(path, data)
 	{
@@ -428,11 +438,16 @@
 	{
 		const line = State.lines.get(State.activeLineIndex);
 		$('#receipt-product-search').val('');
+		$('#receipt-new-product-barcode').val('');
 		renderProductSuggestions(line);
 		renderProductResults('');
 		$('#receipt-product-modal').modal('show');
 		$('#receipt-product-modal').one('shown.bs.modal', function()
 		{
+			if (Grocy.Components.CameraBarcodeScanner && !Grocy.Components.CameraBarcodeScanner.InitDone)
+			{
+				Grocy.Components.CameraBarcodeScanner.Init();
+			}
 			$('#receipt-product-search').trigger('focus');
 		});
 	}
@@ -486,11 +501,121 @@
 	{
 		const line = State.lines.get(State.activeLineIndex);
 		const product = ProductsById.get(productId);
+		if (!line || !product)
+		{
+			return;
+		}
 		line.productId = productId;
 		line.stockAmount = suggestedStockAmount(line.item, product, null);
 		$('#receipt-product-modal').modal('hide');
 		renderLines();
 		updateCommitState();
+	}
+
+	async function refreshProductCatalog(preferredProductId)
+	{
+		const products = await getApi('receipt-import/products');
+		setProductCatalog(products);
+
+		State.lines.forEach(function(line)
+		{
+			if (line.productId && ProductsById.has(line.productId))
+			{
+				return;
+			}
+
+			const exactProduct = Products.find(product => product.searchName === line.item.normalized_label);
+			if (exactProduct)
+			{
+				line.productId = exactProduct.id;
+				line.stockAmount = suggestedStockAmount(line.item, exactProduct, null);
+			}
+		});
+
+		if (preferredProductId && State.activeLineIndex !== null && ProductsById.has(Number(preferredProductId)))
+		{
+			const line = State.lines.get(State.activeLineIndex);
+			const product = ProductsById.get(Number(preferredProductId));
+			line.productId = product.id;
+			line.stockAmount = suggestedStockAmount(line.item, product, null);
+		}
+
+		renderLines();
+		updateCommitState();
+		setLiveMessage(__t('Product list refreshed'));
+	}
+
+	function openManualProduct(barcode)
+	{
+		const line = State.lines.get(State.activeLineIndex);
+		if (!line)
+		{
+			return;
+		}
+
+		const params = new URLSearchParams({
+			flow: 'ReceiptImportProduct',
+			name: line.item.raw_label,
+			closeAfterCreation: 'true'
+		});
+		if (barcode)
+		{
+			params.set('barcode', barcode);
+		}
+		State.productWindow = window.open(U('/product/new?' + params.toString()), 'receipt-import-product');
+		if (!State.productWindow)
+		{
+			toastr.warning(__t('Allow pop-ups to create a product without leaving the receipt'));
+			return;
+		}
+		$('#receipt-product-modal').modal('hide');
+		setLiveMessage(__t('Create the product in the new tab, then return here'));
+	}
+
+	async function lookupNewProductBarcode()
+	{
+		const barcode = String($('#receipt-new-product-barcode').val() || '').trim();
+		if (!/^[A-Za-z0-9-]{4,64}$/.test(barcode))
+		{
+			toastr.warning(__t('Scan or enter a valid barcode'));
+			return;
+		}
+
+		const button = $('#receipt-barcode-lookup-button');
+		button.prop('disabled', true).addClass('disabled');
+		try
+		{
+			const existingBarcodes = await getApi('objects/product_barcodes_view?query[]=barcode=' + encodeURIComponent(barcode));
+			if (existingBarcodes.length > 0 && existingBarcodes[0].product_id)
+			{
+				const existingProductId = Number(existingBarcodes[0].product_id);
+				await refreshProductCatalog(existingProductId);
+				$('#receipt-product-modal').modal('hide');
+				const existingProduct = ProductsById.get(existingProductId);
+				toastr.success(__t('%s was matched', existingProduct ? existingProduct.name : barcode));
+				return;
+			}
+
+			const product = await getApi('stock/barcodes/external-lookup/' + encodeURIComponent(barcode) + '?add=true');
+			if (!product || !product.id)
+			{
+				toastr.info(__t('No product data was found. Complete the prefilled product form instead.'));
+				openManualProduct(barcode);
+				return;
+			}
+
+			await refreshProductCatalog(Number(product.id));
+			$('#receipt-product-modal').modal('hide');
+			toastr.success(__t('%s was created and matched', product.name));
+		}
+		catch (error)
+		{
+			toastr.error(error.message);
+		}
+		finally
+		{
+			button.prop('disabled', false).removeClass('disabled');
+		}
 	}
 
 	function suggestedStockAmount(item, product, learnedMultiplier)
@@ -766,6 +891,61 @@
 	$('#receipt-product-search').on('input', function()
 	{
 		renderProductResults(this.value);
+	});
+	$('#receipt-create-product-button').on('click', function()
+	{
+		openManualProduct(null);
+	});
+	$('#receipt-barcode-lookup-button').on('click', lookupNewProductBarcode);
+	$('#receipt-new-product-barcode').on('keydown', function(event)
+	{
+		if (event.key === 'Enter')
+		{
+			event.preventDefault();
+			lookupNewProductBarcode();
+		}
+	});
+	$(document).on('Grocy.BarcodeScanned', function(event, barcode, target)
+	{
+		if (target !== '@receiptimportnewproduct')
+		{
+			return;
+		}
+		$('#receipt-new-product-barcode').val(barcode);
+		lookupNewProductBarcode();
+	});
+	window.addEventListener('message', async function(event)
+	{
+		if (event.origin !== window.location.origin || !event.data || event.data.Message !== 'ReceiptImportProductCreated')
+		{
+			return;
+		}
+		try
+		{
+			await refreshProductCatalog(Number(event.data.product_id));
+			toastr.success(__t('%s was created and matched', event.data.product_name));
+		}
+		catch (error)
+		{
+			toastr.error(error.message);
+		}
+		State.productWindow = null;
+	});
+	window.addEventListener('focus', async function()
+	{
+		if (!State.productWindow || !State.productWindow.closed)
+		{
+			return;
+		}
+		State.productWindow = null;
+		try
+		{
+			await refreshProductCatalog(null);
+		}
+		catch (error)
+		{
+			toastr.error(error.message);
+		}
 	});
 	$('#receipt-preview-toggle').on('click', function()
 	{
