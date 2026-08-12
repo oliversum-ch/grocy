@@ -48,6 +48,7 @@ $app->group('', function (RouteCollectorProxy $group)
 	$group->get('/stockoverview', '\Grocy\Controllers\StockController:Overview');
 	$group->get('/stockentries', '\Grocy\Controllers\StockController:Stockentries');
 	$group->get('/purchase', '\Grocy\Controllers\StockController:Purchase');
+	$group->get('/receiptimport', '\Grocy\Controllers\ReceiptImportController:Overview');
 	$group->get('/consume', '\Grocy\Controllers\StockController:Consume');
 	$group->get('/transfer', '\Grocy\Controllers\StockController:Transfer');
 	$group->get('/inventory', '\Grocy\Controllers\StockController:Inventory');
@@ -189,6 +190,10 @@ $app->group('/api', function (RouteCollectorProxy $group)
 	$group->post('/stock/products/by-barcode/{barcode}/transfer', '\Grocy\Controllers\StockApiController:TransferProductByBarcode');
 	$group->post('/stock/products/by-barcode/{barcode}/inventory', '\Grocy\Controllers\StockApiController:InventoryProductByBarcode');
 	$group->post('/stock/products/by-barcode/{barcode}/open', '\Grocy\Controllers\StockApiController:OpenProductByBarcode');
+	$group->post('/receipt-import/preview', '\Grocy\Controllers\ReceiptImportApiController:Preview');
+	$group->post('/receipt-import/commit', '\Grocy\Controllers\ReceiptImportApiController:Commit');
+	$group->post('/receipt-import/{receiptImportId}/undo', '\Grocy\Controllers\ReceiptImportApiController:Undo');
+	$group->get('/receipt-import/history', '\Grocy\Controllers\ReceiptImportApiController:History');
 	$group->get('/stock/locations/{locationId}/entries', '\Grocy\Controllers\StockApiController:LocationStockEntries');
 	$group->get('/stock/bookings/{bookingId}', '\Grocy\Controllers\StockApiController:StockBooking');
 	$group->post('/stock/bookings/{bookingId}/undo', '\Grocy\Controllers\StockApiController:UndoBooking');

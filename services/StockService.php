@@ -109,7 +109,7 @@ class StockService extends BaseService
 		}
 	}
 
-	public function AddProduct(int $productId, float $amount, $bestBeforeDate, $transactionType, $purchasedDate, $price, $locationId = null, $shoppingLocationId = null, &$transactionId = null, $stockLabelType = 0, $addExactAmount = false, $note = null)
+	public function AddProduct(int $productId, float $amount, $bestBeforeDate, $transactionType, $purchasedDate, $price, $locationId = null, $shoppingLocationId = null, &$transactionId = null, $stockLabelType = 0, $addExactAmount = false, $note = null, $compactStockEntries = true)
 	{
 		if (!$this->ProductExists($productId))
 		{
@@ -294,7 +294,10 @@ class StockService extends BaseService
 				}
 			}
 
-			$this->CompactStockEntries($productId);
+			if ($compactStockEntries)
+			{
+				$this->CompactStockEntries($productId);
+			}
 
 			return $transactionId;
 		}

@@ -116,6 +116,10 @@ A plugin for [Open Food Facts](https://world.openfoodfacts.org/) is included and
 
 See that plugin or `plugins/DemoBarcodeLookupPlugin.php` for a commented example implementation if you want to build a plugin.
 
+## Receipt import
+
+This installation includes a review-first Lidl Switzerland receipt importer for digital PDFs and paper-receipt photos. It reads files locally in the browser, reconciles receipt totals, learns retailer-specific product aliases, and writes only reviewed lines to Grocy stock. See [the receipt import guide](docs/receipt-import.md) for installation, permissions, workflow, and validation details.
+
 ### Input shorthands for date fields
 
 For (productivity) reasons all date (and time) input (and display) fields use the ISO-8601 format regardless of localization.

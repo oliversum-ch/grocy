@@ -285,6 +285,16 @@
 						<span class="nav-link-text">{{ $__t('Purchase') }}</span>
 					</a>
 				</li>
+				<li class="nav-item nav-item-sidebar permission-STOCK_PURCHASE @if($viewName == 'receiptimport') active-page @endif"
+					data-toggle="tooltip"
+					data-placement="right"
+					title="{{ $__t('Receipt import') }}">
+					<a class="nav-link discrete-link"
+						href="{{ $U('/receiptimport') }}">
+						<i class="fa-solid fa-fw fa-receipt"></i>
+						<span class="nav-link-text">{{ $__t('Receipt import') }}</span>
+					</a>
+				</li>
 				<li class="nav-item nav-item-sidebar permission-STOCK_CONSUME @if($viewName == 'consume') active-page @endif"
 					data-toggle="tooltip"
 					data-placement="right"

@@ -60,7 +60,10 @@ if (!file_exists($viewcachePath))
 // Empty data/viewcache when and trigger database migrations when:
 // The version changed (so when an update was done)
 // GROCY_BASE_URL OR GROCY_BASE_PATH changed
-$hash = hash('sha256', file_get_contents(__DIR__ . '/version.json') . GROCY_BASE_URL . GROCY_BASE_PATH);
+$migrationFiles = glob(__DIR__ . '/migrations/*.sql');
+sort($migrationFiles);
+$migrationFingerprint = implode('|', array_map('basename', $migrationFiles));
+$hash = hash('sha256', file_get_contents(__DIR__ . '/version.json') . GROCY_BASE_URL . GROCY_BASE_PATH . $migrationFingerprint);
 $hashCacheFile = $viewcachePath . "/$hash.txt";
 if (!file_exists($hashCacheFile))
 {

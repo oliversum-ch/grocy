@@ -13,6 +13,7 @@ use Grocy\Services\FilesService;
 use Grocy\Services\LocalizationService;
 use Grocy\Services\PrintService;
 use Grocy\Services\RecipesService;
+use Grocy\Services\ReceiptImportService;
 use Grocy\Services\SessionService;
 use Grocy\Services\StockService;
 use Grocy\Services\TasksService;
@@ -84,6 +85,11 @@ class BaseController
 	protected function getRecipesService()
 	{
 		return RecipesService::getInstance();
+	}
+
+	protected function getReceiptImportService()
+	{
+		return ReceiptImportService::getInstance();
 	}
 
 	protected function getSessionService()
