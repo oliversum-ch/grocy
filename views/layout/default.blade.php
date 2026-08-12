@@ -781,7 +781,7 @@
 
 	@stack('pageScripts')
 	@stack('componentScripts')
-	<script src="{{ $U('/viewjs/' . $viewName . '.js?v=', true) }}{{ $version }}"></script>
+	<script src="{{ $U('/viewjs/' . $viewName . '.js?v=', true) }}{{ $version }}@if(in_array($viewName, ['receiptimport', 'productform']))-receipt-product-handoff-1@endif"></script>
 
 	@if(file_exists(GROCY_DATAPATH . '/custom_js.html'))
 	@php include GROCY_DATAPATH . '/custom_js.html' @endphp

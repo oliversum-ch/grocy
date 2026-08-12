@@ -7,7 +7,7 @@
 @section('title', $__t('Receipt import'))
 
 @push('pageStyles')
-<link href="{{ $U('/css/receiptimport.css?v=', true) }}{{ $version }}"
+<link href="{{ $U('/css/receiptimport.css?v=', true) }}{{ $version }}-receipt-product-handoff-1"
 	rel="stylesheet">
 @endpush
 
