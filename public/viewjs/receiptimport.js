@@ -351,12 +351,11 @@
 
 	function selectLikelyShoppingLocation()
 	{
-		const retailerToken = normalizeSearch(State.preview.retailer_name).split(' ')[0];
-		const matches = (Grocy.ReceiptImport.shoppingLocations || []).filter(location => normalizeSearch(location.name).includes(retailerToken));
-		if (matches.length === 1)
-		{
-			$('#receipt-shopping-location').val(String(matches[0].id));
-		}
+		const locationId = Grocy.ReceiptImportStoreMatcher.findLikelyShoppingLocationId(
+			State.preview,
+			Grocy.ReceiptImport.shoppingLocations || []
+		);
+		$('#receipt-shopping-location').val(locationId === null ? '' : String(locationId));
 	}
 
 	function renderLines()

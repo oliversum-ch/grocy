@@ -13,6 +13,7 @@
 
 @push('pageScripts')
 <script src="{{ $U('/packages/tesseract.js/dist/tesseract.min.js?v=', true) }}{{ $version }}"></script>
+<script src="{{ $U('/viewjs/receiptimportstore.js?v=', true) }}{{ $version }}-receipt-store-matcher-1"></script>
 @endpush
 
 @section('content')
