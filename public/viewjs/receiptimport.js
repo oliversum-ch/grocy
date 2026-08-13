@@ -1,3 +1,114 @@
+const ReceiptImportOcr = (function()
+{
+	'use strict';
+
+	function normalizedMoney(line)
+	{
+		return String(line || '')
+			.replace(/([\p{L}\d])\s+[)OQ][.,](\d{2})(\s+[A-Z0-9*])?$/ui, '$1 0.$2$3')
+			.replace(/\b(\d)(\d{2})(\s+[A-Z*])$/u, '$1.$2$3');
+	}
+
+	function terminalMoney(line)
+	{
+		const match = normalizedMoney(line).match(/(\d{1,6}[.,]\d{2})(\s+[A-Z0-9*])?$/u);
+		return match ? match[1].replace(',', '.') + (match[2] || '') : null;
+	}
+
+	function tokens(line)
+	{
+		return normalizedMoney(line).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+			.toLowerCase().replace(/\d{3,}|\d+[.,]\d+|[^a-z]+/g, ' ').trim().split(/\s+/)
+			.filter(token => token.length >= 4 && !['artikel', 'total', 'preis', 'zahlung'].includes(token));
+	}
+
+	function editDistance(left, right)
+	{
+		const row = Array.from({ length: right.length + 1 }, (_, index) => index);
+		for (let leftIndex = 1; leftIndex <= left.length; leftIndex++)
+		{
+			let diagonal = row[0];
+			row[0] = leftIndex;
+			for (let rightIndex = 1; rightIndex <= right.length; rightIndex++)
+			{
+				const above = row[rightIndex];
+				row[rightIndex] = Math.min(row[rightIndex] + 1, row[rightIndex - 1] + 1,
+					diagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1));
+				diagonal = above;
+			}
+		}
+		return row[right.length];
+	}
+
+	function lineMatchScore(primaryLine, recoveryLine)
+	{
+		const primaryArticle = primaryLine.match(/\b\d{4,14}\b/);
+		const recoveryArticle = recoveryLine.match(/\b\d{4,14}\b/);
+		if (primaryArticle && recoveryArticle && primaryArticle[0] === recoveryArticle[0])
+		{
+			return 100;
+		}
+		let score = 0;
+		tokens(primaryLine).forEach(function(primaryToken)
+		{
+			tokens(recoveryLine).forEach(function(recoveryToken)
+			{
+				if (primaryToken === recoveryToken)
+				{
+					score += 20;
+				}
+				else if (Math.min(primaryToken.length, recoveryToken.length) >= 6 && editDistance(primaryToken, recoveryToken) <= 2)
+				{
+					score += 10;
+				}
+			});
+		});
+		return score;
+	}
+
+	function needsRecovery(text)
+	{
+		return String(text || '').split(/\r?\n/).some(function(line)
+		{
+			return /\b\d{4,14}\b/.test(line) && /[\p{L}]/u.test(line) && terminalMoney(line) === null;
+		});
+	}
+
+	function merge(primaryText, recoveryText)
+	{
+		const recoveryLines = String(recoveryText || '').split(/\r?\n/).map(normalizedMoney)
+			.filter(line => terminalMoney(line) !== null);
+		return String(primaryText || '').split(/\r?\n/).map(normalizedMoney).map(function(primaryLine)
+		{
+			if (terminalMoney(primaryLine) !== null || !/[\p{L}]/u.test(primaryLine))
+			{
+				return primaryLine;
+			}
+			let bestLine = null;
+			let bestScore = 0;
+			recoveryLines.forEach(function(recoveryLine)
+			{
+				const score = lineMatchScore(primaryLine, recoveryLine);
+				if (score > bestScore)
+				{
+					bestScore = score;
+					bestLine = recoveryLine;
+				}
+			});
+			const recoveredMoney = bestLine && bestScore >= 20 ? terminalMoney(bestLine) : null;
+			return recoveredMoney === null ? primaryLine : primaryLine.replace(/\s+[A-Z]{1,3}$/u, '') + ' ' + recoveredMoney;
+		}).join('\n');
+	}
+
+	return { merge: merge, needsRecovery: needsRecovery, normalizedMoney: normalizedMoney };
+})();
+
+if (typeof module !== 'undefined' && module.exports)
+{
+	module.exports = ReceiptImportOcr;
+}
+
+if (typeof window !== 'undefined')
 (function()
 {
 	'use strict';
@@ -154,7 +265,6 @@
 		catch (error)
 		{
 			console.error(error);
-			console.debug('Receipt OCR diagnostic', State.rawText);
 			showOnly('#receipt-capture');
 			toastr.error(escapeHtml(error.message));
 			setLiveMessage(error.message);
@@ -247,7 +357,7 @@
 		$('#receipt-image-preview').attr('src', State.objectUrl).removeClass('d-none');
 		$('#receipt-pdf-preview').addClass('d-none');
 		const imageBitmap = await createImageBitmap(file);
-		const preparedCanvas = prepareReceiptImage(imageBitmap);
+		const preparedImages = prepareReceiptImage(imageBitmap);
 		imageBitmap.close();
 
 		let worker;
@@ -270,12 +380,18 @@
 				preserve_interword_spaces: '1',
 				user_defined_dpi: '300'
 			});
-			let result = await worker.recognize(preparedCanvas, { rotateAuto: true });
-			let text = result.data.text;
+			let result = await worker.recognize(preparedImages.primary, { rotateAuto: true });
+			let text = ReceiptImportOcr.normalizedMoney(result.data.text);
+			if (ReceiptImportOcr.needsRecovery(text))
+			{
+				setProcessing(__t('Reading photo'), __t('Recovering unclear receipt prices'), 66);
+				const recoveryResult = await worker.recognize(preparedImages.recovery, { rotateAuto: false });
+				text = ReceiptImportOcr.merge(text, recoveryResult.data.text);
+			}
 			if (receiptTextScore(text) < 60)
 			{
 				setProcessing(__t('Reading photo'), __t('Trying the opposite receipt orientation'), 66);
-				const rotatedCanvas = rotateCanvasHalfTurn(preparedCanvas);
+				const rotatedCanvas = rotateCanvasHalfTurn(preparedImages.primary);
 				result = await worker.recognize(rotatedCanvas, { rotateAuto: false });
 				if (receiptTextScore(result.data.text) > receiptTextScore(text))
 				{
@@ -325,6 +441,22 @@
 			context.drawImage(sourceCanvas, bounds.left, bounds.top, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
 		}
 		context.restore();
+		const recoveryCanvas = document.createElement('canvas');
+		recoveryCanvas.width = canvas.width;
+		recoveryCanvas.height = canvas.height;
+		const recoveryContext = recoveryCanvas.getContext('2d', { willReadFrequently: true });
+		recoveryContext.drawImage(canvas, 0, 0);
+		const recoveryPixels = recoveryContext.getImageData(0, 0, recoveryCanvas.width, recoveryCanvas.height);
+		for (let index = 0; index < recoveryPixels.data.length; index += 4)
+		{
+			const gray = recoveryPixels.data[index] * 0.299 + recoveryPixels.data[index + 1] * 0.587 + recoveryPixels.data[index + 2] * 0.114;
+			const value = gray >= 200 ? 255 : 0;
+			recoveryPixels.data[index] = value;
+			recoveryPixels.data[index + 1] = value;
+			recoveryPixels.data[index + 2] = value;
+		}
+		recoveryContext.putImageData(recoveryPixels, 0, 0);
+
 		const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
 
 		for (let index = 0; index < pixels.data.length; index += 4)
@@ -336,7 +468,7 @@
 			pixels.data[index + 2] = contrasted;
 		}
 		context.putImageData(pixels, 0, 0);
-		return canvas;
+		return { primary: canvas, recovery: recoveryCanvas };
 	}
 
 	function findReceiptBounds(context, width, height)
