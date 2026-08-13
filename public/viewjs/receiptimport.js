@@ -154,6 +154,7 @@
 		catch (error)
 		{
 			console.error(error);
+			console.debug('Receipt OCR diagnostic', State.rawText);
 			showOnly('#receipt-capture');
 			toastr.error(escapeHtml(error.message));
 			setLiveMessage(error.message);
