@@ -4,7 +4,8 @@ const matcher = require('../public/viewjs/receiptimportstore.js');
 const locations = [
 	{ id: 1, name: 'LIDL Schweiz' },
 	{ id: 5, name: 'LIDL Deutschland' },
-	{ id: 7, name: 'DM' }
+	{ id: 7, name: 'DM' },
+	{ id: 8, name: 'Aldi Suisse' }
 ];
 
 assert.equal(
@@ -23,6 +24,12 @@ assert.equal(
 	matcher.findLikelyShoppingLocationId({ retailer_key: 'unknown', retailer_name: 'Lidl' }, locations),
 	null,
 	'A brand-only retailer must stay unresolved when multiple country locations match'
+);
+
+assert.equal(
+	matcher.findLikelyShoppingLocationId({ retailer_key: 'aldi_ch', retailer_name: 'Aldi Switzerland' }, locations),
+	8,
+	'Swiss Aldi receipts must match an Aldi Suisse shopping location'
 );
 
 console.log('ReceiptImportStoreMatcher: country-aware unambiguous store selection passed');

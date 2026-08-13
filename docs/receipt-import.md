@@ -1,12 +1,13 @@
 # Receipt import
 
-The receipt importer adds reviewed Lidl Switzerland purchases to Grocy stock from either a digital PDF or a photograph of a paper receipt.
+The receipt importer adds reviewed purchases to Grocy stock from either a digital PDF or a photograph of a paper receipt. It keeps an optimized Lidl Switzerland parser and uses a retailer-neutral parser for other common itemized receipt layouts, including Aldi Switzerland.
 
 ## What it does
 
 - Reads digital PDF text in the browser with PDF.js.
 - Reads receipt photos in the browser with Tesseract.js. The original PDF or image is not uploaded to Grocy.
-- Parses Lidl Switzerland line items, quantities, weighted produce, item discounts, date, store label, currency, and total.
+- Detects known retailers and derives a stable name for previously unknown retailers.
+- Parses common itemized layouts, quantities, weighted produce, item discounts, cash rounding, date, store label, currency, and total.
 - Rejects receipts whose parsed line total does not reconcile with the printed receipt total.
 - Matches exact Grocy product names and previously learned retailer aliases.
 - Lets users with master-data permission scan an unknown product barcode, create it through Grocy's configured external barcode lookup, and return to the same receipt review.
@@ -40,14 +41,14 @@ For a dedicated household importer account, grant only the existing Grocy areas 
 
 1. Open **Receipt import** below **Purchase** in the Grocy sidebar.
 2. Take a receipt photo or choose a PDF/image.
-3. Wait for local extraction. A digital Lidl PDF normally uses its embedded text; photographs run local OCR in the browser.
+3. Wait for local extraction. A digital PDF normally uses its embedded text; photographs run local OCR in the browser.
 4. Review the receipt date, total, discounts, Grocy store, product mapping, stock amount, and stock unit.
 5. Disable any line which should not be tracked in Grocy.
 6. For an unknown product, open its product chooser and either scan its barcode or select **Create product manually**. Finish the product in the second tab; the importer retains the receipt and all completed mappings.
 7. Select **Add to Grocy** only after every enabled line is resolved.
 8. Use **Undo entire receipt** if the complete import should be reversed. Undo can fail after a stock entry has dependent later bookings, matching Grocy's existing transaction-undo rules.
 
-Each accepted product mapping is stored as a retailer-specific alias. A future receipt with the same normalized Lidl label proposes the same Grocy product and quantity multiplier.
+Each accepted product mapping is stored as a retailer-specific alias. A future receipt from the same retailer with the same normalized label proposes the same Grocy product and quantity multiplier.
 
 ## Amount and price handling
 
@@ -71,11 +72,15 @@ For best OCR results:
 - fill most of the frame with the receipt;
 - retake faded or blurred thermal receipts rather than approving uncertain values.
 
-OCR output is never trusted directly: Lidl parsing, total reconciliation, product matching, and the final human review all occur before stock changes.
+The browser detects the bright receipt area, removes most of the surrounding table/background, enlarges the text, and rotates a sideways receipt to portrait before OCR. If the first orientation produces implausible receipt text, it tries the opposite orientation and keeps the stronger result.
 
-## Adding another retailer
+OCR output is never trusted directly: parsing, total reconciliation, product matching, and the final human review all occur before stock changes.
 
-Retailer parsing is isolated in `services/ReceiptImportParser.php`. Add retailer detection, a deterministic parser, and fixtures representing each supported receipt layout. A new parser must preserve these invariants:
+## Receipt-layout support
+
+Lidl Switzerland keeps a dedicated parser for its digital receipt format. Other retailers use a conservative generic parser that recognizes common total labels, trailing line prices, inline or following quantity/weight lines, discounts, cash rounding, currencies, and common European date formats. Aldi Switzerland is covered by a photo-derived fixture.
+
+An unfamiliar receipt is accepted only when its product lines reconcile with the printed total. Layouts without a readable date, total, product lines, or reconcilable amounts fail before the review screen and never write stock. Adding a dedicated retailer parser can improve unusual layouts while preserving these invariants:
 
 - line discounts belong to their product line;
 - quantity and weight syntax are explicit;
@@ -97,11 +102,12 @@ The sample PDF extraction test accepts the PDF path as its argument:
 node .\tests\receipt_import_pdf_text_test.mjs C:\path\to\receipt.pdf
 ```
 
-The optional photo OCR test accepts a rendered or photographed receipt image. It downloads the Tesseract language models on first run:
+The optional photo OCR test accepts a rendered or photographed receipt image. It downloads the Tesseract language models on first run. Optional rotation and expected-token arguments help validate sideways retailer fixtures:
 
 ```powershell
 $env:NODE_PATH = (Resolve-Path .\public\packages).Path
 node .\tests\receipt_import_ocr_test.mjs C:\path\to\receipt-photo.png
+node .\tests\receipt_import_ocr_test.mjs C:\path\to\aldi-photo.jpg --rotate=90 --expect=ALDI --expect="Cracker Mix" --expect=6.60
 ```
 
 Before deploying, also run PHP syntax checks for the new controllers/services, the migration test, a JavaScript syntax check, `git diff --check`, and the HTTP integration test against a disposable Grocy database. The integration test commits a stock line and undoes it again, so never point it at a real Grocy database.

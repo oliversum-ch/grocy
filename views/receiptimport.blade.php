@@ -38,7 +38,7 @@
 		<div>
 			<p class="receipt-import-kicker">{{ $__t('Stock purchase') }}</p>
 			<h2>{{ $__t('Receipt import') }}</h2>
-			<p class="receipt-import-intro">{{ $__t('Scan a Lidl Switzerland receipt, match each line once, then add the reviewed purchase to stock.') }}</p>
+			<p class="receipt-import-intro">{{ $__t('Scan an itemized receipt, match each line once, then add the reviewed purchase to stock.') }}</p>
 		</div>
 		<button id="receipt-reset-button"
 			class="btn btn-outline-secondary d-none"
@@ -80,7 +80,7 @@
 				type="file"
 				accept="application/pdf,image/*">
 		</div>
-		<p class="receipt-capture-footnote">{{ $__t('First version: Lidl Switzerland. Maximum file size 20 MB.') }}</p>
+		<p class="receipt-capture-footnote">{{ $__t('Supports common itemized receipt layouts. Maximum file size 20 MB.') }}</p>
 	</section>
 
 	<section id="receipt-processing"

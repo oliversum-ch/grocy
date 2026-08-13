@@ -269,8 +269,19 @@
 				preserve_interword_spaces: '1',
 				user_defined_dpi: '300'
 			});
-			const result = await worker.recognize(preparedCanvas, { rotateAuto: true });
-			return result.data.text;
+			let result = await worker.recognize(preparedCanvas, { rotateAuto: true });
+			let text = result.data.text;
+			if (receiptTextScore(text) < 60)
+			{
+				setProcessing(__t('Reading photo'), __t('Trying the opposite receipt orientation'), 66);
+				const rotatedCanvas = rotateCanvasHalfTurn(preparedCanvas);
+				result = await worker.recognize(rotatedCanvas, { rotateAuto: false });
+				if (receiptTextScore(result.data.text) > receiptTextScore(text))
+				{
+					text = result.data.text;
+				}
+			}
+			return text;
 		}
 		finally
 		{
@@ -283,14 +294,36 @@
 
 	function prepareReceiptImage(imageBitmap)
 	{
-		const scale = Math.min(1, 1800 / imageBitmap.width, 6000 / imageBitmap.height);
+		const sourceCanvas = document.createElement('canvas');
+		sourceCanvas.width = imageBitmap.width;
+		sourceCanvas.height = imageBitmap.height;
+		const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+		sourceContext.drawImage(imageBitmap, 0, 0);
+		const bounds = findReceiptBounds(sourceContext, sourceCanvas.width, sourceCanvas.height);
+		const sourceWidth = bounds.right - bounds.left;
+		const sourceHeight = bounds.bottom - bounds.top;
+		const rotate = sourceWidth > sourceHeight * 1.15;
+		const orientedWidth = rotate ? sourceHeight : sourceWidth;
+		const orientedHeight = rotate ? sourceWidth : sourceHeight;
+		const scale = Math.min(3, 1400 / orientedWidth, 5200 / orientedHeight);
 		const canvas = document.createElement('canvas');
-		canvas.width = Math.max(1, Math.round(imageBitmap.width * scale));
-		canvas.height = Math.max(1, Math.round(imageBitmap.height * scale));
+		canvas.width = Math.max(1, Math.round(orientedWidth * scale));
+		canvas.height = Math.max(1, Math.round(orientedHeight * scale));
 		const context = canvas.getContext('2d', { willReadFrequently: true });
 		context.fillStyle = '#ffffff';
 		context.fillRect(0, 0, canvas.width, canvas.height);
-		context.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+		context.save();
+		if (rotate)
+		{
+			context.translate(canvas.width, 0);
+			context.rotate(Math.PI / 2);
+			context.drawImage(sourceCanvas, bounds.left, bounds.top, sourceWidth, sourceHeight, 0, 0, canvas.height, canvas.width);
+		}
+		else
+		{
+			context.drawImage(sourceCanvas, bounds.left, bounds.top, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+		}
+		context.restore();
 		const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
 
 		for (let index = 0; index < pixels.data.length; index += 4)
@@ -302,6 +335,82 @@
 			pixels.data[index + 2] = contrasted;
 		}
 		context.putImageData(pixels, 0, 0);
+		return canvas;
+	}
+
+	function findReceiptBounds(context, width, height)
+	{
+		const pixels = context.getImageData(0, 0, width, height).data;
+		const step = Math.max(1, Math.floor(Math.min(width, height) / 500));
+		const columnCounts = new Array(Math.ceil(width / step)).fill(0);
+		const rowCounts = new Array(Math.ceil(height / step)).fill(0);
+		let sampledRows = 0;
+		let sampledColumns = 0;
+
+		for (let y = 0; y < height; y += step)
+		{
+			sampledRows++;
+			let columnIndex = 0;
+			for (let x = 0; x < width; x += step)
+			{
+				if (y === 0)
+				{
+					sampledColumns++;
+				}
+				const index = (y * width + x) * 4;
+				const red = pixels[index];
+				const green = pixels[index + 1];
+				const blue = pixels[index + 2];
+				const brightness = red * 0.299 + green * 0.587 + blue * 0.114;
+				const saturation = Math.max(red, green, blue) - Math.min(red, green, blue);
+				if (brightness >= 170 && saturation <= 55)
+				{
+					rowCounts[Math.floor(y / step)]++;
+					columnCounts[columnIndex]++;
+				}
+				columnIndex++;
+			}
+		}
+
+		const rowIndexes = rowCounts.map((count, index) => count >= sampledColumns * 0.14 ? index : -1).filter(index => index >= 0);
+		const columnIndexes = columnCounts.map((count, index) => count >= sampledRows * 0.12 ? index : -1).filter(index => index >= 0);
+		if (rowIndexes.length < 10 || columnIndexes.length < 10)
+		{
+			return { left: 0, top: 0, right: width, bottom: height };
+		}
+
+		const padding = Math.max(8, Math.round(Math.min(width, height) * 0.015));
+		const bounds = {
+			left: Math.max(0, columnIndexes[0] * step - padding),
+			top: Math.max(0, rowIndexes[0] * step - padding),
+			right: Math.min(width, (columnIndexes[columnIndexes.length - 1] + 1) * step + padding),
+			bottom: Math.min(height, (rowIndexes[rowIndexes.length - 1] + 1) * step + padding)
+		};
+		if ((bounds.right - bounds.left) * (bounds.bottom - bounds.top) < width * height * 0.15)
+		{
+			return { left: 0, top: 0, right: width, bottom: height };
+		}
+		return bounds;
+	}
+
+	function receiptTextScore(text)
+	{
+		const value = String(text || '');
+		const moneyLines = (value.match(/\d{1,6}[.,]\d{2}/g) || []).length;
+		const receiptWords = (value.match(/\b(?:total|preis|zahlen|summe|aldi|lidl|coop|migros|chf|eur|mwst|vat)\b/gi) || []).length;
+		const dates = (value.match(/\b\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\b/g) || []).length;
+		return Math.min(35, moneyLines * 7) + Math.min(50, receiptWords * 5) + Math.min(15, dates * 15);
+	}
+
+	function rotateCanvasHalfTurn(sourceCanvas)
+	{
+		const canvas = document.createElement('canvas');
+		canvas.width = sourceCanvas.width;
+		canvas.height = sourceCanvas.height;
+		const context = canvas.getContext('2d');
+		context.translate(canvas.width, canvas.height);
+		context.rotate(Math.PI);
+		context.drawImage(sourceCanvas, 0, 0);
 		return canvas;
 	}
 

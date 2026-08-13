@@ -118,7 +118,7 @@ See that plugin or `plugins/DemoBarcodeLookupPlugin.php` for a commented example
 
 ## Receipt import
 
-This installation includes a review-first Lidl Switzerland receipt importer for digital PDFs and paper-receipt photos. It reads files locally in the browser, reconciles receipt totals, learns retailer-specific product aliases, and writes only reviewed lines to Grocy stock. See [the receipt import guide](docs/receipt-import.md) for installation, permissions, workflow, and validation details.
+This installation includes a review-first receipt importer for digital PDFs and paper-receipt photos from common itemized retail layouts. It reads files locally in the browser, reconciles receipt totals, learns retailer-specific product aliases, and writes only reviewed lines to Grocy stock. See [the receipt import guide](docs/receipt-import.md) for installation, permissions, workflow, and validation details.
 
 ### Input shorthands for date fields
 

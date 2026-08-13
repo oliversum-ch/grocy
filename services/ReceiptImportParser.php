@@ -5,18 +5,19 @@ namespace Grocy\Services;
 class ReceiptImportParser
 {
 	private const MONEY_PATTERN = '(\d{1,6}[.,]\d{2})';
+	private const FLEXIBLE_MONEY_PATTERN = '(\d{1,6}(?:[.,]\d{2}|\s+\d{2}))';
 
 	public function Parse(string $rawText): array
 	{
 		$text = $this->NormalizeText($rawText);
 		$retailer = $this->DetectRetailer($text);
 
-		if ($retailer['key'] !== 'lidl_ch')
+		if ($retailer['key'] === 'lidl_ch')
 		{
-			throw new \InvalidArgumentException('This first version currently supports Lidl Switzerland receipts only');
+			return $this->ParseLidlSwitzerland($text, $retailer);
 		}
 
-		return $this->ParseLidlSwitzerland($text, $retailer);
+		return $this->ParseGenericReceipt($text, $retailer);
 	}
 
 	public function NormalizeLabel(string $label): string
@@ -55,12 +56,360 @@ class ReceiptImportParser
 
 	private function DetectRetailer(string $text): array
 	{
-		if (preg_match('/\bLidl\b/ui', $text) || preg_match('/Lidl Plus/ui', $text))
+		$country = $this->DetectCountry($text);
+		$knownRetailers = [
+			'aldi' => '/\bALDI(?:\s+SUISSE|\s+SUED|\s+SÜD|\s+NORD)?\b/ui',
+			'lidl' => '/\bLidl\b/ui',
+			'coop' => '/\bCoop\b/ui',
+			'migros' => '/\bMigros\b/ui',
+			'denner' => '/\bDenner\b/ui',
+			'volg' => '/\bVolg\b/ui',
+			'spar' => '/\bSpar\b/ui',
+			'rewe' => '/\bREWE\b/ui',
+			'edeka' => '/\bEDEKA\b/ui',
+			'kaufland' => '/\bKaufland\b/ui',
+			'penny' => '/\bPenny\b/ui',
+			'netto' => '/(?:\bNetto\s+Marken-Discount\b|netto-online[.]de|netto[.]de)/ui',
+			'dm' => '/\bdm(?:-drogerie markt)?\b/ui',
+			'carrefour' => '/\bCarrefour\b/ui'
+		];
+
+		foreach ($knownRetailers as $key => $pattern)
 		{
-			return ['key' => 'lidl_ch', 'name' => 'Lidl Switzerland'];
+			if (!preg_match($pattern, $text))
+			{
+				continue;
+			}
+
+			$countrySuffix = $country === null ? '' : '_' . $country['key'];
+			$name = $key === 'dm' ? 'dm' : ucfirst($key);
+			if ($country !== null)
+			{
+				$name .= ' ' . $country['name'];
+			}
+			return ['key' => $key . $countrySuffix, 'name' => $name];
 		}
 
-		return ['key' => 'unknown', 'name' => 'Unknown retailer'];
+		$name = $this->DetectGenericRetailerName($text);
+		$key = str_replace(' ', '_', $this->NormalizeLabel($name));
+		$key = substr($key, 0, 80);
+		return ['key' => $key === '' ? 'unknown_retailer' : $key, 'name' => $name];
+	}
+
+	private function DetectCountry(string $text): ?array
+	{
+		$countries = [
+			'ch' => ['name' => 'Switzerland', 'pattern' => '/(?:\bCHF\b|\bCHE[- ]|\bSchweiz\b|\bSuisse\b|\bSvizzera\b|[.]ch\b)/ui'],
+			'de' => ['name' => 'Germany', 'pattern' => '/(?:\bDeutschland\b|[.]de\b)/ui'],
+			'fr' => ['name' => 'France', 'pattern' => '/(?:\bFrance\b|[.]fr\b)/ui'],
+			'it' => ['name' => 'Italy', 'pattern' => '/(?:\bItalia\b|[.]it\b)/ui'],
+			'at' => ['name' => 'Austria', 'pattern' => '/(?:\bÖsterreich\b|\bOesterreich\b|[.]at\b)/ui']
+		];
+
+		foreach ($countries as $key => $country)
+		{
+			if (preg_match($country['pattern'], $text))
+			{
+				return ['key' => $key, 'name' => $country['name']];
+			}
+		}
+
+		return null;
+	}
+
+	private function DetectGenericRetailerName(string $text): string
+	{
+		foreach (array_slice(explode("\n", $text), 0, 12) as $line)
+		{
+			if (mb_strlen($line) < 2 || mb_strlen($line) > 80 || !preg_match('/[\p{L}]/u', $line))
+			{
+				continue;
+			}
+			if (preg_match('/^(?:store receipts?|digital(?:er)? kassenbon|receipt|kassenbon|bon de caisse|www[.]|https?:|tel[.: ]|phone[.: ])/ui', $line))
+			{
+				continue;
+			}
+			if (preg_match('/^\d{4,6}\s+\p{L}/u', $line) || preg_match('/\b(?:strasse|straße|street|road|avenue|weg|gasse)\b/ui', $line))
+			{
+				continue;
+			}
+			return trim(preg_replace('/\s+(?:AG|GmbH|SA|SAGL|Ltd[.]?|Inc[.]?)$/ui', '', $line));
+		}
+
+		return 'Unknown retailer';
+	}
+
+	private function ParseGenericReceipt(string $text, array $retailer): array
+	{
+		$lines = explode("\n", $text);
+		$receiptDate = $this->ParseGenericDate($text);
+		$total = $this->ParseGenericTotal($lines);
+		$currency = $this->DetectCurrency($text);
+		$items = [];
+		$currentIndex = null;
+
+		for ($lineIndex = 0; $lineIndex < $total['line_index']; $lineIndex++)
+		{
+			$line = $lines[$lineIndex];
+
+			if ($currentIndex !== null && $this->ApplyGenericQuantityLine($line, $items[$currentIndex]))
+			{
+				continue;
+			}
+
+			if ($currentIndex !== null && $this->ApplyGenericDiscountLine($line, $items[$currentIndex]))
+			{
+				continue;
+			}
+
+			$item = $this->ParseGenericItemLine($line);
+			if ($item === null)
+			{
+				continue;
+			}
+
+			$item['line_index'] = count($items);
+			$items[] = $item;
+			$currentIndex = array_key_last($items);
+		}
+
+		if (count($items) === 0)
+		{
+			throw new \InvalidArgumentException('No receipt line items were found');
+		}
+
+		$receiptTotal = $total['amount'];
+		$parsedTotal = $this->FinalizeItems($items);
+		$difference = round($receiptTotal - $parsedTotal, 2);
+		$roundingAdjustment = $this->ParseRoundingAdjustment($lines);
+
+		if (abs($difference) > 0.0001 && abs($difference) <= 0.05 && ($roundingAdjustment === null || abs($roundingAdjustment - $difference) <= 0.01))
+		{
+			$lastIndex = array_key_last($items);
+			if ($difference < 0)
+			{
+				$items[$lastIndex]['discount_total'] = round($items[$lastIndex]['discount_total'] + abs($difference), 2);
+			}
+			else
+			{
+				$items[$lastIndex]['gross_total'] = round($items[$lastIndex]['gross_total'] + $difference, 2);
+			}
+			$parsedTotal = $this->FinalizeItems($items);
+		}
+
+		$difference = round($parsedTotal - $receiptTotal, 2);
+		if (abs($difference) > 0.02)
+		{
+			throw new \InvalidArgumentException(sprintf('Receipt line total %.2f does not match receipt total %.2f (difference %.2f)', $parsedTotal, $receiptTotal, $difference));
+		}
+
+		$discountTotal = round(array_sum(array_column($items, 'discount_total')), 2);
+
+		return [
+			'retailer_key' => $retailer['key'],
+			'retailer_name' => $retailer['name'],
+			'store_label' => $this->ParseGenericStore($lines),
+			'receipt_reference' => null,
+			'receipt_date' => $receiptDate,
+			'currency' => $currency,
+			'receipt_total' => $receiptTotal,
+			'parsed_total' => $parsedTotal,
+			'discount_total' => $discountTotal,
+			'is_reconciled' => true,
+			'items' => $items
+		];
+	}
+
+	private function ParseGenericItemLine(string $line): ?array
+	{
+		$pattern = '/^(.+?)\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z*])?$/ui';
+		if (!preg_match($pattern, $line, $matches))
+		{
+			return null;
+		}
+
+		$label = trim($matches[1]);
+		if ($this->IsNonProductLine($label))
+		{
+			return null;
+		}
+
+		$label = preg_replace('/^\d{4,14}\s+/u', '', $label);
+		$quantity = 1.0;
+		$unit = 'piece';
+		$listedUnitPrice = null;
+
+		if (preg_match('/^(\d+(?:[.,]\d+)?)\s*[xX*]\s+(.+)$/u', $label, $quantityMatches))
+		{
+			$quantity = $this->Number($quantityMatches[1]);
+			$label = trim($quantityMatches[2]);
+			if (preg_match('/^(.+?)\s+' . self::FLEXIBLE_MONEY_PATTERN . '$/u', $label, $unitPriceMatches))
+			{
+				$label = trim($unitPriceMatches[1]);
+				$listedUnitPrice = $this->Money($unitPriceMatches[2]);
+			}
+		}
+
+		if ($label === '' || !preg_match('/[\p{L}]/u', $label))
+		{
+			return null;
+		}
+
+		return [
+			'raw_label' => $label,
+			'normalized_label' => $this->NormalizeLabel($label),
+			'receipt_quantity' => $quantity,
+			'receipt_unit' => $unit,
+			'listed_unit_price' => $listedUnitPrice,
+			'gross_total' => $this->Money($matches[2]),
+			'discount_total' => 0.0
+		];
+	}
+
+	private function ApplyGenericQuantityLine(string $line, array &$item): bool
+	{
+		$pattern = '/^(\d+(?:[.,]\d+)?)\s*(kg|g|l|ml|stk|stück|piece|pcs)?\s*[xX*]\s*(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+(?:CHF|EUR|USD|GBP)\/(?:kg|g|l|ml))?$/ui';
+		if (!preg_match($pattern, $line, $matches))
+		{
+			return false;
+		}
+
+		$unit = mb_strtolower($matches[2] ?? '', 'UTF-8');
+		$item['receipt_quantity'] = $this->Number($matches[1]);
+		$item['receipt_unit'] = $unit === '' ? 'piece' : $unit;
+		$item['listed_unit_price'] = $this->Money($matches[3]);
+		return true;
+	}
+
+	private function ApplyGenericDiscountLine(string $line, array &$item): bool
+	{
+		if (!preg_match('/\b(?:rabatt|discount|coupon|aktion|ersparnis|remise|sconto)\b/ui', $line))
+		{
+			return false;
+		}
+		if (!preg_match('/(-?\s*\d{1,6}(?:[.,]\d{2}|\s+\d{2})\s*-?)\s*(?:[A-Z*])?$/u', $line, $matches))
+		{
+			return false;
+		}
+
+		$item['discount_total'] = round($item['discount_total'] + abs($this->Money($matches[1])), 2);
+		return true;
+	}
+
+	private function FinalizeItems(array &$items): float
+	{
+		$parsedTotal = 0.0;
+		foreach ($items as &$item)
+		{
+			$item['gross_total'] = round($item['gross_total'], 2);
+			$item['discount_total'] = round($item['discount_total'], 2);
+			$item['net_total'] = round($item['gross_total'] - $item['discount_total'], 2);
+			$parsedTotal += $item['net_total'];
+		}
+		unset($item);
+		return round($parsedTotal, 2);
+	}
+
+	private function ParseGenericTotal(array $lines): array
+	{
+		$labels = '(?:aldi\s+preis|zu\s+zahlen|grand\s+total|total|gesamt(?:betrag)?|summe|endbetrag|amount\s+due|to\s+pay|a\s+payer|totale)';
+		$matchesFound = [];
+		foreach ($lines as $lineIndex => $line)
+		{
+			if (preg_match('/^' . $labels . '\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z*])?$/ui', $line, $matches))
+			{
+				$matchesFound[] = ['line_index' => $lineIndex, 'amount' => $this->Money($matches[1])];
+			}
+		}
+
+		if (count($matchesFound) === 0)
+		{
+			throw new \InvalidArgumentException('The receipt total could not be read');
+		}
+
+		return $matchesFound[array_key_last($matchesFound)];
+	}
+
+	private function ParseGenericDate(string $text): string
+	{
+		if (preg_match('/\b(20\d{2})[-\/.]([01]?\d)[-\/.]([0-3]?\d)\b/', $text, $matches))
+		{
+			return $this->ValidatedDate(intval($matches[1]), intval($matches[2]), intval($matches[3]));
+		}
+		if (preg_match('/\b([0-3]?\d)[.\/-]([01]?\d)[.\/-](20\d{2}|\d{2})\b/', $text, $matches))
+		{
+			$year = intval($matches[3]);
+			return $this->ValidatedDate($year < 100 ? 2000 + $year : $year, intval($matches[2]), intval($matches[1]));
+		}
+
+		try
+		{
+			return $this->ParseLidlDate($text);
+		}
+		catch (\InvalidArgumentException $exception)
+		{
+			throw new \InvalidArgumentException('The receipt date could not be read');
+		}
+	}
+
+	private function ValidatedDate(int $year, int $month, int $day): string
+	{
+		if (!checkdate($month, $day, $year))
+		{
+			throw new \InvalidArgumentException('The receipt date is invalid');
+		}
+		return sprintf('%04d-%02d-%02d', $year, $month, $day);
+	}
+
+	private function DetectCurrency(string $text): string
+	{
+		if (preg_match('/(?:\bCHF\b|\bFr[.]?\s*\d)/ui', $text))
+		{
+			return 'CHF';
+		}
+		if (preg_match('/(?:\bEUR\b|€)/ui', $text))
+		{
+			return 'EUR';
+		}
+		if (preg_match('/(?:\bGBP\b|£)/ui', $text))
+		{
+			return 'GBP';
+		}
+		if (preg_match('/(?:\bUSD\b|\$)/ui', $text))
+		{
+			return 'USD';
+		}
+		return 'CHF';
+	}
+
+	private function ParseGenericStore(array $lines): ?string
+	{
+		foreach (array_slice($lines, 0, 12) as $lineIndex => $line)
+		{
+			if (!preg_match('/^\d{4,6}\s+\p{L}/u', $line))
+			{
+				continue;
+			}
+			$nextLine = $lines[$lineIndex + 1] ?? '';
+			if ($nextLine !== '' && preg_match('/(?:\d|strasse|straße|street|road|avenue|weg|gasse)/ui', $nextLine))
+			{
+				return $line . ', ' . $nextLine;
+			}
+			return $line;
+		}
+		return null;
+	}
+
+	private function ParseRoundingAdjustment(array $lines): ?float
+	{
+		foreach ($lines as $line)
+		{
+			if (preg_match('/\b(?:rundung|rounding|arrondi|arrotondamento)\b.*?(-?\s*\d{1,6}(?:[.,]\d{2}|\s+\d{2})\s*-?)$/ui', $line, $matches))
+			{
+				return $this->Money($matches[1]);
+			}
+		}
+		return null;
 	}
 
 	private function ParseLidlSwitzerland(string $text, array $retailer): array
@@ -246,11 +595,30 @@ class ReceiptImportParser
 
 	private function Number(string $value): float
 	{
-		return floatval(str_replace(',', '.', $value));
+		$value = trim(str_replace(["'", '’'], '', $value));
+		$negative = str_starts_with($value, '-') || str_ends_with($value, '-');
+		$value = trim($value, "- \t\n\r\0\x0B");
+		if (preg_match('/^(\d+)\s+(\d{2})$/', $value, $matches))
+		{
+			$value = $matches[1] . '.' . $matches[2];
+		}
+		else
+		{
+			$value = str_replace(' ', '', $value);
+			$value = str_replace(',', '.', $value);
+		}
+		$number = floatval($value);
+		return $negative ? -$number : $number;
 	}
 
 	private function IsNonProductLine(string $label): bool
 	{
-		return preg_match('/^(?:Total-EFT CHF|A 2[.,]6 % MwSt von|Gesamter Preisvorteil|Karte)$/ui', $label) === 1;
+		return preg_match('/^(?:
+			Zwischen(?:summe|total)|Sub[- ]?total|Sous[- ]?total|Rundung|Round(?:ing)?|Arrondi|
+			ALDI\s+PREIS|zu\s+zahlen|Grand\s+Total|Total|Gesamt(?:betrag)?|Summe|Endbetrag|Amount\s+due|To\s+pay|A\s+payer|Totale|
+			Total-EFT|Kartenzahlung|Karte|Card|Cash|Bar|Bargeld|Change|Rückgeld|Retourgeld|
+			Netto|MwSt|MWST|VAT|TVA|IVA|Tax|A\s+\d+[.,]\d+\s*%\s*MwSt|
+			Gesamter\s+Preisvorteil|Ersparnis|\d+\s+Artikel
+		)/uix', $label) === 1;
 	}
 }

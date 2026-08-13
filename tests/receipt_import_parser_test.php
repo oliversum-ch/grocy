@@ -78,6 +78,62 @@ assertNear(2.55, $commaParsed['items'][0]['listed_unit_price'], 'OCR decimal com
 
 $brokenTotal = preg_replace('/zu zahlen 25[.]74/', 'zu zahlen 25.80', $fixture);
 assertThrows(fn() => $parser->Parse($brokenTotal), 'does not match receipt total', 'Mismatched totals must be rejected');
-assertThrows(fn() => $parser->Parse("Other store\nMilk 2.00\nTotal 2.00"), 'supports Lidl Switzerland', 'Unsupported retailers must be rejected');
+
+$aldiFixture = file_get_contents(__DIR__ . '/fixtures/aldi-ch-20260813.txt');
+$aldiReceipt = $parser->Parse($aldiFixture);
+assertSameValue('aldi_ch', $aldiReceipt['retailer_key'], 'Aldi retailer key');
+assertSameValue('Aldi Switzerland', $aldiReceipt['retailer_name'], 'Aldi retailer name');
+assertSameValue('2026-08-13', $aldiReceipt['receipt_date'], 'Aldi receipt date');
+assertSameValue('8001 Zürich, Stadelhoferstrasse 10', $aldiReceipt['store_label'], 'Aldi store label');
+assertSameValue('CHF', $aldiReceipt['currency'], 'Aldi currency');
+assertSameValue(4, count($aldiReceipt['items']), 'Aldi line item count');
+assertNear(6.60, $aldiReceipt['receipt_total'], 'Aldi receipt total');
+assertNear(6.60, $aldiReceipt['parsed_total'], 'Aldi reconciled line total');
+assertNear(0.02, $aldiReceipt['discount_total'], 'Aldi rounding adjustment allocation');
+assertSameValue('Jumbo Erdnüsse', $aldiReceipt['items'][0]['raw_label'], 'Aldi article number removal');
+assertNear(1.17, $aldiReceipt['items'][3]['net_total'], 'Aldi rounding is allocated to the last line');
+
+$genericReceipt = $parser->Parse(implode("\n", [
+	'Corner Market',
+	'18 High Street',
+	'14/08/2026 17:42',
+	'EUR',
+	'Milk 1.50',
+	'Bread 2.25',
+	'Grand Total 3.75'
+]));
+assertSameValue('corner_market', $genericReceipt['retailer_key'], 'Unknown retailer gets a stable key');
+assertSameValue('Corner Market', $genericReceipt['retailer_name'], 'Unknown retailer name');
+assertSameValue('2026-08-14', $genericReceipt['receipt_date'], 'Generic slash date');
+assertSameValue('EUR', $genericReceipt['currency'], 'Generic currency');
+assertSameValue(2, count($genericReceipt['items']), 'Generic line item count');
+assertNear(3.75, $genericReceipt['receipt_total'], 'Generic receipt total');
+assertSameValue(true, $genericReceipt['is_reconciled'], 'Generic receipt reconciliation');
+
+$quantityReceipt = $parser->Parse(implode("\n", [
+	'Neighbourhood Foods',
+	'2026-08-15 09:10',
+	'EUR',
+	'2 x Oat Drink 1.50 3.00',
+	'Apples 2.50',
+	'0.500 kg x 5.00 EUR/kg',
+	'Coupon -0.50',
+	'Total 5.00'
+]));
+assertSameValue(2, count($quantityReceipt['items']), 'Generic quantity line item count');
+assertSameValue('Oat Drink', $quantityReceipt['items'][0]['raw_label'], 'Inline quantity label');
+assertNear(2, $quantityReceipt['items'][0]['receipt_quantity'], 'Inline quantity');
+assertNear(1.50, $quantityReceipt['items'][0]['listed_unit_price'], 'Inline unit price');
+assertSameValue('kg', $quantityReceipt['items'][1]['receipt_unit'], 'Generic weighted unit');
+assertNear(0.5, $quantityReceipt['items'][1]['receipt_quantity'], 'Generic weighted quantity');
+assertNear(0.5, $quantityReceipt['items'][1]['discount_total'], 'Generic line discount');
+assertNear(5.00, $quantityReceipt['parsed_total'], 'Generic quantity receipt reconciliation');
+
+$spaceDecimalReceipt = $parser->Parse("Tiny Shop\n16.08.26\nCHF\nTea 1 50\nTotal 1 50");
+assertNear(1.50, $spaceDecimalReceipt['items'][0]['net_total'], 'OCR space decimal item');
+assertNear(1.50, $spaceDecimalReceipt['receipt_total'], 'OCR space decimal total');
+
+$brokenGeneric = "Corner Market\n14/08/2026\nMilk 1.50\nBread 2.25\nTotal 4.25";
+assertThrows(fn() => $parser->Parse($brokenGeneric), 'does not match receipt total', 'Generic mismatched totals must be rejected');
 
 echo "ReceiptImportParser: all tests passed\n";
