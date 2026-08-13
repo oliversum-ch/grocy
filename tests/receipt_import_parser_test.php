@@ -93,6 +93,23 @@ assertNear(0.02, $aldiReceipt['discount_total'], 'Aldi rounding adjustment alloc
 assertSameValue('Jumbo Erdnüsse', $aldiReceipt['items'][0]['raw_label'], 'Aldi article number removal');
 assertNear(1.17, $aldiReceipt['items'][3]['net_total'], 'Aldi rounding is allocated to the last line');
 
+$ocrDamagedAldiReceipt = $parser->Parse(implode("\n", [
+	'ALDI SUISSE AG',
+	'8001 ZÃ¼rich',
+	'13.08.26 10:55',
+	'CHF',
+	'Jumbo ErdnÃ¼sse 1.79 A',
+	'Low Carb Riegel 2.69 A',
+	'Fladenbrot 0.95 A',
+	'Cracker Mix 1.19 A',
+	'Zwischensumme 6.62',
+	'Rundung -0.02',
+	'fLDI PREIS 6.60',
+	'Kartenzahlung CHF 6.60'
+]));
+assertNear(6.60, $ocrDamagedAldiReceipt['receipt_total'], 'OCR-damaged Aldi total label');
+assertSameValue(4, count($ocrDamagedAldiReceipt['items']), 'OCR-damaged Aldi line item count');
+
 $genericReceipt = $parser->Parse(implode("\n", [
 	'Corner Market',
 	'18 High Street',

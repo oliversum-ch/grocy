@@ -312,13 +312,22 @@ class ReceiptImportParser
 
 	private function ParseGenericTotal(array $lines): array
 	{
-		$labels = '(?:aldi\s+preis|zu\s+zahlen|grand\s+total|total|gesamt(?:betrag)?|summe|endbetrag|amount\s+due|to\s+pay|a\s+payer|totale)';
 		$matchesFound = [];
 		foreach ($lines as $lineIndex => $line)
 		{
-			if (preg_match('/^' . $labels . '\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z*])?$/ui', $line, $matches))
+			if (!preg_match('/^(.+?)\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z*])?$/ui', $line, $matches))
 			{
-				$matchesFound[] = ['line_index' => $lineIndex, 'amount' => $this->Money($matches[1])];
+				continue;
+			}
+
+			$score = $this->GenericTotalLabelScore($matches[1]);
+			if ($score > 0)
+			{
+				$matchesFound[] = [
+					'line_index' => $lineIndex,
+					'amount' => $this->Money($matches[2]),
+					'score' => $score
+				];
 			}
 		}
 
@@ -327,7 +336,42 @@ class ReceiptImportParser
 			throw new \InvalidArgumentException('The receipt total could not be read');
 		}
 
-		return $matchesFound[array_key_last($matchesFound)];
+		usort($matchesFound, static function(array $left, array $right): int
+		{
+			return [$left['score'], $left['line_index']] <=> [$right['score'], $right['line_index']];
+		});
+
+		$total = $matchesFound[array_key_last($matchesFound)];
+		unset($total['score']);
+		return $total;
+	}
+
+	private function GenericTotalLabelScore(string $label): int
+	{
+		$label = trim($label);
+		if (preg_match('/^(?:aldi\s+preis|zu\s+zahlen|grand\s+total|total(?:-eft)?|gesamt(?:betrag)?|summe|endbetrag|amount\s+due|to\s+pay|a\s+payer|totale)$/ui', $label))
+		{
+			return 100;
+		}
+
+		if (preg_match('/\b(?:zwischen(?:summe|total)|sub[- ]?total|sous[- ]?total|netto|mwst|vat|tva|iva|tax|rabatt|discount|coupon|ersparnis|preisvorteil|remise|sconto)\b/ui', $label))
+		{
+			return 0;
+		}
+
+		// OCR commonly damages the retailer name while preserving the total keyword and amount.
+		if (preg_match('/\b(?:preis|price|total|gesamt(?:betrag)?|summe|endbetrag)\b/ui', $label))
+		{
+			return 80;
+		}
+
+		// A card/cash payment amount is a useful fallback when the printed total label is unreadable.
+		if (preg_match('/^(?:total-eft|kartenzahlung|karte|card(?:\s+payment)?|cash|bar(?:zahlung)?|bargeld|payment|paiement|pagamento)$/ui', $label))
+		{
+			return 60;
+		}
+
+		return 0;
 	}
 
 	private function ParseGenericDate(string $text): string
