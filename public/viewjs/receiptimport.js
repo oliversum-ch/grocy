@@ -6,7 +6,7 @@ const ReceiptImportOcr = (function()
 	{
 		return String(line || '')
 			.replace(/([\p{L}\d])\s+[)OQ][.,](\d{2})(\s+[A-Z0-9*])?$/ui, '$1 0.$2$3')
-			.replace(/\b(\d)(\d{2})(\s+[A-Z*])$/u, '$1.$2$3');
+			.replace(/\b(\d)(\d{2})(\s+[A-Z0-9*])$/u, '$1.$2$3');
 	}
 
 	function terminalMoney(line)
@@ -57,6 +57,10 @@ const ReceiptImportOcr = (function()
 				{
 					score += 20;
 				}
+				else if (Math.min(primaryToken.length, recoveryToken.length) >= 5 && editDistance(primaryToken, recoveryToken) <= 1)
+				{
+					score += 20;
+				}
 				else if (Math.min(primaryToken.length, recoveryToken.length) >= 6 && editDistance(primaryToken, recoveryToken) <= 2)
 				{
 					score += 10;
@@ -96,7 +100,7 @@ const ReceiptImportOcr = (function()
 				}
 			});
 			const recoveredMoney = bestLine && bestScore >= 20 ? terminalMoney(bestLine) : null;
-			return recoveredMoney === null ? primaryLine : primaryLine.replace(/\s+[A-Z]{1,3}$/u, '') + ' ' + recoveredMoney;
+			return recoveredMoney === null ? primaryLine : primaryLine.replace(/\s+(?:\d{1,3}\s+)?[A-Z0-9*]{1,3}$/u, '') + ' ' + recoveredMoney;
 		}).join('\n');
 	}
 
@@ -123,8 +127,7 @@ if (typeof window !== 'undefined')
 		activeLineIndex: null,
 		objectUrl: null,
 		lastImportId: null,
-		productWindow: null,
-		ocrDiagnostic: null
+		productWindow: null
 	};
 	let Products = [];
 	const ProductsById = new Map();
@@ -267,7 +270,6 @@ if (typeof window !== 'undefined')
 		{
 			console.error(error);
 			showOnly('#receipt-capture');
-			renderOcrDiagnostic();
 			toastr.error(escapeHtml(error.message));
 			setLiveMessage(error.message);
 		}
@@ -383,17 +385,13 @@ if (typeof window !== 'undefined')
 				user_defined_dpi: '300'
 			});
 			let result = await worker.recognize(preparedImages.primary, { rotateAuto: true });
-			const primaryText = result.data.text;
-			let recoveryText = '';
-			let text = ReceiptImportOcr.normalizedMoney(primaryText);
+			let text = ReceiptImportOcr.normalizedMoney(result.data.text);
 			if (ReceiptImportOcr.needsRecovery(text))
 			{
 				setProcessing(__t('Reading photo'), __t('Recovering unclear receipt prices'), 66);
 				const recoveryResult = await worker.recognize(preparedImages.recovery, { rotateAuto: false });
-				recoveryText = recoveryResult.data.text;
-				text = ReceiptImportOcr.merge(text, recoveryText);
+				text = ReceiptImportOcr.merge(text, recoveryResult.data.text);
 			}
-			State.ocrDiagnostic = { primary: primaryText, recovery: recoveryText, merged: text };
 			if (receiptTextScore(text) < 60)
 			{
 				setProcessing(__t('Reading photo'), __t('Trying the opposite receipt orientation'), 66);
@@ -1072,10 +1070,7 @@ if (typeof window !== 'undefined')
 		State.activeLineIndex = null;
 		State.objectUrl = null;
 		State.lastImportId = null;
-		State.ocrDiagnostic = null;
 		$('#receipt-camera-input, #receipt-file-input').val('');
-		$('#receipt-ocr-diagnostic').addClass('d-none');
-		$('#receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged').text('');
 		$('#receipt-pdf-preview, #receipt-image-preview').addClass('d-none');
 		$('#receipt-commit-bar, #receipt-success').addClass('d-none');
 		$('#receipt-reset-button').toggleClass('d-none', !!showCapture);
@@ -1083,18 +1078,6 @@ if (typeof window !== 'undefined')
 		{
 			showOnly('#receipt-capture');
 		}
-	}
-
-	function renderOcrDiagnostic()
-	{
-		if (!State.ocrDiagnostic)
-		{
-			return;
-		}
-		$('#receipt-ocr-primary').text(State.ocrDiagnostic.primary || '(empty)');
-		$('#receipt-ocr-recovery').text(State.ocrDiagnostic.recovery || '(not run)');
-		$('#receipt-ocr-merged').text(State.ocrDiagnostic.merged || '(empty)');
-		$('#receipt-ocr-diagnostic').removeClass('d-none').prop('open', true);
 	}
 
 	function receiptQuantityLabel(item)

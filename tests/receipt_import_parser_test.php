@@ -138,6 +138,28 @@ assertThrows(
 	'Missing prices must not be inferred without a matching printed article count'
 );
 
+$capturedMobileAldiOcr = implode("\n", [
+	'ALDI SUISSE AG',
+	'8001 7 icl',
+	'Stadelhoferstrasse 1(',
+	'13.08.26 10:55',
+	'CHF',
+	'7622 Jumbo Erdniiss 1.79 A',
+	'0816 ow Carb Riege] 2.69 4',
+	'433984 Flachofi, 500g 95 A',
+	'157241 Cracke, Mix 300 g 1.19 A',
+	'Zwischensumme 6.62',
+	'Rundung 0.07',
+	'ALDI PREIS 6.60',
+	'4 Artikel',
+	'Kartenzahlung CHF 5.60'
+]);
+$capturedMobileAldiReceipt = $parser->Parse($capturedMobileAldiOcr);
+assertSameValue(4, count($capturedMobileAldiReceipt['items']), 'Captured mobile Aldi OCR recovers all four article lines');
+assertNear(0.95, $capturedMobileAldiReceipt['items'][2]['gross_total'], 'Captured mobile Aldi OCR infers the remaining damaged price');
+assertSameValue('Flachofi, 500g', $capturedMobileAldiReceipt['items'][2]['raw_label'], 'Captured mobile Aldi OCR removes dangling cents from the inferred label');
+assertNear(6.60, $capturedMobileAldiReceipt['parsed_total'], 'Captured mobile Aldi OCR reconciles using subtotal-derived rounding');
+
 $genericReceipt = $parser->Parse(implode("\n", [
 	'Corner Market',
 	'18 High Street',

@@ -149,6 +149,15 @@ class ReceiptImportParser
 		$unpricedItems = [];
 		$currentIndex = null;
 		$roundingAdjustment = $this->ParseRoundingAdjustment($lines);
+		$subtotal = $this->ParseGenericSubtotal($lines);
+		if ($subtotal !== null)
+		{
+			$subtotalRounding = round($total['amount'] - $subtotal, 2);
+			if (abs($subtotalRounding) <= 0.05 && ($roundingAdjustment === null || abs($roundingAdjustment - $subtotalRounding) > 0.01))
+			{
+				$roundingAdjustment = $subtotalRounding;
+			}
+		}
 
 		for ($lineIndex = 0; $lineIndex < $total['line_index']; $lineIndex++)
 		{
@@ -296,7 +305,8 @@ class ReceiptImportParser
 			return null;
 		}
 
-		$label = trim(preg_replace('/\s+[A-Z]{1,3}$/u', '', $matches[1]));
+		$label = trim(preg_replace('/\s+\d{2}\s+[A-Z0-9*]$/u', '', $matches[1]));
+		$label = trim(preg_replace('/\s+[A-Z]{1,3}$/u', '', $label));
 		if ($label === '' || !preg_match('/[\p{L}]/u', $label) || $this->IsNonProductLine($label))
 		{
 			return null;
@@ -537,6 +547,18 @@ class ReceiptImportParser
 		foreach ($lines as $line)
 		{
 			if (preg_match('/\b(?:rundung|rounding|arrondi|arrotondamento)\b.*?(-?\s*\d{1,6}(?:[.,]\d{2}|\s+\d{2})\s*-?)$/ui', $line, $matches))
+			{
+				return $this->Money($matches[1]);
+			}
+		}
+		return null;
+	}
+
+	private function ParseGenericSubtotal(array $lines): ?float
+	{
+		foreach ($lines as $line)
+		{
+			if (preg_match('/^(?:zwischen(?:summe|total)|sub[- ]?total|sous[- ]?total)\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z0-9*])?$/ui', $line, $matches))
 			{
 				return $this->Money($matches[1]);
 			}
