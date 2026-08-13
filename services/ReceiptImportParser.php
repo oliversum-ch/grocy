@@ -146,7 +146,9 @@ class ReceiptImportParser
 		$total = $this->ParseGenericTotal($lines);
 		$currency = $this->DetectCurrency($text);
 		$items = [];
+		$unpricedItems = [];
 		$currentIndex = null;
+		$roundingAdjustment = $this->ParseRoundingAdjustment($lines);
 
 		for ($lineIndex = 0; $lineIndex < $total['line_index']; $lineIndex++)
 		{
@@ -165,6 +167,13 @@ class ReceiptImportParser
 			$item = $this->ParseGenericItemLine($line);
 			if ($item === null)
 			{
+				$unpricedItem = count($items) > 0 ? $this->ParseGenericUnpricedItemLine($line) : null;
+				if ($unpricedItem !== null)
+				{
+					$unpricedItem['insert_index'] = count($items);
+					$unpricedItems[] = $unpricedItem;
+					$currentIndex = null;
+				}
 				continue;
 			}
 
@@ -172,6 +181,19 @@ class ReceiptImportParser
 			$items[] = $item;
 			$currentIndex = array_key_last($items);
 		}
+
+		$this->InferSingleMissingItem(
+			$items,
+			$unpricedItems,
+			$this->ParseDeclaredItemCount($lines),
+			$total['amount'],
+			$roundingAdjustment
+		);
+		foreach ($items as $lineIndex => &$item)
+		{
+			$item['line_index'] = $lineIndex;
+		}
+		unset($item);
 
 		if (count($items) === 0)
 		{
@@ -181,7 +203,6 @@ class ReceiptImportParser
 		$receiptTotal = $total['amount'];
 		$parsedTotal = $this->FinalizeItems($items);
 		$difference = round($receiptTotal - $parsedTotal, 2);
-		$roundingAdjustment = $this->ParseRoundingAdjustment($lines);
 
 		if (abs($difference) > 0.0001 && abs($difference) <= 0.05 && ($roundingAdjustment === null || abs($roundingAdjustment - $difference) <= 0.01))
 		{
@@ -222,7 +243,8 @@ class ReceiptImportParser
 
 	private function ParseGenericItemLine(string $line): ?array
 	{
-		$pattern = '/^(.+?)\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z*])?$/ui';
+		$line = preg_replace('/([\p{L}\d])\s+[)OQ][.,](\d{2})(\s+[A-Z0-9*])?$/ui', '$1 0.$2$3', $line);
+		$pattern = '/^(.+?)\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z0-9*])?$/ui';
 		if (!preg_match($pattern, $line, $matches))
 		{
 			return null;
@@ -262,8 +284,74 @@ class ReceiptImportParser
 			'receipt_unit' => $unit,
 			'listed_unit_price' => $listedUnitPrice,
 			'gross_total' => $this->Money($matches[2]),
-			'discount_total' => 0.0
+			'discount_total' => 0.0,
+			'price_inferred' => false
 		];
+	}
+
+	private function ParseGenericUnpricedItemLine(string $line): ?array
+	{
+		if (!preg_match('/^\d{4,14}\s+(.+)$/u', $line, $matches))
+		{
+			return null;
+		}
+
+		$label = trim(preg_replace('/\s+[A-Z]{1,3}$/u', '', $matches[1]));
+		if ($label === '' || !preg_match('/[\p{L}]/u', $label) || $this->IsNonProductLine($label))
+		{
+			return null;
+		}
+
+		return [
+			'raw_label' => $label,
+			'normalized_label' => $this->NormalizeLabel($label),
+			'receipt_quantity' => 1.0,
+			'receipt_unit' => 'piece',
+			'listed_unit_price' => null,
+			'discount_total' => 0.0,
+			'price_inferred' => true
+		];
+	}
+
+	private function ParseDeclaredItemCount(array $lines): ?int
+	{
+		foreach ($lines as $line)
+		{
+			if (preg_match('/\b(\d{1,3})\s+(?:artikel|items?|articles?|articoli)\b/ui', $line, $matches))
+			{
+				return intval($matches[1]);
+			}
+		}
+		return null;
+	}
+
+	private function InferSingleMissingItem(array &$items, array $unpricedItems, ?int $declaredCount, float $receiptTotal, ?float $roundingAdjustment): void
+	{
+		if (count($unpricedItems) !== 1 || $declaredCount !== count($items) + 1)
+		{
+			return;
+		}
+		foreach ($items as $item)
+		{
+			if (abs($item['discount_total']) > 0.0001)
+			{
+				return;
+			}
+		}
+
+		$knownTotal = $this->FinalizeItems($items);
+		$targetBeforeRounding = round($receiptTotal - ($roundingAdjustment ?? 0.0), 2);
+		$inferredPrice = round($targetBeforeRounding - $knownTotal, 2);
+		if ($inferredPrice <= 0 || $inferredPrice > $targetBeforeRounding)
+		{
+			return;
+		}
+
+		$item = $unpricedItems[0];
+		$insertIndex = $item['insert_index'];
+		unset($item['insert_index']);
+		$item['gross_total'] = $inferredPrice;
+		array_splice($items, $insertIndex, 0, [$item]);
 	}
 
 	private function ApplyGenericQuantityLine(string $line, array &$item): bool

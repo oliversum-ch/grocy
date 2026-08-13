@@ -478,6 +478,9 @@
 			const discount = Number(item.discount_total) > 0
 				? '<span class="receipt-line-discount">-' + formatCurrency(item.discount_total) + ' ' + escapeHtml(__t('discount')) + '</span>'
 				: '';
+			const inferredPrice = item.price_inferred
+				? '<span class="receipt-line-meta text-warning"><i class="fa-solid fa-triangle-exclamation mr-1"></i>' + escapeHtml(__t('Price inferred from receipt total; please check')) + '</span>'
+				: '';
 			const choiceText = product ? product.name : __t('Choose Grocy product');
 			const unitName = product ? product.stockUnitName : __t('unit');
 			const unitPrice = product && line.stockAmount > 0 ? formatCurrency(Number(item.net_total) / line.stockAmount) + ' / ' + escapeHtml(unitName) : '';
@@ -488,7 +491,7 @@
 					'</div>' +
 					'<div>' +
 						'<div class="receipt-line-label">' + escapeHtml(item.raw_label) + '</div>' +
-						'<span class="receipt-line-meta">' + escapeHtml(receiptQuantityLabel(item)) + '</span>' +
+						'<span class="receipt-line-meta">' + escapeHtml(receiptQuantityLabel(item)) + '</span>' + inferredPrice +
 					'</div>' +
 					'<div class="receipt-line-pricing">' +
 						'<strong>' + formatCurrency(item.net_total) + '</strong>' + discount +

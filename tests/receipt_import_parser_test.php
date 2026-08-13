@@ -110,6 +110,34 @@ $ocrDamagedAldiReceipt = $parser->Parse(implode("\n", [
 assertNear(6.60, $ocrDamagedAldiReceipt['receipt_total'], 'OCR-damaged Aldi total label');
 assertSameValue(4, count($ocrDamagedAldiReceipt['items']), 'OCR-damaged Aldi line item count');
 
+$mobileAldiOcr = implode("\n", [
+	'ALDI SUISSE AG',
+	'8001 ZÃ¼rich',
+	'13.08.26 10:55',
+	'CHF',
+	'27622 Jumbo Erdniss 1.79 A',
+	'556816 Low Carb Riegel HE',
+	'433984 Flachpfir. 500g ).95 4',
+	'157241 Cracker Mix 300 g 1.19 A',
+	'Zwischensumme 6.62',
+	'Rundung -0.02',
+	'fLDI PREIS 6.60',
+	'4 Artikel',
+	'Kartenzahlung CHF 6.60'
+]);
+$mobileAldiReceipt = $parser->Parse($mobileAldiOcr);
+assertSameValue(4, count($mobileAldiReceipt['items']), 'Mobile Aldi OCR recovers all declared article lines');
+assertSameValue('Low Carb Riegel', $mobileAldiReceipt['items'][1]['raw_label'], 'Mobile Aldi inferred article label');
+assertNear(2.69, $mobileAldiReceipt['items'][1]['gross_total'], 'Mobile Aldi inferred missing price');
+assertSameValue(true, $mobileAldiReceipt['items'][1]['price_inferred'], 'Mobile Aldi inferred price is marked for review');
+assertNear(0.95, $mobileAldiReceipt['items'][2]['gross_total'], 'Mobile Aldi repairs OCR zero in decimal price');
+assertNear(6.60, $mobileAldiReceipt['parsed_total'], 'Mobile Aldi OCR receipt reconciles');
+assertThrows(
+	fn() => $parser->Parse(str_replace("4 Artikel\n", '', $mobileAldiOcr)),
+	'does not match receipt total',
+	'Missing prices must not be inferred without a matching printed article count'
+);
+
 $genericReceipt = $parser->Parse(implode("\n", [
 	'Corner Market',
 	'18 High Street',
