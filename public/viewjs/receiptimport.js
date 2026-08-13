@@ -123,7 +123,8 @@ if (typeof window !== 'undefined')
 		activeLineIndex: null,
 		objectUrl: null,
 		lastImportId: null,
-		productWindow: null
+		productWindow: null,
+		ocrDiagnostic: null
 	};
 	let Products = [];
 	const ProductsById = new Map();
@@ -266,6 +267,7 @@ if (typeof window !== 'undefined')
 		{
 			console.error(error);
 			showOnly('#receipt-capture');
+			renderOcrDiagnostic();
 			toastr.error(escapeHtml(error.message));
 			setLiveMessage(error.message);
 		}
@@ -381,13 +383,17 @@ if (typeof window !== 'undefined')
 				user_defined_dpi: '300'
 			});
 			let result = await worker.recognize(preparedImages.primary, { rotateAuto: true });
-			let text = ReceiptImportOcr.normalizedMoney(result.data.text);
+			const primaryText = result.data.text;
+			let recoveryText = '';
+			let text = ReceiptImportOcr.normalizedMoney(primaryText);
 			if (ReceiptImportOcr.needsRecovery(text))
 			{
 				setProcessing(__t('Reading photo'), __t('Recovering unclear receipt prices'), 66);
 				const recoveryResult = await worker.recognize(preparedImages.recovery, { rotateAuto: false });
-				text = ReceiptImportOcr.merge(text, recoveryResult.data.text);
+				recoveryText = recoveryResult.data.text;
+				text = ReceiptImportOcr.merge(text, recoveryText);
 			}
+			State.ocrDiagnostic = { primary: primaryText, recovery: recoveryText, merged: text };
 			if (receiptTextScore(text) < 60)
 			{
 				setProcessing(__t('Reading photo'), __t('Trying the opposite receipt orientation'), 66);
@@ -1066,7 +1072,10 @@ if (typeof window !== 'undefined')
 		State.activeLineIndex = null;
 		State.objectUrl = null;
 		State.lastImportId = null;
+		State.ocrDiagnostic = null;
 		$('#receipt-camera-input, #receipt-file-input').val('');
+		$('#receipt-ocr-diagnostic').addClass('d-none');
+		$('#receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged').text('');
 		$('#receipt-pdf-preview, #receipt-image-preview').addClass('d-none');
 		$('#receipt-commit-bar, #receipt-success').addClass('d-none');
 		$('#receipt-reset-button').toggleClass('d-none', !!showCapture);
@@ -1074,6 +1083,18 @@ if (typeof window !== 'undefined')
 		{
 			showOnly('#receipt-capture');
 		}
+	}
+
+	function renderOcrDiagnostic()
+	{
+		if (!State.ocrDiagnostic)
+		{
+			return;
+		}
+		$('#receipt-ocr-primary').text(State.ocrDiagnostic.primary || '(empty)');
+		$('#receipt-ocr-recovery').text(State.ocrDiagnostic.recovery || '(not run)');
+		$('#receipt-ocr-merged').text(State.ocrDiagnostic.merged || '(empty)');
+		$('#receipt-ocr-diagnostic').removeClass('d-none').prop('open', true);
 	}
 
 	function receiptQuantityLabel(item)

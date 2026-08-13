@@ -81,6 +81,15 @@
 				accept="application/pdf,image/*">
 		</div>
 		<p class="receipt-capture-footnote">{{ $__t('Supports common itemized receipt layouts. Maximum file size 20 MB.') }}</p>
+		<details id="receipt-ocr-diagnostic" class="mt-4 d-none">
+			<summary><strong>Temporary OCR diagnostic</strong></summary>
+			<p class="mt-3 mb-1">First pass</p>
+			<pre id="receipt-ocr-primary" class="border rounded p-2 bg-light text-wrap"></pre>
+			<p class="mb-1">Recovery pass</p>
+			<pre id="receipt-ocr-recovery" class="border rounded p-2 bg-light text-wrap"></pre>
+			<p class="mb-1">Merged text</p>
+			<pre id="receipt-ocr-merged" class="border rounded p-2 bg-light text-wrap"></pre>
+		</details>
 	</section>
 
 	<section id="receipt-processing"
