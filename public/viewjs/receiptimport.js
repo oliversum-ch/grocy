@@ -118,6 +118,7 @@ if (typeof window !== 'undefined')
 	'use strict';
 
 	const MAX_FILE_SIZE = 20 * 1024 * 1024;
+	const OCR_DIAGNOSTICS_ENABLED = window.location.hostname.toLowerCase().startsWith('grocy-test.');
 	const State = {
 		file: null,
 		receiptHash: null,
@@ -127,7 +128,8 @@ if (typeof window !== 'undefined')
 		activeLineIndex: null,
 		objectUrl: null,
 		lastImportId: null,
-		productWindow: null
+		productWindow: null,
+		ocrDiagnostic: null
 	};
 	let Products = [];
 	const ProductsById = new Map();
@@ -263,6 +265,11 @@ if (typeof window !== 'undefined')
 			setProcessing(__t('Preparing review'), __t('Building the receipt review'), 96);
 			renderPreview();
 			showOnly('#receipt-review');
+			if (State.ocrDiagnostic)
+			{
+				State.ocrDiagnostic.result = 'Preview accepted: ' + State.preview.retailer_name + ', ' + State.preview.items.length + ' lines, ' + State.preview.currency + ' ' + Number(State.preview.receipt_total).toFixed(2);
+			}
+			renderOcrDiagnostic(false);
 			$('#receipt-commit-bar').removeClass('d-none');
 			setLiveMessage(__t('Receipt ready for review'));
 		}
@@ -270,6 +277,11 @@ if (typeof window !== 'undefined')
 		{
 			console.error(error);
 			showOnly('#receipt-capture');
+			if (State.ocrDiagnostic)
+			{
+				State.ocrDiagnostic.result = 'Error: ' + error.message;
+			}
+			renderOcrDiagnostic(true);
 			toastr.error(escapeHtml(error.message));
 			setLiveMessage(error.message);
 		}
@@ -385,23 +397,51 @@ if (typeof window !== 'undefined')
 				user_defined_dpi: '300'
 			});
 			let result = await worker.recognize(preparedImages.primary, { rotateAuto: true });
-			let text = ReceiptImportOcr.normalizedMoney(result.data.text);
-			if (ReceiptImportOcr.needsRecovery(text))
+			const primaryText = result.data.text;
+			let text = ReceiptImportOcr.normalizedMoney(primaryText);
+			const primaryScore = receiptTextScore(text);
+			const recoveryNeeded = ReceiptImportOcr.needsRecovery(text);
+			let recoveryText = '';
+			let mergedText = text;
+			let rotatedText = '';
+			let selectedPass = 'primary';
+			if (recoveryNeeded || OCR_DIAGNOSTICS_ENABLED)
 			{
 				setProcessing(__t('Reading photo'), __t('Recovering unclear receipt prices'), 66);
 				const recoveryResult = await worker.recognize(preparedImages.recovery, { rotateAuto: false });
-				text = ReceiptImportOcr.merge(text, recoveryResult.data.text);
+				recoveryText = recoveryResult.data.text;
+				mergedText = ReceiptImportOcr.merge(text, recoveryText);
+				if (recoveryNeeded)
+				{
+					text = mergedText;
+					selectedPass = 'merged';
+				}
 			}
 			if (receiptTextScore(text) < 60)
 			{
 				setProcessing(__t('Reading photo'), __t('Trying the opposite receipt orientation'), 66);
 				const rotatedCanvas = rotateCanvasHalfTurn(preparedImages.primary);
 				result = await worker.recognize(rotatedCanvas, { rotateAuto: false });
+				rotatedText = result.data.text;
 				if (receiptTextScore(result.data.text) > receiptTextScore(text))
 				{
 					text = result.data.text;
+					selectedPass = 'rotated';
 				}
 			}
+			State.ocrDiagnostic = {
+				file: file.name,
+				image: preparedImages.meta,
+				primaryScore: primaryScore,
+				recoveryNeeded: recoveryNeeded,
+				selectedPass: selectedPass,
+				primary: primaryText,
+				recovery: recoveryText,
+				merged: mergedText,
+				rotated: rotatedText,
+				selected: text,
+				result: 'OCR complete; waiting for parser'
+			};
 			return text;
 		}
 		finally
@@ -472,7 +512,17 @@ if (typeof window !== 'undefined')
 			pixels.data[index + 2] = contrasted;
 		}
 		context.putImageData(pixels, 0, 0);
-		return { primary: canvas, recovery: recoveryCanvas };
+		return {
+			primary: canvas,
+			recovery: recoveryCanvas,
+			meta: {
+				source: imageBitmap.width + ' × ' + imageBitmap.height,
+				bounds: bounds.left + ',' + bounds.top + ' → ' + bounds.right + ',' + bounds.bottom,
+				autoRotated: rotate,
+				prepared: canvas.width + ' × ' + canvas.height,
+				scale: Number(scale.toFixed(3))
+			}
+		};
 	}
 
 	function findReceiptBounds(context, width, height)
@@ -1070,7 +1120,10 @@ if (typeof window !== 'undefined')
 		State.activeLineIndex = null;
 		State.objectUrl = null;
 		State.lastImportId = null;
+		State.ocrDiagnostic = null;
 		$('#receipt-camera-input, #receipt-file-input').val('');
+		$('#receipt-ocr-diagnostic').addClass('d-none').prop('open', false);
+		$('#receipt-ocr-diagnostic-meta, #receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged, #receipt-ocr-rotated, #receipt-ocr-selected').text('');
 		$('#receipt-pdf-preview, #receipt-image-preview').addClass('d-none');
 		$('#receipt-commit-bar, #receipt-success').addClass('d-none');
 		$('#receipt-reset-button').toggleClass('d-none', !!showCapture);
@@ -1078,6 +1131,29 @@ if (typeof window !== 'undefined')
 		{
 			showOnly('#receipt-capture');
 		}
+	}
+
+	function renderOcrDiagnostic(openPanel)
+	{
+		if (!OCR_DIAGNOSTICS_ENABLED || !State.ocrDiagnostic)
+		{
+			return;
+		}
+		const diagnostic = State.ocrDiagnostic;
+		$('#receipt-ocr-diagnostic-meta').text(JSON.stringify({
+			file: diagnostic.file,
+			image: diagnostic.image,
+			primaryScore: diagnostic.primaryScore,
+			recoveryNeeded: diagnostic.recoveryNeeded,
+			selectedPass: diagnostic.selectedPass,
+			result: diagnostic.result
+		}, null, 2));
+		$('#receipt-ocr-primary').text(diagnostic.primary || '(empty)');
+		$('#receipt-ocr-recovery').text(diagnostic.recovery || '(not run)');
+		$('#receipt-ocr-merged').text(diagnostic.merged || '(empty)');
+		$('#receipt-ocr-rotated').text(diagnostic.rotated || '(not run)');
+		$('#receipt-ocr-selected').text(diagnostic.selected || '(empty)');
+		$('#receipt-ocr-diagnostic').removeClass('d-none').prop('open', !!openPanel);
 	}
 
 	function receiptQuantityLabel(item)

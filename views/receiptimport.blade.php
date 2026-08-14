@@ -94,6 +94,25 @@
 		</div>
 	</section>
 
+	<details id="receipt-ocr-diagnostic" class="card mt-4 mb-4 d-none">
+		<summary class="card-header"><strong>OCR debug information (test only)</strong></summary>
+		<div class="card-body">
+			<p class="text-muted">This panel remains available on the test instance while receipt recognition is being tuned.</p>
+			<h4>Run details</h4>
+			<pre id="receipt-ocr-diagnostic-meta" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Primary OCR</h4>
+			<pre id="receipt-ocr-primary" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Recovery OCR</h4>
+			<pre id="receipt-ocr-recovery" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Merged OCR</h4>
+			<pre id="receipt-ocr-merged" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Opposite orientation OCR</h4>
+			<pre id="receipt-ocr-rotated" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Text sent to the parser</h4>
+			<pre id="receipt-ocr-selected" class="border rounded p-2 bg-light text-wrap"></pre>
+		</div>
+	</details>
+
 	<section id="receipt-review"
 		class="receipt-review d-none"
 		aria-labelledby="receipt-review-title">
