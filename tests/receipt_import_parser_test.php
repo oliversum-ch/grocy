@@ -184,6 +184,52 @@ assertNear(6.60, $splitAldiTotalReceipt['receipt_total'], 'Split ALDI PREIS labe
 assertSameValue(4, count($splitAldiTotalReceipt['items']), 'Split-total Aldi keeps all product lines');
 assertNear(6.60, $splitAldiTotalReceipt['parsed_total'], 'Split-total Aldi reconciles its two-cent rounding');
 
+$paddleAldiOcr = implode("\n", [
+	'ALDI SUISSE AG',
+	'8001 zÃƒÂ¼r ich',
+	'Stadelhoferstrasse 10',
+	'CHF',
+	'297622 Jumbo ErdnÃƒÂ¼ss. 1.79 A',
+	'556816 Low Carb Riegel 2.69 A',
+	'433984 Flachpf ir. 500g 0.95 A',
+	'157241 Cracker Mix 300 g 1.19 A',
+	'Zwischensumme 6.62',
+	'Rundung -0.02',
+	'ALDI PREIS 6.60',
+	'4 Artikel',
+	'Kartenzahlung CHF 6.60',
+	'A 02.6% Netto 6.45 MWSt 0.17',
+	'*5107 E190/003/801 13.08.26 10:55',
+	'CHE-110.576.236 WST'
+]);
+$paddleAldiReceipt = $parser->Parse($paddleAldiOcr);
+assertSameValue('aldi_ch', $paddleAldiReceipt['retailer_key'], 'PaddleOCR Aldi retailer');
+assertSameValue(4, count($paddleAldiReceipt['items']), 'PaddleOCR Aldi line item count');
+assertNear(6.60, $paddleAldiReceipt['receipt_total'], 'PaddleOCR Aldi total');
+assertNear(6.60, $paddleAldiReceipt['parsed_total'], 'PaddleOCR Aldi reconciliation');
+
+$paddleLidlOcr = implode("\n", [
+	'Digitaler Kassenbon',
+	'Lidl Schweiz',
+	'CHF',
+	'High Protein Drink Pista 1.25 A',
+	'Lidl Plus Rabatt -0.26',
+	'BIo Karotten 3.29 A',
+	'Energy Drink light 0,51 9.75 A',
+	'25 x 0.39',
+	'zu zahlen 14.03',
+	'Karte 14.03',
+	'14.08.2026 10:40:08',
+	'0275 278747/81 14.08.26 10:37',
+	'Zurich (FiLNr. 0275)',
+	'8001 ZÃƒÂ¼rich'
+]);
+$paddleLidlReceipt = $parser->Parse($paddleLidlOcr);
+assertSameValue('lidl_ch', $paddleLidlReceipt['retailer_key'], 'PaddleOCR Lidl retailer');
+assertSameValue(3, count($paddleLidlReceipt['items']), 'PaddleOCR Lidl line item count');
+assertNear(14.03, $paddleLidlReceipt['receipt_total'], 'PaddleOCR Lidl total');
+assertNear(14.03, $paddleLidlReceipt['parsed_total'], 'PaddleOCR Lidl reconciliation');
+
 $genericReceipt = $parser->Parse(implode("\n", [
 	'Corner Market',
 	'18 High Street',

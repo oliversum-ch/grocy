@@ -27,6 +27,10 @@
 		assets: {
 			pdfModule: "{{ $U('/packages/pdfjs-dist/build/pdf.mjs', true) }}",
 			pdfWorker: "{{ $U('/packages/pdfjs-dist/build/pdf.worker.mjs', true) }}",
+			paddleModule: "{{ $U('/viewjs/vendor/receipt-ocr/paddleocr-0.4.2.mjs?v=', true) }}{{ $version }}",
+			paddleDetectionModel: "{{ $U('/viewjs/vendor/receipt-ocr/PP-OCRv6_tiny_det_onnx_infer.tar?v=', true) }}{{ $version }}",
+			paddleRecognitionModel: "{{ $U('/viewjs/vendor/receipt-ocr/PP-OCRv6_tiny_rec_onnx_infer.tar?v=', true) }}{{ $version }}",
+			paddleOrt: "{{ $U('/viewjs/vendor/receipt-ocr/ort-1.27.0/', true) }}",
 			tesseractWorker: "{{ $U('/packages/tesseract.js/dist/worker.min.js', true) }}",
 			tesseractCore: "{{ $U('/packages/tesseract.js-core', true) }}"
 		}
@@ -100,7 +104,9 @@
 			<p class="text-muted">This panel remains available on the test instance while receipt recognition is being tuned.</p>
 			<h4>Run details</h4>
 			<pre id="receipt-ocr-diagnostic-meta" class="border rounded p-2 bg-light text-wrap"></pre>
-			<h4>Primary OCR</h4>
+			<h4>PaddleOCR</h4>
+			<pre id="receipt-ocr-paddle" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Tesseract primary fallback</h4>
 			<pre id="receipt-ocr-primary" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Low-contrast recovery OCR</h4>
 			<pre id="receipt-ocr-recovery" class="border rounded p-2 bg-light text-wrap"></pre>

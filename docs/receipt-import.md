@@ -5,7 +5,7 @@ The receipt importer adds reviewed purchases to Grocy stock from either a digita
 ## What it does
 
 - Reads digital PDF text in the browser with PDF.js.
-- Reads receipt photos in the browser with Tesseract.js. The original PDF or image is not uploaded to Grocy.
+- Reads receipt photos in the browser with PaddleOCR and keeps Tesseract.js as a compatibility fallback. The original PDF or image is not uploaded to Grocy.
 - Detects known retailers and derives a stable name for previously unknown retailers.
 - Parses common itemized layouts, quantities, weighted produce, item discounts, cash rounding, date, store label, currency, and total.
 - Rejects receipts whose parsed line total does not reconcile with the printed receipt total.
@@ -22,9 +22,11 @@ The first version intentionally does not create new Grocy products automatically
 
 ## Installation
 
-Deploy the complete Grocy release, including `public/packages/pdfjs-dist`, `public/packages/tesseract.js`, and `public/packages/tesseract.js-core`. On first request after deploying the code, Grocy migration `0258` creates the three isolated receipt-import tables.
+Deploy the complete Grocy release, including `public/viewjs/vendor/receipt-ocr`, `public/packages/pdfjs-dist`, `public/packages/tesseract.js`, and `public/packages/tesseract.js-core`. On first request after deploying the code, Grocy migration `0258` creates the three isolated receipt-import tables.
 
-The first photo scan downloads the German and English Tesseract recognition models from the public jsDelivr package CDN and the browser then caches them. The receipt image itself stays in the browser and is never sent to that CDN or another OCR service. A fully offline installation can self-host the same `@tesseract.js-data/deu` and `@tesseract.js-data/eng` model files and set Tesseract's `langPath` to that local directory.
+The PaddleOCR JavaScript runtime, WASM runtime, and PP-OCRv6 tiny detection and recognition models are served by Grocy itself and cached by the browser. A first photo scan therefore downloads about 30 MB from the Grocy server; later scans reuse the browser cache. The receipt image stays in the browser and is never sent to Grocy, Paddle, or another OCR service.
+
+If PaddleOCR cannot initialize or if its extracted receipt does not pass parser reconciliation, the importer retries with Tesseract. That fallback downloads the German and English Tesseract recognition models from the public jsDelivr package CDN unless those language files are self-hosted and Tesseract's `langPath` is changed accordingly.
 
 The web server must serve Grocy over HTTPS. Browser cryptographic receipt fingerprints and phone camera access require a secure context.
 
@@ -72,7 +74,7 @@ For best OCR results:
 - fill most of the frame with the receipt;
 - retake faded or blurred thermal receipts rather than approving uncertain values.
 
-The browser detects the bright receipt area, removes most of the surrounding table/background, enlarges the text, and rotates a sideways receipt to portrait before OCR. If the first orientation produces implausible receipt text, it tries the opposite orientation and keeps the stronger result.
+The browser detects the bright receipt area, removes most of the surrounding table/background, enlarges the text, and rotates a sideways receipt to portrait before OCR. Long receipts are split into overlapping sections so small print retains enough resolution on mobile devices. PaddleOCR's detected text boxes are reconstructed into rows with local perspective correction before parsing.
 
 OCR output is never trusted directly: parsing, total reconciliation, product matching, and the final human review all occur before stock changes.
 
@@ -96,13 +98,19 @@ Run the deterministic parser test:
 php .\tests\receipt_import_parser_test.php
 ```
 
+Run the PaddleOCR row-reconstruction test:
+
+```powershell
+node .\tests\receipt_import_paddle_layout_test.mjs
+```
+
 The sample PDF extraction test accepts the PDF path as its argument:
 
 ```powershell
 node .\tests\receipt_import_pdf_text_test.mjs C:\path\to\receipt.pdf
 ```
 
-The optional photo OCR test accepts a rendered or photographed receipt image. It downloads the Tesseract language models on first run. Optional rotation and expected-token arguments help validate sideways retailer fixtures:
+The optional compatibility OCR test accepts a rendered or photographed receipt image. It directly exercises the Tesseract fallback and downloads its language models on first run. Optional rotation and expected-token arguments help validate sideways retailer fixtures:
 
 ```powershell
 $env:NODE_PATH = (Resolve-Path .\public\packages).Path

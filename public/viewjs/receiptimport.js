@@ -241,7 +241,91 @@ const ReceiptImportOcr = (function()
 		});
 	}
 
-	return { candidates: candidates, fuseLabels: fuseLabels, merge: merge, needsRecovery: needsRecovery, normalizedMoney: normalizedMoney };
+	function paddleText(items)
+	{
+		const sourceItems = (items || []).filter(function(item)
+		{
+			return item && String(item.text || '').trim() !== '' && (item.score === undefined || Number(item.score) >= 0.2) && Array.isArray(item.poly);
+		});
+		const slopeSamples = sourceItems.map(function(item)
+		{
+			const points = item.poly.map(point => [Number(point[0]) || 0, Number(point[1]) || 0]).sort((left, right) => left[0] - right[0]);
+			const left = points.slice(0, 2);
+			const right = points.slice(-2);
+			const leftX = left.reduce((sum, point) => sum + point[0], 0) / left.length;
+			const rightX = right.reduce((sum, point) => sum + point[0], 0) / right.length;
+			const leftY = left.reduce((sum, point) => sum + point[1], 0) / left.length;
+			const rightY = right.reduce((sum, point) => sum + point[1], 0) / right.length;
+			return {
+				y: points.reduce((sum, point) => sum + point[1], 0) / points.length,
+				width: rightX - leftX,
+				slope: rightX === leftX ? 0 : (rightY - leftY) / (rightX - leftX)
+			};
+		}).filter(sample => sample.width >= 90 && Math.abs(sample.slope) <= 0.3);
+		function localSlope(y)
+		{
+			const nearby = slopeSamples.slice().sort((left, right) => Math.abs(left.y - y) - Math.abs(right.y - y)).slice(0, 5)
+				.map(sample => sample.slope).sort((left, right) => left - right);
+			return nearby.length === 0 ? 0 : nearby[Math.floor(nearby.length / 2)];
+		}
+
+		const positioned = sourceItems.map(function(item)
+		{
+			const xs = item.poly.map(point => Number(point[0]) || 0);
+			const ys = item.poly.map(point => Number(point[1]) || 0);
+			const top = Math.min.apply(null, ys);
+			const bottom = Math.max.apply(null, ys);
+			const centerX = xs.reduce((sum, x) => sum + x, 0) / xs.length;
+			const centerY = ys.reduce((sum, y) => sum + y, 0) / ys.length;
+			let lineHeight = bottom - top;
+			if (item.poly.length === 4)
+			{
+				const distance = (left, right) => Math.hypot(Number(left[0]) - Number(right[0]), Number(left[1]) - Number(right[1]));
+				lineHeight = (distance(item.poly[0], item.poly[3]) + distance(item.poly[1], item.poly[2])) / 2;
+			}
+			return {
+				text: String(item.text).trim(),
+				score: Number(item.score) || 0,
+				left: Math.min.apply(null, xs),
+				top: top,
+				bottom: bottom,
+				center: centerY - localSlope(centerY) * (centerX - 500),
+				height: Math.max(1, lineHeight)
+			};
+		}).sort((left, right) => left.center - right.center || left.left - right.left);
+
+		const rows = [];
+		positioned.forEach(function(item)
+		{
+			let bestRow = null;
+			let bestDistance = Number.POSITIVE_INFINITY;
+			rows.forEach(function(row)
+			{
+				const distance = Math.abs(row.center - item.center);
+				const tolerance = Math.max(6, Math.min(row.height, item.height) * 0.6);
+				if (distance <= tolerance && distance < bestDistance)
+				{
+					bestRow = row;
+					bestDistance = distance;
+				}
+			});
+			if (!bestRow)
+			{
+				bestRow = { center: item.center, height: item.height, items: [] };
+				rows.push(bestRow);
+			}
+			bestRow.items.push(item);
+			bestRow.center = bestRow.items.reduce((sum, rowItem) => sum + rowItem.center, 0) / bestRow.items.length;
+			bestRow.height = bestRow.items.reduce((sum, rowItem) => sum + rowItem.height, 0) / bestRow.items.length;
+		});
+
+		return rows.sort((left, right) => left.center - right.center).map(function(row)
+		{
+			return row.items.sort((left, right) => left.left - right.left).map(item => item.text).join(' ');
+		}).join('\n');
+	}
+
+	return { candidates: candidates, fuseLabels: fuseLabels, merge: merge, needsRecovery: needsRecovery, normalizedMoney: normalizedMoney, paddleText: paddleText };
 })();
 
 if (typeof module !== 'undefined' && module.exports)
@@ -270,6 +354,7 @@ if (typeof window !== 'undefined')
 	};
 	let Products = [];
 	const ProductsById = new Map();
+	let PaddleOcrInstancePromise = null;
 
 	function setProductCatalog(products)
 	{
@@ -395,35 +480,17 @@ if (typeof window !== 'undefined')
 			}
 
 			setProcessing(__t('Matching products'), __t('Checking learned aliases and Grocy product names'), 82);
-			const previewCandidates = State.ocrDiagnostic && State.ocrDiagnostic.candidates
+			let previewCandidates = State.ocrDiagnostic && State.ocrDiagnostic.candidates
 				? State.ocrDiagnostic.candidates
 				: [{ name: 'selected', text: State.rawText }];
-			let firstPreviewError = null;
-			for (const candidate of previewCandidates)
+			let firstPreviewError = await tryPreviewCandidates(previewCandidates);
+			if (!State.preview && isImage && State.ocrDiagnostic && State.ocrDiagnostic.provider === 'PaddleOCR')
 			{
-				try
-				{
-					State.preview = await postApi('receipt-import/preview', {
-						raw_text: candidate.text,
-						receipt_hash: State.receiptHash
-					});
-					State.rawText = candidate.text;
-					if (State.ocrDiagnostic)
-					{
-						State.ocrDiagnostic.selectedPass = candidate.name;
-						State.ocrDiagnostic.selected = candidate.text;
-						State.ocrDiagnostic.attempts.push(candidate.name + ': accepted');
-					}
-					break;
-				}
-				catch (error)
-				{
-					firstPreviewError = firstPreviewError || error;
-					if (State.ocrDiagnostic)
-					{
-						State.ocrDiagnostic.attempts.push(candidate.name + ': ' + error.message);
-					}
-				}
+				setProcessing(__t('Reading photo'), __t('Trying compatibility OCR'), 68);
+				State.rawText = await extractImageTextWithTesseract(file, State.ocrDiagnostic);
+				previewCandidates = State.ocrDiagnostic.candidates || [{ name: 'tesseract', text: State.rawText }];
+				const fallbackPreviewError = await tryPreviewCandidates(previewCandidates);
+				firstPreviewError = firstPreviewError || fallbackPreviewError;
 			}
 			if (!State.preview)
 			{
@@ -531,11 +598,178 @@ if (typeof window !== 'undefined')
 
 	async function extractImageText(file)
 	{
+		State.objectUrl = URL.createObjectURL(file);
+		$('#receipt-image-preview').attr('src', State.objectUrl).removeClass('d-none');
+		$('#receipt-pdf-preview').addClass('d-none');
+		const imageBitmap = await createImageBitmap(file);
+		const preparedImages = prepareReceiptImage(imageBitmap);
+		imageBitmap.close();
+
+		try
+		{
+			return await extractImageTextWithPaddle(file, preparedImages);
+		}
+		catch (error)
+		{
+			console.warn('PaddleOCR failed, using Tesseract fallback', error);
+			return extractImageTextWithTesseract(file, {
+				file: file.name,
+				image: preparedImages.meta,
+				provider: 'PaddleOCR failed',
+				paddleError: error.message,
+				attempts: ['paddle: ' + error.message]
+			});
+		}
+	}
+
+	async function getPaddleOcr()
+	{
+		if (!PaddleOcrInstancePromise)
+		{
+			PaddleOcrInstancePromise = (async function()
+			{
+				const paddleModule = await import(Grocy.ReceiptImport.assets.paddleModule);
+				return paddleModule.PaddleOCR.create({
+					textDetectionModelName: 'PP-OCRv6_tiny_det',
+					textDetectionModelAsset: { url: Grocy.ReceiptImport.assets.paddleDetectionModel },
+					textRecognitionModelName: 'PP-OCRv6_tiny_rec',
+					textRecognitionModelAsset: { url: Grocy.ReceiptImport.assets.paddleRecognitionModel },
+					textRecognitionBatchSize: 8,
+					ortOptions: {
+						backend: 'wasm',
+						wasmPaths: Grocy.ReceiptImport.assets.paddleOrt,
+						numThreads: 1,
+						simd: true,
+						proxy: false
+					}
+				});
+			})().catch(function(error)
+			{
+				PaddleOcrInstancePromise = null;
+				throw error;
+			});
+		}
+		return PaddleOcrInstancePromise;
+	}
+
+	function receiptImageTiles(canvas)
+	{
+		const maximumHeight = 1700;
+		const overlap = 160;
+		if (canvas.height <= maximumHeight)
+		{
+			return [{ canvas: canvas, offsetY: 0 }];
+		}
+		const tiles = [];
+		let offsetY = 0;
+		while (offsetY < canvas.height)
+		{
+			const height = Math.min(maximumHeight, canvas.height - offsetY);
+			const tile = document.createElement('canvas');
+			tile.width = canvas.width;
+			tile.height = height;
+			tile.getContext('2d', { alpha: false }).drawImage(canvas, 0, offsetY, canvas.width, height, 0, 0, canvas.width, height);
+			tiles.push({ canvas: tile, offsetY: offsetY });
+			if (offsetY + height >= canvas.height)
+			{
+				break;
+			}
+			offsetY += height - overlap;
+		}
+		return tiles;
+	}
+
+	function mergePaddleItems(results, tiles)
+	{
+		const items = [];
+		results.forEach(function(result, resultIndex)
+		{
+			(result.items || []).forEach(function(item)
+			{
+				const adjusted = {
+					text: item.text,
+					score: item.score,
+					poly: item.poly.map(point => [point[0], point[1] + tiles[resultIndex].offsetY])
+				};
+				const center = adjusted.poly.reduce((sum, point) => sum + point[1], 0) / adjusted.poly.length;
+				const key = adjusted.text.toLowerCase().replace(/\s+/g, ' ').trim();
+				const duplicateIndex = items.findIndex(existing => existing.key === key && Math.abs(existing.center - center) < 90);
+				if (duplicateIndex === -1)
+				{
+					items.push({ item: adjusted, key: key, center: center });
+				}
+				else if (adjusted.score > items[duplicateIndex].item.score)
+				{
+					items[duplicateIndex] = { item: adjusted, key: key, center: center };
+				}
+			});
+		});
+		return items.map(entry => entry.item);
+	}
+
+	async function extractImageTextWithPaddle(file, preparedImages)
+	{
+		setProcessing(__t('Reading photo'), __t('Loading private PaddleOCR'), 22);
+		const paddle = await getPaddleOcr();
+		const tiles = receiptImageTiles(preparedImages.primary);
+		const results = [];
+		for (let tileIndex = 0; tileIndex < tiles.length; tileIndex++)
+		{
+			setProcessing(__t('Reading photo'), __t('PaddleOCR section %1$s of %2$s', tileIndex + 1, tiles.length), 30 + ((tileIndex + 1) / tiles.length) * 38);
+			const [result] = await paddle.predict(tiles[tileIndex].canvas, {
+				textDetLimitSideLen: 1800,
+				textDetLimitType: 'max',
+				textDetMaxSideLimit: 1900,
+				textRecScoreThresh: 0.2
+			});
+			results.push(result);
+		}
+		const items = mergePaddleItems(results, tiles);
+		const text = ReceiptImportOcr.paddleText(items);
+		if (text.trim().length < 30)
+		{
+			throw new Error(__t('PaddleOCR detected too little receipt text'));
+		}
+		const initialization = paddle.getInitializationSummary ? paddle.getInitializationSummary() : null;
+		State.ocrDiagnostic = {
+			file: file.name,
+			image: Object.assign({}, preparedImages.meta, { tiles: tiles.length }),
+			provider: 'PaddleOCR',
+			paddleRuntime: initialization ? {
+				backend: initialization.backend,
+				detection: initialization.detProvider,
+				recognition: initialization.recProvider,
+				modelBytes: (initialization.assets || []).reduce((sum, asset) => sum + Number(asset.bytes || 0), 0)
+			} : null,
+			paddle: text,
+			paddleItems: items.length,
+			primaryScore: receiptTextScore(text),
+			recoveryNeeded: false,
+			selectedPass: 'paddle',
+			primary: text,
+			recovery: '',
+			merged: text,
+			threshold: '',
+			rotated: '',
+			selected: text,
+			candidates: [{ name: 'paddle', text: text }],
+			attempts: [],
+			result: 'PaddleOCR complete; waiting for parser'
+		};
+		return text;
+	}
+
+	async function extractImageTextWithTesseract(file, paddleDiagnostic)
+	{
 		if (!window.Tesseract)
 		{
 			throw new Error(__t('The browser OCR library could not be loaded'));
 		}
 
+		if (State.objectUrl)
+		{
+			URL.revokeObjectURL(State.objectUrl);
+		}
 		State.objectUrl = URL.createObjectURL(file);
 		$('#receipt-image-preview').attr('src', State.objectUrl).removeClass('d-none');
 		$('#receipt-pdf-preview').addClass('d-none');
@@ -611,6 +845,10 @@ if (typeof window !== 'undefined')
 			State.ocrDiagnostic = {
 				file: file.name,
 				image: preparedImages.meta,
+				provider: 'Tesseract fallback',
+				paddle: paddleDiagnostic && paddleDiagnostic.paddle ? paddleDiagnostic.paddle : '',
+				paddleRuntime: paddleDiagnostic ? paddleDiagnostic.paddleRuntime : null,
+				paddleError: paddleDiagnostic ? paddleDiagnostic.paddleError : null,
 				primaryScore: primaryScore,
 				recoveryNeeded: recoveryNeeded,
 				selectedPass: selectedPass,
@@ -622,7 +860,7 @@ if (typeof window !== 'undefined')
 				rotated: rotatedText,
 				selected: text,
 				candidates: candidates,
-				attempts: [],
+				attempts: paddleDiagnostic && paddleDiagnostic.attempts ? paddleDiagnostic.attempts.slice() : [],
 				result: 'OCR complete; waiting for parser'
 			};
 			return text;
@@ -721,6 +959,38 @@ if (typeof window !== 'undefined')
 				scale: Number(scale.toFixed(3))
 			}
 		};
+	}
+
+	async function tryPreviewCandidates(candidates)
+	{
+		let firstError = null;
+		for (const candidate of candidates)
+		{
+			try
+			{
+				State.preview = await postApi('receipt-import/preview', {
+					raw_text: candidate.text,
+					receipt_hash: State.receiptHash
+				});
+				State.rawText = candidate.text;
+				if (State.ocrDiagnostic)
+				{
+					State.ocrDiagnostic.selectedPass = candidate.name;
+					State.ocrDiagnostic.selected = candidate.text;
+					State.ocrDiagnostic.attempts.push(candidate.name + ': accepted');
+				}
+				return null;
+			}
+			catch (error)
+			{
+				firstError = firstError || error;
+				if (State.ocrDiagnostic)
+				{
+					State.ocrDiagnostic.attempts.push(candidate.name + ': ' + error.message);
+				}
+			}
+		}
+		return firstError;
 	}
 
 	function findReceiptBounds(context, width, height)
@@ -1321,7 +1591,7 @@ if (typeof window !== 'undefined')
 		State.ocrDiagnostic = null;
 		$('#receipt-camera-input, #receipt-file-input').val('');
 		$('#receipt-ocr-diagnostic').addClass('d-none').prop('open', false);
-		$('#receipt-ocr-diagnostic-meta, #receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged, #receipt-ocr-threshold, #receipt-ocr-rotated, #receipt-ocr-selected').text('');
+		$('#receipt-ocr-diagnostic-meta, #receipt-ocr-paddle, #receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged, #receipt-ocr-threshold, #receipt-ocr-rotated, #receipt-ocr-selected').text('');
 		$('#receipt-pdf-preview, #receipt-image-preview').addClass('d-none');
 		$('#receipt-commit-bar, #receipt-success').addClass('d-none');
 		$('#receipt-reset-button').toggleClass('d-none', !!showCapture);
@@ -1341,12 +1611,17 @@ if (typeof window !== 'undefined')
 		$('#receipt-ocr-diagnostic-meta').text(JSON.stringify({
 			file: diagnostic.file,
 			image: diagnostic.image,
+			provider: diagnostic.provider,
+			paddleRuntime: diagnostic.paddleRuntime,
+			paddleItems: diagnostic.paddleItems,
+			paddleError: diagnostic.paddleError,
 			primaryScore: diagnostic.primaryScore,
 			recoveryNeeded: diagnostic.recoveryNeeded,
 			selectedPass: diagnostic.selectedPass,
 			attempts: diagnostic.attempts || [],
 			result: diagnostic.result
 		}, null, 2));
+		$('#receipt-ocr-paddle').text(diagnostic.paddle || '(not run)');
 		$('#receipt-ocr-primary').text(diagnostic.primary || '(empty)');
 		$('#receipt-ocr-recovery').text(diagnostic.recovery || '(not run)');
 		$('#receipt-ocr-merged').text(diagnostic.merged || '(empty)');
