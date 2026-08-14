@@ -45,6 +45,10 @@ class ReceiptImportParser
 		foreach ($lines as $line)
 		{
 			$line = trim(preg_replace('/[\t ]+/u', ' ', $line));
+			if (preg_match('/[\p{L}]/u', $line))
+			{
+				$line = preg_replace('/(\d{1,6}[.,]\d{2})([A-Z4*])$/u', '$1 $2', $line);
+			}
 			if ($line !== '')
 			{
 				$normalized[] = $line;
@@ -419,6 +423,10 @@ class ReceiptImportParser
 			}
 
 			$score = $this->GenericTotalLabelScore($matches[1]);
+			if ($score === 0 && $lineIndex > 0)
+			{
+				$score = $this->SplitGenericTotalLabelScore($lines[$lineIndex - 1], $matches[1]);
+			}
 			if ($score > 0)
 			{
 				$matchesFound[] = [
@@ -470,6 +478,25 @@ class ReceiptImportParser
 		}
 
 		return 0;
+	}
+
+	private function SplitGenericTotalLabelScore(string $previousLine, string $currentLabel): int
+	{
+		if (preg_match('/\d{1,6}(?:[.,]\d{2}|\s+\d{2})/u', $previousLine))
+		{
+			return 0;
+		}
+
+		$compact = mb_strtolower($previousLine . $currentLabel, 'UTF-8');
+		$compact = preg_replace('/[^\p{L}]+/u', '', $compact);
+		if (preg_match('/(?:zwischen(?:summe|total)|subtotal|soustotal|netto|mwst|vat|tva|iva|tax)/u', $compact))
+		{
+			return 0;
+		}
+
+		// OCR can place the last letters of a strong total label on the amount line,
+		// for example "ALDI PREI" followed by "S 4 Artikel 6.60".
+		return preg_match('/(?:aldipreis|zuzahlen|grandtotal|gesamtbetrag|endbetrag|amountdue|topay|apayer)/u', $compact) ? 90 : 0;
 	}
 
 	private function ParseGenericDate(string $text): string
@@ -768,7 +795,7 @@ class ReceiptImportParser
 	private function IsNonProductLine(string $label): bool
 	{
 		return preg_match('/^(?:
-			Zwischen(?:summe|total)|Sub[- ]?total|Sous[- ]?total|Rundung|Round(?:ing)?|Arrondi|
+			Zwischen(?:summe|total)|Sub[- ]?total|Sous[- ]?total|Run(?:d(?:ung)?)?|Round(?:ing)?|Arrondi|
 			ALDI\s+PREIS|zu\s+zahlen|Grand\s+Total|Total|Gesamt(?:betrag)?|Summe|Endbetrag|Amount\s+due|To\s+pay|A\s+payer|Totale|
 			Total-EFT|Kartenzahlung|Karte|Card|Cash|Bar|Bargeld|Change|Rückgeld|Retourgeld|
 			Netto|MwSt|MWST|VAT|TVA|IVA|Tax|A\s+\d+[.,]\d+\s*%\s*MwSt|

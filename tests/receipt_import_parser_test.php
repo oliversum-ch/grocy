@@ -160,6 +160,30 @@ assertNear(0.95, $capturedMobileAldiReceipt['items'][2]['gross_total'], 'Capture
 assertSameValue('Flachofi, 500g', $capturedMobileAldiReceipt['items'][2]['raw_label'], 'Captured mobile Aldi OCR removes dangling cents from the inferred label');
 assertNear(6.60, $capturedMobileAldiReceipt['parsed_total'], 'Captured mobile Aldi OCR reconciles using subtotal-derived rounding');
 
+$splitAldiTotalOcr = implode("\n", [
+	'ALDT SUISSE AG',
+	'8001 ZÃƒÂ¼rich',
+	'Stadelhoferstrasse 10',
+	'CHF',
+	'622 Jumbo ErdnÃƒÂ¼ss, 1.79 4',
+	'pe = Carb Riegel 2.694',
+	'157201 flachpfir, 500g 0.954',
+	': racker Mix 300 g 1.194',
+	'Zwischen u Ensumme a',
+	'Run 6,62',
+	're -0.02',
+	'ALDI PREI',
+	'- S 4 Artike] 6.60',
+	'Kartenzahiung CHE 5.60',
+	'*5107 E190/003/801 13.08.26 10:55',
+	'aldi-suisse.ch'
+]);
+$splitAldiTotalReceipt = $parser->Parse($splitAldiTotalOcr);
+assertSameValue('aldi_ch', $splitAldiTotalReceipt['retailer_key'], 'Split-total Aldi retailer');
+assertNear(6.60, $splitAldiTotalReceipt['receipt_total'], 'Split ALDI PREIS label retains its following total');
+assertSameValue(4, count($splitAldiTotalReceipt['items']), 'Split-total Aldi keeps all product lines');
+assertNear(6.60, $splitAldiTotalReceipt['parsed_total'], 'Split-total Aldi reconciles its two-cent rounding');
+
 $genericReceipt = $parser->Parse(implode("\n", [
 	'Corner Market',
 	'18 High Street',
