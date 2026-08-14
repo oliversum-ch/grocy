@@ -199,11 +199,12 @@ $paddleAldiOcr = implode("\n", [
 	'4 Artikel',
 	'Kartenzahlung CHF 6.60',
 	'A 02.6% Netto 6.45 MWSt 0.17',
-	'*5107 E190/003/801 13.08.26 10:55',
+	'*5107 E190/003/80113.08.2610:55',
 	'CHE-110.576.236 WST'
 ]);
 $paddleAldiReceipt = $parser->Parse($paddleAldiOcr);
 assertSameValue('aldi_ch', $paddleAldiReceipt['retailer_key'], 'PaddleOCR Aldi retailer');
+assertSameValue('2026-08-13', $paddleAldiReceipt['receipt_date'], 'PaddleOCR Aldi joined date and time');
 assertSameValue(4, count($paddleAldiReceipt['items']), 'PaddleOCR Aldi line item count');
 assertNear(6.60, $paddleAldiReceipt['receipt_total'], 'PaddleOCR Aldi total');
 assertNear(6.60, $paddleAldiReceipt['parsed_total'], 'PaddleOCR Aldi reconciliation');

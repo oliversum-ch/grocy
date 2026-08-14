@@ -505,6 +505,13 @@ class ReceiptImportParser
 		{
 			return $this->ValidatedDate(intval($matches[1]), intval($matches[2]), intval($matches[3]));
 		}
+		// OCR can concatenate a receipt number, date and time (for example
+		// "80113.08.2610:55"), so the date has no usable word boundaries.
+		if (preg_match('/([0-3]\d)[.\/-]([01]\d)[.\/-](20\d{2}|\d{2})(?=\d{2}:\d{2}\b)/', $text, $matches))
+		{
+			$year = intval($matches[3]);
+			return $this->ValidatedDate($year < 100 ? 2000 + $year : $year, intval($matches[2]), intval($matches[1]));
+		}
 		if (preg_match('/\b([0-3]?\d)[.\/-]([01]?\d)[.\/-](20\d{2}|\d{2})\b/', $text, $matches))
 		{
 			$year = intval($matches[3]);
