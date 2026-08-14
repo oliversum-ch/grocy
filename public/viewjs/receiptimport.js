@@ -567,6 +567,7 @@ if (typeof window !== 'undefined')
 			let recoveryText = '';
 			let mergedText = text;
 			let softText = '';
+			let thresholdText = '';
 			let rotatedText = '';
 			let selectedPass = 'primary';
 			if (recoveryNeeded || OCR_DIAGNOSTICS_ENABLED)
@@ -574,6 +575,7 @@ if (typeof window !== 'undefined')
 				setProcessing(__t('Reading photo'), __t('Recovering unclear receipt prices'), 66);
 				const recoveryResult = await worker.recognize(preparedImages.recovery, { rotateAuto: false });
 				recoveryText = recoveryResult.data.text;
+				softText = recoveryText;
 				mergedText = ReceiptImportOcr.merge(text, recoveryText);
 				if (recoveryNeeded)
 				{
@@ -583,9 +585,9 @@ if (typeof window !== 'undefined')
 			}
 			if (OCR_DIAGNOSTICS_ENABLED)
 			{
-				setProcessing(__t('Reading photo'), __t('Testing low-contrast receipt text'), 70);
-				const softResult = await worker.recognize(preparedImages.soft, { rotateAuto: false });
-				softText = softResult.data.text;
+				setProcessing(__t('Reading photo'), __t('Testing high-threshold receipt text'), 70);
+				const thresholdResult = await worker.recognize(preparedImages.threshold, { rotateAuto: false });
+				thresholdText = thresholdResult.data.text;
 			}
 			if (receiptTextScore(text) < 60)
 			{
@@ -612,6 +614,7 @@ if (typeof window !== 'undefined')
 				recovery: recoveryText,
 				merged: mergedText,
 				soft: softText,
+				threshold: thresholdText,
 				rotated: rotatedText,
 				selected: text,
 				candidates: candidates,
@@ -704,8 +707,8 @@ if (typeof window !== 'undefined')
 		context.putImageData(pixels, 0, 0);
 		return {
 			primary: canvas,
-			soft: softCanvas,
-			recovery: recoveryCanvas,
+			recovery: softCanvas,
+			threshold: recoveryCanvas,
 			meta: {
 				source: imageBitmap.width + ' × ' + imageBitmap.height,
 				bounds: bounds.left + ',' + bounds.top + ' → ' + bounds.right + ',' + bounds.bottom,
@@ -1314,7 +1317,7 @@ if (typeof window !== 'undefined')
 		State.ocrDiagnostic = null;
 		$('#receipt-camera-input, #receipt-file-input').val('');
 		$('#receipt-ocr-diagnostic').addClass('d-none').prop('open', false);
-		$('#receipt-ocr-diagnostic-meta, #receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged, #receipt-ocr-soft, #receipt-ocr-rotated, #receipt-ocr-selected').text('');
+		$('#receipt-ocr-diagnostic-meta, #receipt-ocr-primary, #receipt-ocr-recovery, #receipt-ocr-merged, #receipt-ocr-threshold, #receipt-ocr-rotated, #receipt-ocr-selected').text('');
 		$('#receipt-pdf-preview, #receipt-image-preview').addClass('d-none');
 		$('#receipt-commit-bar, #receipt-success').addClass('d-none');
 		$('#receipt-reset-button').toggleClass('d-none', !!showCapture);
@@ -1343,7 +1346,7 @@ if (typeof window !== 'undefined')
 		$('#receipt-ocr-primary').text(diagnostic.primary || '(empty)');
 		$('#receipt-ocr-recovery').text(diagnostic.recovery || '(not run)');
 		$('#receipt-ocr-merged').text(diagnostic.merged || '(empty)');
-		$('#receipt-ocr-soft').text(diagnostic.soft || '(not run)');
+		$('#receipt-ocr-threshold').text(diagnostic.threshold || '(not run)');
 		$('#receipt-ocr-rotated').text(diagnostic.rotated || '(not run)');
 		$('#receipt-ocr-selected').text(diagnostic.selected || '(empty)');
 		$('#receipt-ocr-diagnostic').removeClass('d-none').prop('open', !!openPanel);

@@ -102,12 +102,12 @@
 			<pre id="receipt-ocr-diagnostic-meta" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Primary OCR</h4>
 			<pre id="receipt-ocr-primary" class="border rounded p-2 bg-light text-wrap"></pre>
-			<h4>Recovery OCR</h4>
+			<h4>Low-contrast recovery OCR</h4>
 			<pre id="receipt-ocr-recovery" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Merged OCR</h4>
 			<pre id="receipt-ocr-merged" class="border rounded p-2 bg-light text-wrap"></pre>
-			<h4>Low-contrast grayscale OCR</h4>
-			<pre id="receipt-ocr-soft" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>High-threshold diagnostic OCR</h4>
+			<pre id="receipt-ocr-threshold" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Opposite orientation OCR</h4>
 			<pre id="receipt-ocr-rotated" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Text sent to the parser</h4>

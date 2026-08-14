@@ -43,6 +43,8 @@ const capturedMobileSoft = [
 	'433984 Flac fir a QE 4',
 	'91241 Cracker Mix 300 g 1.19 A'
 ].join('\n');
+const capturedMobileSoftRecovery = ReceiptImportOcr.merge(capturedMobilePrimary, capturedMobileSoft);
+assert.match(capturedMobileSoftRecovery, /0816 ow Carb Riege] 2[.]69 A/, 'The grayscale recovery pass restores a split item price');
 const capturedMobileFused = ReceiptImportOcr.fuseLabels(capturedMobileMerged, capturedMobileSoft);
 assert.match(capturedMobileFused, /7622 Jumbo Erdnüss 1[.]79 A/, 'The clearer grayscale spelling is used when OCR passes agree on the line');
 assert.match(capturedMobileFused, /0816 Low Carb Riegel 2[.]69 4/, 'Missing edge letters are restored without importing grayscale noise');
