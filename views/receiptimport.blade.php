@@ -106,6 +106,8 @@
 			<pre id="receipt-ocr-recovery" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Merged OCR</h4>
 			<pre id="receipt-ocr-merged" class="border rounded p-2 bg-light text-wrap"></pre>
+			<h4>Low-contrast grayscale OCR</h4>
+			<pre id="receipt-ocr-soft" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Opposite orientation OCR</h4>
 			<pre id="receipt-ocr-rotated" class="border rounded p-2 bg-light text-wrap"></pre>
 			<h4>Text sent to the parser</h4>

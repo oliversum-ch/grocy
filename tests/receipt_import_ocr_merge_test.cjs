@@ -37,4 +37,25 @@ const capturedMobileRecovery = [
 const capturedMobileMerged = ReceiptImportOcr.merge(capturedMobilePrimary, capturedMobileRecovery);
 assert.match(capturedMobileMerged, /0816 ow Carb Riege] 2[.]69 4/, 'A tax marker misread as 4 must not hide a recovered price');
 
+const capturedLidlPrimary = [
+	'LIDL Schweiz',
+	'High Protein Drink Pista 1.25 A',
+	'Lidl Plus Rabatt -0.26',
+	'BIO Karotten 3.26 A',
+	'Energy Drink light 0,5l 9.75 A',
+	'zu zahlen 14.03'
+].join('\n');
+const capturedLidlRecovery = [
+	'High Protein Drink Pista 1.25 A',
+	'Lidl Plus Rabatt -0.26',
+	'BIO Karotten 3,29 A',
+	'Energy Drink light 0,5l 9.75 A',
+	'2u zahlen 14.03'
+].join('\n');
+const capturedLidlCandidates = ReceiptImportOcr.candidates(capturedLidlPrimary, capturedLidlRecovery);
+assert.equal(capturedLidlCandidates.length, 3, 'Distinct OCR interpretations are retained as parser fallbacks');
+assert.match(capturedLidlCandidates[0].text, /BIO Karotten 3[.]26 A/, 'The primary interpretation remains first');
+assert.match(capturedLidlCandidates[1].text, /BIO Karotten 3[.]29 A/, 'A recovery interpretation may replace a conflicting item price');
+assert.doesNotMatch(capturedLidlCandidates[1].text, /Lidl Plus Rabatt 0[.]26/, 'Negative discounts retain their sign');
+
 console.log('ReceiptImportOCRMerge: unclear prices are recovered without duplicate lines');
