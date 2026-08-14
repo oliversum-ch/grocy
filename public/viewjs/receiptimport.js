@@ -98,6 +98,10 @@ const ReceiptImportOcr = (function()
 			{
 				return primaryLine;
 			}
+			if (primaryMoney === null && !/\b\d{4,14}\b/u.test(primaryLine))
+			{
+				return primaryLine;
+			}
 			let bestLine = null;
 			let bestScore = 0;
 			recoveryLines.forEach(function(recoveryLine)
