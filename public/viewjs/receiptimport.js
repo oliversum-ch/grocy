@@ -62,7 +62,7 @@ const ReceiptImportOcr = (function()
 				{
 					score += 20;
 				}
-				else if (Math.min(primaryToken.length, recoveryToken.length) >= 5 && editDistance(primaryToken, recoveryToken) <= 1)
+				else if (Math.min(primaryToken.length, recoveryToken.length) >= 4 && editDistance(primaryToken, recoveryToken) <= 1)
 				{
 					score += 20;
 				}
@@ -122,11 +122,113 @@ const ReceiptImportOcr = (function()
 		}).join('\n');
 	}
 
-	function candidates(primaryText, recoveryText)
+	function plainToken(token)
 	{
+		return String(token || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+	}
+
+	function fuseLabelWords(primaryLabel, secondaryLabel)
+	{
+		const secondaryWords = String(secondaryLabel || '').match(/\p{L}+/gu) || [];
+		return String(primaryLabel || '').replace(/\p{L}+/gu, function(primaryWord)
+		{
+			const primaryPlain = plainToken(primaryWord);
+			let bestWord = null;
+			let bestRank = 0;
+			secondaryWords.forEach(function(secondaryWord)
+			{
+				const secondaryPlain = plainToken(secondaryWord);
+				const distance = editDistance(primaryPlain, secondaryPlain);
+				const minimumLength = Math.min(primaryPlain.length, secondaryPlain.length);
+				let rank = 0;
+				if (primaryPlain === secondaryPlain)
+				{
+					rank = 100;
+				}
+				else if (minimumLength >= 2 && (primaryPlain.includes(secondaryPlain) || secondaryPlain.includes(primaryPlain)))
+				{
+					rank = 80;
+				}
+				else if (minimumLength >= 2 && distance === 1)
+				{
+					rank = 70;
+				}
+				else if (minimumLength >= 6 && distance <= 2)
+				{
+					rank = 50;
+				}
+				if (rank > bestRank)
+				{
+					bestRank = rank;
+					bestWord = secondaryWord;
+				}
+			});
+			if (!bestWord)
+			{
+				return primaryWord;
+			}
+			const bestPlain = plainToken(bestWord);
+			const distance = editDistance(primaryPlain, bestPlain);
+			const restoresEdge = bestPlain.length > primaryPlain.length && bestPlain.includes(primaryPlain);
+			const restoresAccent = /[^\x00-\x7f]/u.test(bestWord) && !/[^\x00-\x7f]/u.test(primaryWord) && distance <= 2;
+			return restoresEdge || restoresAccent || (distance === 1 && bestPlain.length > primaryPlain.length) ? bestWord : primaryWord;
+		}).replace(/([\p{L}])[\]\[|}]+(?=\s|$)/gu, '$1');
+	}
+
+	function fuseLabels(primaryText, secondaryText)
+	{
+		const secondaryLines = String(secondaryText || '').split(/\r?\n/).map(normalizedMoney);
+		const comparableLines = secondaryLines.slice();
+		secondaryLines.forEach(function(line, index)
+		{
+			if (terminalMoney(line) === null && index + 1 < secondaryLines.length && terminalMoney(secondaryLines[index + 1]) !== null)
+			{
+				comparableLines.push(line + ' ' + secondaryLines[index + 1]);
+			}
+		});
+		return String(primaryText || '').split(/\r?\n/).map(normalizedMoney).map(function(primaryLine)
+		{
+			const primaryMoney = terminalMoney(primaryLine);
+			if (primaryMoney === null || !/[\p{L}]/u.test(primaryLine))
+			{
+				return primaryLine;
+			}
+			const primaryAmount = primaryMoney.match(/-?\d+[.]\d{2}/u);
+			let bestLine = null;
+			let bestScore = 0;
+			comparableLines.forEach(function(secondaryLine)
+			{
+				const secondaryMoney = terminalMoney(secondaryLine);
+				const secondaryAmount = secondaryMoney && secondaryMoney.match(/-?\d+[.]\d{2}/u);
+				if (!primaryAmount || !secondaryAmount || primaryAmount[0] !== secondaryAmount[0])
+				{
+					return;
+				}
+				const score = lineMatchScore(primaryLine, secondaryLine);
+				if (score > bestScore)
+				{
+					bestScore = score;
+					bestLine = secondaryLine;
+				}
+			});
+			if (!bestLine || bestScore < 20)
+			{
+				return primaryLine;
+			}
+			const primaryLabel = primaryLine.replace(/\s+-?\d{1,6}[.,]\d{2}(?:\s+[A-Z0-9*])?$/u, '');
+			const secondaryLabel = bestLine.replace(/\s+-?\d{1,6}[.,]\d{2}(?:\s+[A-Z0-9*])?$/u, '');
+			return primaryLine.replace(primaryLabel, fuseLabelWords(primaryLabel, secondaryLabel));
+		}).join('\n');
+	}
+
+	function candidates(primaryText, recoveryText, secondaryText)
+	{
+		const mergedText = merge(primaryText, recoveryText, false);
+		const recoveryPricesText = merge(primaryText, recoveryText, true);
 		const interpretations = [
-			{ name: 'merged', text: merge(primaryText, recoveryText, false) },
-			{ name: 'recovery-prices', text: merge(primaryText, recoveryText, true) },
+			{ name: 'label-fusion', text: secondaryText ? fuseLabels(recoveryPricesText, secondaryText) : '' },
+			{ name: 'merged', text: mergedText },
+			{ name: 'recovery-prices', text: recoveryPricesText },
 			{ name: 'recovery', text: String(recoveryText || '').split(/\r?\n/).map(normalizedMoney).join('\n') }
 		];
 		return interpretations.filter(function(candidate, index)
@@ -135,7 +237,7 @@ const ReceiptImportOcr = (function()
 		});
 	}
 
-	return { candidates: candidates, merge: merge, needsRecovery: needsRecovery, normalizedMoney: normalizedMoney };
+	return { candidates: candidates, fuseLabels: fuseLabels, merge: merge, needsRecovery: needsRecovery, normalizedMoney: normalizedMoney };
 })();
 
 if (typeof module !== 'undefined' && module.exports)
@@ -499,7 +601,7 @@ if (typeof window !== 'undefined')
 			}
 			const candidates = selectedPass === 'rotated'
 				? [{ name: 'rotated', text: text }]
-				: ReceiptImportOcr.candidates(primaryText, recoveryText);
+				: ReceiptImportOcr.candidates(primaryText, recoveryText, softText);
 			State.ocrDiagnostic = {
 				file: file.name,
 				image: preparedImages.meta,

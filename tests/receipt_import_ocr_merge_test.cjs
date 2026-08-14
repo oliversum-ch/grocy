@@ -36,6 +36,18 @@ const capturedMobileRecovery = [
 ].join('\n');
 const capturedMobileMerged = ReceiptImportOcr.merge(capturedMobilePrimary, capturedMobileRecovery);
 assert.match(capturedMobileMerged, /0816 ow Carb Riege] 2[.]69 4/, 'A tax marker misread as 4 must not hide a recovered price');
+const capturedMobileSoft = [
+	'7622 Jumbo Erdnüss, 1.79 A',
+	'NE816 Low Carl',
+	'aay EM Lard Riegel 2,69 A',
+	'433984 Flac fir a QE 4',
+	'91241 Cracker Mix 300 g 1.19 A'
+].join('\n');
+const capturedMobileFused = ReceiptImportOcr.fuseLabels(capturedMobileMerged, capturedMobileSoft);
+assert.match(capturedMobileFused, /7622 Jumbo Erdnüss 1[.]79 A/, 'The clearer grayscale spelling is used when OCR passes agree on the line');
+assert.match(capturedMobileFused, /0816 Low Carb Riegel 2[.]69 4/, 'Missing edge letters are restored without importing grayscale noise');
+assert.match(capturedMobileFused, /157241 Cracker,? Mix 300 g 1[.]19 A/, 'A clearer product word is fused even when the article number is damaged');
+assert.match(capturedMobileFused, /433984 Flachofi, 500g 95 A/, 'Unmatched words stay on the more reliable primary line');
 
 const capturedLidlPrimary = [
 	'LIDL Schweiz',
