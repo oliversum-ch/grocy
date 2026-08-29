@@ -31,19 +31,6 @@ msgstr "Süßigkeitenschrank"
 msgid "Tinned food cupboard"
 msgstr "Konservenschrank"
 
-msgid "Fridge"
-msgstr "Kühlschrank"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Stück"
-msgstr[1] "Stücke"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Packung"
-msgstr[1] "Packungen"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Glas"

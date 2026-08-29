@@ -1,5 +1,4 @@
 # Translators:
-# Márk Kökény <oregapamgroup@gmail.com>, 2019
 # Ádám Kovács <kovacsadam07@outlook.hu>, 2019
 # bolash <balazs.izso@gesundheitscloud.de>, 2020
 # Gabor Pilsits <gabor.pilsits@gmail.com>, 2020
@@ -12,6 +11,9 @@
 # Tamas Voros <voros.e.tamas@gmail.com>, 2023
 # Gábor Buslig, 2025
 # Gergő Mihály, 2025
+# Richard Szolár <szolar.richard@gmail.com>, 2026
+# Bernd Bestel <bernd@berrnd.de>, 2026
+# Márk Kökény <oregapamgroup@gmail.com>, 2026
 # 
 msgid ""
 msgstr ""
@@ -19,7 +21,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: Gergő Mihály, 2025\n"
+"Last-Translator: Márk Kökény <oregapamgroup@gmail.com>, 2026\n"
 "Language-Team: Hungarian (https://app.transifex.com/grocy/teams/93189/hu/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -700,12 +702,8 @@ msgstr "Termékcsoport"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr ""
 
-msgid "Stay logged in permanently"
-msgstr "Bejelentkezés korlátlan ideig"
-
-msgid "When not set, you will get logged out at latest after 30 days"
+msgid "Remember Me"
 msgstr ""
-"Amikor nincs beállítva, akkor legkorábban 30 nap után ki leszel léptetve"
 
 msgid "Status"
 msgstr "Állapot"
@@ -1676,9 +1674,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr "Fagyasztószekrény"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "Nem lehet azonos a \"Forrás\" hellyel"
-
 msgid "Thawed"
 msgstr "Kiolvasztott"
 
@@ -1736,9 +1731,6 @@ msgstr "Tétel törlése"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr "Jelenítsen meg egy ikont, ha a termék már a bevásárlólistán van"
 
-msgid "Calories"
-msgstr "Kalória"
-
 msgid "means %1$s per %2$s"
 msgstr "%1$s minden %2$s-ben"
 
@@ -1787,8 +1779,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "Szűrő törlése"
 
-msgid "Permissions for user %s"
-msgstr "%s jogosultságai"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "Biztosan el akarod távolítani az összes jogosultságodat?"
@@ -2809,4 +2801,44 @@ msgstr ""
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "Hűtő"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "Darab"
+msgstr[1] "Darab"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "Csomag"
+msgstr[1] "Csomag"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

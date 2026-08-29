@@ -1,7 +1,6 @@
 # Translators:
 # Richard Szolár <szolar.richard@gmail.com>, 2019
 # Márk Kökény <oregapamgroup@gmail.com>, 2019
-# Bernd Bestel <bernd@berrnd.de>, 2020
 # Gabor Pilsits <gabor.pilsits@gmail.com>, 2020
 # Gábor Szellő <gabor.szello@gmail.com>, 2020
 # Vad Laszlo, 2021
@@ -39,19 +38,6 @@ msgstr "Édességszekrény"
 
 msgid "Tinned food cupboard"
 msgstr "Konzverves szekrény"
-
-msgid "Fridge"
-msgstr "Hűtő"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Darab"
-msgstr[1] "Darab"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Csomag"
-msgstr[1] "Csomag"
 
 msgid "Glass"
 msgid_plural "Glasses"

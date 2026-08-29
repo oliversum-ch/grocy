@@ -1,7 +1,10 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
+use Grocy\Services\ApplicationService;
+use Grocy\Services\DatabaseService;
+use Grocy\Services\LocalizationService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -14,10 +17,24 @@ class SystemApiController extends BaseApiController
 			$constants = get_defined_constants();
 
 			// Some GROCY_* constants are not really config settings and therefore should not be exposed
-			unset($constants['GROCY_AUTHENTICATED'], $constants['GROCY_DATAPATH'], $constants['GROCY_IS_EMBEDDED_INSTALL'], $constants['GROCY_USER_ID']);
+			unset(
+				$constants['GROCY_AUTHENTICATED'],
+				$constants['GROCY_DATAPATH'],
+				$constants['GROCY_IS_EMBEDDED_INSTALL'],
+				$constants['GROCY_REVERSE_PROXY_AUTH_HEADER'],
+				$constants['GROCY_REVERSE_PROXY_AUTH_USE_ENV'],
+				$constants['GROCY_LDAP_ADDRESS'],
+				$constants['GROCY_LDAP_BASE_DN'],
+				$constants['GROCY_LDAP_BIND_DN'],
+				$constants['GROCY_LDAP_BIND_PW'],
+				$constants['GROCY_LDAP_USER_FILTER'],
+				$constants['GROCY_LDAP_UID_ATTR'],
+				$constants['GROCY_USER_USERNAME'],
+				$constants['GROCY_USER_PICTURE_FILE_NAME'],
+				$constants['GROCY_USER_ID']
+			);
 
 			$returnArray = [];
-
 			foreach ($constants as $constant => $value)
 			{
 				if (substr($constant, 0, 6) === 'GROCY_')
@@ -37,13 +54,13 @@ class SystemApiController extends BaseApiController
 	public function GetDbChangedTime(Request $request, Response $response, array $args)
 	{
 		return $this->ApiResponse($response, [
-			'changed_time' => $this->getDatabaseService()->GetDbChangedTime()
+			'changed_time' => DatabaseService::GetInstance()->GetDbChangedTime()
 		]);
 	}
 
 	public function GetSystemInfo(Request $request, Response $response, array $args)
 	{
-		return $this->ApiResponse($response, $this->getApplicationService()->GetSystemInfo());
+		return $this->ApiResponse($response, ApplicationService::GetInstance()->GetSystemInfo());
 	}
 
 	public function GetSystemTime(Request $request, Response $response, array $args)
@@ -62,7 +79,7 @@ class SystemApiController extends BaseApiController
 				$offset = $params['offset'];
 			}
 
-			return $this->ApiResponse($response, $this->getApplicationService()->GetSystemTime($offset));
+			return $this->ApiResponse($response, ApplicationService::GetInstance()->GetSystemTime($offset));
 		}
 		catch (\Exception $ex)
 		{
@@ -78,7 +95,7 @@ class SystemApiController extends BaseApiController
 			{
 				$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
-				$this->getLocalizationService()->CheckAndAddMissingTranslationToPot($requestBody['text']);
+				LocalizationService::GetInstance()->CheckAndAddMissingTranslationToPot($requestBody['text']);
 				return $this->EmptyApiResponse($response);
 			}
 			catch (\Exception $ex)
@@ -90,6 +107,6 @@ class SystemApiController extends BaseApiController
 
 	public function GetLocalizationStrings(Request $request, Response $response, array $args)
 	{
-		return $this->ApiResponse($response, json_decode($this->getLocalizationService()->GetPoAsJsonString()), true);
+		return $this->ApiResponse($response, json_decode(LocalizationService::GetInstance()->GetPoAsJsonString()), true);
 	}
 }

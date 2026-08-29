@@ -44,23 +44,6 @@ msgstr "Szafka z cukierkami"
 msgid "Tinned food cupboard"
 msgstr "Szafka na konserwy"
 
-msgid "Fridge"
-msgstr "Lodówka"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Sztuka"
-msgstr[1] "Sztuki"
-msgstr[2] "Sztuk"
-msgstr[3] "Sztuk"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Paczka"
-msgstr[1] "Paczki"
-msgstr[2] "Paczek"
-msgstr[3] "Opakowań"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Szklanka"

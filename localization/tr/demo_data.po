@@ -34,19 +34,6 @@ msgstr "Şeker dolabı"
 msgid "Tinned food cupboard"
 msgstr "Konserve dolabı"
 
-msgid "Fridge"
-msgstr "Buzdolabı"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Tane"
-msgstr[1] "Tane"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Paket"
-msgstr[1] "Paket"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Bardak"

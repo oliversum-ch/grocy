@@ -17,17 +17,6 @@
 <script src="{{ $U('/viewjs/purchase.js?v=', true) }}{{ $version }}"></script>
 @endpush
 
-@php
-if(boolval($userSettings['shopping_list_round_up']))
-{
-foreach($listItems as $listItem)
-{
-$listItem->amount = ceil($listItem->amount);
-$listItem->last_price_total = $listItem->price * $listItem->amount;
-}
-}
-@endphp
-
 @section('content')
 <div class="row d-print-none hide-on-fullscreen-card">
 	<div class="col">
@@ -37,7 +26,8 @@ $listItem->last_price_total = $listItem->price * $listItem->amount;
 			</h2>
 			@if(GROCY_FEATURE_FLAG_STOCK_PRICE_TRACKING)
 			<h2 class="mb-0 mr-auto order-3 order-md-1 width-xs-sm-100">
-				<span class="text-muted small">{!! $__t('%s total value', '<span class="locale-number locale-number-currency">' . SumArrayValue($listItems, 'last_price_total') . '</span>') !!}</span>
+				<span class="text-muted small">{!! $__t('%s total value', '<span id="total-value"
+						class="locale-number locale-number-currency"></span>') !!}</span>
 			</h2>
 			@endif
 			<div class="float-right @if($embedded) pr-5 @endif">
@@ -276,6 +266,12 @@ $listItem->last_price_total = $listItem->price * $listItem->amount;
 					if ($productQuConversion)
 					{
 					$listItem->amount = $listItem->amount * $productQuConversion->factor;
+					}
+
+					if(boolval($userSettings['shopping_list_round_up']))
+					{
+					$listItem->amount = ceil($listItem->amount);
+					$listItem->last_price_total = $listItem->price * $listItem->amount;
 					}
 					@endphp
 					@endif

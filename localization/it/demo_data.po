@@ -37,21 +37,6 @@ msgstr "Credenza delle caramelle"
 msgid "Tinned food cupboard"
 msgstr "Credenza del cibo in scatola"
 
-msgid "Fridge"
-msgstr "Frigorifero"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Pezzo"
-msgstr[1] "Pezzi"
-msgstr[2] "Pezzi"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pacco"
-msgstr[1] "Pacchi"
-msgstr[2] "Pacchi"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Bicchiere"

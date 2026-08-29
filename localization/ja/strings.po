@@ -1,10 +1,9 @@
 # Translators:
-# EbXpJ6bp <ebxpj6bp@outlook.jp>, 2020
-# Cisco Benjamin <metallica@vivaldi.net>, 2020
 # Tatsuya Ueda <ml@tatsuya.info>, 2020
 # KATSUHIKO SHIGEYAMA <kshigeyama@gmail.com>, 2020
 # 鳥山 陽平 <kagemomiji@gmail.com>, 2022
 # Taiki Matsumura, 2025
+# EbXpJ6bp <ebxpj6bp@outlook.jp>, 2026
 # pigmentblue15, 2026
 # 
 msgid ""
@@ -671,11 +670,8 @@ msgstr "物品グループ"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr "物品グループ「%s」を削除してもよろしいですか？"
 
-msgid "Stay logged in permanently"
-msgstr "ログインしたままにする"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "設定しない場合、30日後にログアウトされます"
+msgid "Remember Me"
+msgstr "ログイン状態を保持"
 
 msgid "Status"
 msgstr "状態"
@@ -1572,9 +1568,6 @@ msgstr "スキャンモードが有効ですが、必須フィールドの一部
 msgid "Is freezer"
 msgstr "冷凍庫"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "「移動元」と同じ保管場所にすることはできません"
-
 msgid "Thawed"
 msgstr "解凍"
 
@@ -1632,9 +1625,6 @@ msgstr "項目を削除"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr "既に買い物リストにある物品のアイコンを表示"
 
-msgid "Calories"
-msgstr "カロリー"
-
 msgid "means %1$s per %2$s"
 msgstr "%1$s あたり %2$s"
 
@@ -1684,8 +1674,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "フィルター解除"
 
-msgid "Permissions for user %s"
-msgstr "ユーザー %s の権限"
+msgid "Permissions"
+msgstr "権限"
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "自分自身の完全な権限を削除してもよろしいですか？"
@@ -2622,3 +2612,41 @@ msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
 msgstr "この物品がストックありとなった後、ここで希望の数量単位を選択できない場合、まず対応する単位変換を作成してください"
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "冷蔵庫"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "ピース"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "パック"
+
+msgid "Manage user sessions"
+msgstr "ユーザーセッション管理"
+
+msgid "Sessions"
+msgstr "セッション"
+
+msgid "Token type"
+msgstr "トークンタイプ"
+
+msgid "Token hash"
+msgstr "トークンハッシュ"
+
+msgid "Client"
+msgstr "クライアント"
+
+msgid "This session"
+msgstr "このセッション"
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr "選択したセッションを削除してもよろしいですか？"
+
+msgid "Last access"
+msgstr "直近のアクセス"

@@ -1,9 +1,9 @@
 # Translators:
-# jd615645 <jd615645@gmail.com>, 2020
 # ppatrickxctw <ppatrickxctw@gmail.com>, 2020
 # richegg Tsai <zxp86021@gmail.com>, 2020
 # 鍾佑豪 <zobuwei@gmail.com>, 2022
 # alexli1205, 2022
+# jd615645 <jd615645@gmail.com>, 2026
 # 
 msgid ""
 msgstr ""
@@ -11,7 +11,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: alexli1205, 2022\n"
+"Last-Translator: jd615645 <jd615645@gmail.com>, 2026\n"
 "Language-Team: Chinese (Taiwan) (https://app.transifex.com/grocy/teams/93189/zh_TW/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -669,11 +669,8 @@ msgstr "物品分類"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr ""
 
-msgid "Stay logged in permanently"
-msgstr "保持登入狀態"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "如未設定，最晚將在 30 天後被登出"
+msgid "Remember Me"
+msgstr ""
 
 msgid "Status"
 msgstr "狀態"
@@ -1567,9 +1564,6 @@ msgstr "掃描模式已開啟，但並非所有必填欄位皆可自動填入"
 msgid "Is freezer"
 msgstr "冷凍庫"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "這不能與「來源」存放位置相同"
-
 msgid "Thawed"
 msgstr "已解凍"
 
@@ -1627,9 +1621,6 @@ msgstr "刪除此項目"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr "當物品已經在購物清單時顯示圖示"
 
-msgid "Calories"
-msgstr "大卡"
-
 msgid "means %1$s per %2$s"
 msgstr "代表每 %2$s 包含 %1$s"
 
@@ -1678,8 +1669,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "清除過濾條件"
 
-msgid "Permissions for user %s"
-msgstr "使用者 %s 的權限"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "確定要刪除個人最高權限嗎？"
@@ -2609,4 +2600,42 @@ msgstr ""
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "冰箱"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "件"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "包"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

@@ -11,10 +11,10 @@ class BatteriesService extends BaseService
 			throw new \Exception('Battery does not exist');
 		}
 
-		$battery = $this->getDatabase()->batteries($batteryId);
-		$batteryChargeCyclesCount = $this->getDatabase()->battery_charge_cycles()->where('battery_id = :1 AND undone = 0', $batteryId)->count();
-		$batteryLastChargedTime = $this->getDatabase()->battery_charge_cycles()->where('battery_id = :1 AND undone = 0', $batteryId)->max('tracked_time');
-		$nextChargeTime = $this->getDatabase()->batteries_current()->where('battery_id', $batteryId)->min('next_estimated_charge_time');
+		$battery = $this->DB->batteries($batteryId);
+		$batteryChargeCyclesCount = $this->DB->battery_charge_cycles()->where('battery_id = :1 AND undone = 0', $batteryId)->count();
+		$batteryLastChargedTime = $this->DB->battery_charge_cycles()->where('battery_id = :1 AND undone = 0', $batteryId)->max('tracked_time');
+		$nextChargeTime = $this->DB->batteries_current()->where('battery_id', $batteryId)->min('next_estimated_charge_time');
 
 		return [
 			'battery' => $battery,
@@ -26,8 +26,8 @@ class BatteriesService extends BaseService
 
 	public function GetCurrent()
 	{
-		$batteries = $this->getDatabase()->batteries()->where('active = 1')->orderBy('name', 'COLLATE NOCASE');
-		$currentBatteries = $this->getDatabase()->batteries_current();
+		$batteries = $this->DB->batteries()->where('active = 1')->orderBy('name', 'COLLATE NOCASE');
+		$currentBatteries = $this->DB->batteries_current();
 		foreach ($currentBatteries as $currentBattery)
 		{
 			$currentBattery->battery = FindObjectInArrayByPropertyValue($batteries, 'id', $currentBattery->battery_id);
@@ -43,18 +43,18 @@ class BatteriesService extends BaseService
 			throw new \Exception('Battery does not exist');
 		}
 
-		$logRow = $this->getDatabase()->battery_charge_cycles()->createRow([
+		$logRow = $this->DB->battery_charge_cycles()->createRow([
 			'battery_id' => $batteryId,
 			'tracked_time' => $trackedTime
 		]);
 		$logRow->save();
 
-		return $this->getDatabase()->lastInsertId();
+		return $this->DB->lastInsertId();
 	}
 
 	public function UndoChargeCycle($chargeCycleId)
 	{
-		$logRow = $this->getDatabase()->battery_charge_cycles()->where('id = :1 AND undone = 0', $chargeCycleId)->fetch();
+		$logRow = $this->DB->battery_charge_cycles()->where('id = :1 AND undone = 0', $chargeCycleId)->fetch();
 
 		if ($logRow == null)
 		{
@@ -70,7 +70,7 @@ class BatteriesService extends BaseService
 
 	private function BatteryExists($batteryId)
 	{
-		$batteryRow = $this->getDatabase()->batteries()->where('id = :1', $batteryId)->fetch();
+		$batteryRow = $this->DB->batteries()->where('id = :1', $batteryId)->fetch();
 		return $batteryRow !== null;
 	}
 }

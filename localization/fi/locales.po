@@ -1,5 +1,6 @@
 # Translators:
 # Sami Kiviniemi, 2024
+# Tomi Hurenius, 2026
 # 
 msgid ""
 msgstr ""
@@ -7,7 +8,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2020-08-31 19:11+0000\n"
-"Last-Translator: Sami Kiviniemi, 2024\n"
+"Last-Translator: Tomi Hurenius, 2026\n"
 "Language-Team: Finnish (https://app.transifex.com/grocy/teams/93189/fi/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -146,4 +147,4 @@ msgstr "Viro"
 
 # Bulgarian
 msgid "bg_BG"
-msgstr ""
+msgstr "Bulgaria"

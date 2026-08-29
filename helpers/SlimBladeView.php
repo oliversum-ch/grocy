@@ -17,7 +17,7 @@ class SlimBladeView
 	protected $CachePath;
 	protected $ViewData = [];
 
-	public function render(ResponseInterface $response, string $template, array $data = [])
+	public function Render(ResponseInterface $response, string $template, array $data = [])
 	{
 		$data = array_merge($this->ViewData, $data);
 		$renderer = new Blade($this->ViewPaths, $this->CachePath, null);

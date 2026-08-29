@@ -37,19 +37,6 @@ msgstr "Sweets cupboard"
 msgid "Tinned food cupboard"
 msgstr "Tinned food cupboard"
 
-msgid "Fridge"
-msgstr "Fridge"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Piece"
-msgstr[1] "Pieces"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pack"
-msgstr[1] "Packs"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Glass"

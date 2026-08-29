@@ -2,6 +2,7 @@
 
 namespace Grocy\Controllers;
 
+use Grocy\Services\ApplicationService;
 use Grocy\Services\DatabaseMigrationService;
 use Grocy\Services\DemoDataGeneratorService;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -11,27 +12,27 @@ class SystemController extends BaseController
 {
 	public function About(Request $request, Response $response, array $args)
 	{
-		return $this->renderPage($response, 'about', [
-			'systemInfo' => $this->getApplicationService()->GetSystemInfo(),
-			'versionInfo' => $this->getApplicationService()->GetInstalledVersion(),
-			'changelog' => $this->getApplicationService()->GetChangelog()
+		return $this->RenderPage($response, 'about', [
+			'systemInfo' => ApplicationService::GetInstance()->GetSystemInfo(),
+			'versionInfo' => ApplicationService::GetInstance()->GetInstalledVersion(),
+			'changelog' => ApplicationService::GetInstance()->GetChangelog()
 		]);
 	}
 
 	public function BarcodeScannerTesting(Request $request, Response $response, array $args)
 	{
-		return $this->renderPage($response, 'barcodescannertesting');
+		return $this->RenderPage($response, 'barcodescannertesting');
 	}
 
 	public function Root(Request $request, Response $response, array $args)
 	{
 		// Schema migration is done here
-		$databaseMigrationService = DatabaseMigrationService::getInstance();
+		$databaseMigrationService = DatabaseMigrationService::GetInstance();
 		$databaseMigrationService->MigrateDatabase();
 
 		if (GROCY_MODE === 'dev' || GROCY_MODE === 'demo' || GROCY_MODE === 'prerelease')
 		{
-			$demoDataGeneratorService = DemoDataGeneratorService::getInstance();
+			$demoDataGeneratorService = DemoDataGeneratorService::GetInstance();
 			$demoDataGeneratorService->PopulateDemoData(isset($request->getQueryParams()['nodemodata']));
 		}
 

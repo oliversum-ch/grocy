@@ -54,7 +54,7 @@
 
 <div class="row collapse d-md-flex"
 	id="table-filter-row">
-	<div class="col-12 col-md-6 col-xl-3">
+	<div class="col-12 col-md-6 col-xl-2">
 		<div class="input-group">
 			<div class="input-group-prepend">
 				<span class="input-group-text"><i class="fa-solid fa-search"></i></span>
@@ -65,7 +65,7 @@
 				placeholder="{{ $__t('Search') }}">
 		</div>
 	</div>
-	<div class="col-12 col-md-6 col-xl-3">
+	<div class="col-12 col-md-6 col-xl-2">
 		<div class="input-group">
 			<div class="input-group-prepend">
 				<span class="input-group-text"><i class="fa-solid fa-filter"></i>&nbsp;{{ $__t('Status') }}</span>
@@ -98,6 +98,20 @@
 		</div>
 	</div>
 	<div class="col-12 col-md-6 col-xl-3">
+		<div class="input-group">
+			<div class="input-group-prepend">
+				<span class="input-group-text"><i class="fa-solid fa-filter"></i>&nbsp;{{ $__t('Assignment') }}</span>
+			</div>
+			<select class="custom-control custom-select"
+				id="user-filter">
+				<option value="all">{{ $__t('All') }}</option>
+				@foreach($users as $user)
+				<option value="{{ $user->display_name }}">{{ $user->display_name }}</option>
+				@endforeach
+			</select>
+		</div>
+	</div>
+	<div class="col-12 col-md-6 col-xl-2">
 		<div class="form-check custom-control custom-checkbox">
 			<input class="form-check-input custom-control-input"
 				type="checkbox"
@@ -190,7 +204,7 @@
 						@if($task->category_id != null) <span>{{ FindObjectInArrayByPropertyValue($taskCategories, 'id', $task->category_id)->name }}</span> @else <span class="font-italic font-weight-light">{{ $__t('Uncategorized') }}</span>@endif
 					</td>
 					<td>
-						@if($task->assigned_to_user_id != null) <span>{{ GetUserDisplayName(FindObjectInArrayByPropertyValue($users, 'id', $task->assigned_to_user_id)) }}</span> @endif
+						@if($task->assigned_to_user_id != null) {{ GetUserDisplayName(FindObjectInArrayByPropertyValue($users, 'id', $task->assigned_to_user_id)) }} @endif
 					</td>
 					<td class="d-none">
 						{{ $task->due_type }}

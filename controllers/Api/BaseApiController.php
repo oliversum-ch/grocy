@@ -1,7 +1,8 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
+use Grocy\Controllers\BaseController;
 use LessQL\Result;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Exception\HttpException;
@@ -32,22 +33,24 @@ class BaseApiController extends BaseController
 
 	protected function GenericErrorResponse(Response $response, $errorMessage, $status = 400)
 	{
-		return $response->withStatus($status)->withJson([
+		$response = $response->withStatus($status);
+
+		return $this->ApiResponse($response, [
 			'error_message' => $errorMessage
 		]);
 	}
 
 	public function FilteredApiResponse(Response $response, Result $data, array $query)
 	{
-		$data = $this->queryData($data, $query);
+		$data = $this->QueryData($data, $query);
 		return $this->ApiResponse($response, $data);
 	}
 
-	protected function queryData(Result $data, array $query)
+	protected function QueryData(Result $data, array $query)
 	{
 		if (isset($query['query']))
 		{
-			$data = $this->filter($data, $query['query']);
+			$data = $this->FilterData($data, $query['query']);
 		}
 
 		if (isset($query['limit']) || isset($query['offset']))
@@ -82,7 +85,7 @@ class BaseApiController extends BaseController
 		return $data;
 	}
 
-	protected function filter(Result $data, array $query): Result
+	protected function FilterData(Result $data, array $query): Result
 	{
 		foreach ($query as $q)
 		{
@@ -141,11 +144,11 @@ class BaseApiController extends BaseController
 		return $data;
 	}
 
-	protected function getOpenApispec()
+	protected function GetOpenApispec()
 	{
 		if ($this->OpenApiSpec == null)
 		{
-			$this->OpenApiSpec = json_decode(file_get_contents(__DIR__ . '/../grocy.openapi.json'));
+			$this->OpenApiSpec = json_decode(file_get_contents(__DIR__ . '/../../grocy.openapi.json'));
 		}
 
 		return $this->OpenApiSpec;

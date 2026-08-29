@@ -122,7 +122,7 @@ class DatabaseService
 		touch($this->GetDbFilePath(), strtotime($dateTime));
 	}
 
-	public static function getInstance()
+	public static function GetInstance()
 	{
 		if (self::$instance == null)
 		{

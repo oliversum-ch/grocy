@@ -1,8 +1,11 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
+use Grocy\Services\StockService;
+use Grocy\Services\UserfieldsService;
+use Grocy\Services\UsersService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -12,30 +15,30 @@ class GenericEntityApiController extends BaseApiController
 	{
 		if ($args['entity'] == 'shopping_list' || $args['entity'] == 'shopping_lists')
 		{
-			User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+			User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 		}
 		elseif ($args['entity'] == 'recipes' || $args['entity'] == 'recipes_pos' || $args['entity'] == 'recipes_nestings')
 		{
-			User::checkPermission($request, User::PERMISSION_RECIPES);
+			User::CheckPermission($request, User::PERMISSION_RECIPES);
 		}
 		elseif ($args['entity'] == 'meal_plan')
 		{
-			User::checkPermission($request, User::PERMISSION_RECIPES_MEALPLAN);
+			User::CheckPermission($request, User::PERMISSION_RECIPES_MEALPLAN);
 		}
 		elseif ($args['entity'] == 'equipment')
 		{
-			User::checkPermission($request, User::PERMISSION_EQUIPMENT);
+			User::CheckPermission($request, User::PERMISSION_EQUIPMENT);
 		}
 		else
 		{
-			User::checkPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
+			User::CheckPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
 		}
 
 		if ($this->IsValidExposedEntity($args['entity']) && !$this->IsEntityWithNoEdit($args['entity']))
 		{
 			if ($this->IsEntityWithEditRequiresAdmin($args['entity']))
 			{
-				User::checkPermission($request, User::PERMISSION_ADMIN);
+				User::CheckPermission($request, User::PERMISSION_ADMIN);
 			}
 
 			$requestBody = $this->GetParsedAndFilteredRequestBody($request);
@@ -47,14 +50,14 @@ class GenericEntityApiController extends BaseApiController
 					throw new \Exception('Request body could not be parsed (probably invalid JSON format or missing/wrong Content-Type header)');
 				}
 
-				$newRow = $this->getDatabase()->{$args['entity']}()->createRow($requestBody);
+				$newRow = $this->DB->{$args['entity']}()->createRow($requestBody);
 				$newRow->save();
-				$newObjectId = $this->getDatabase()->lastInsertId();
+				$newObjectId = $this->DB->lastInsertId();
 
 				// TODO: This should be better done somehow in StockService
-				if ($args['entity'] == 'products' && boolval($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
+				if ($args['entity'] == 'products' && boolval(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
 				{
-					$this->getStockService()->AddMissingProductsToShoppingList($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
+					StockService::GetInstance()->AddMissingProductsToShoppingList(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
 				}
 
 				return $this->ApiResponse($response, [
@@ -76,19 +79,19 @@ class GenericEntityApiController extends BaseApiController
 	{
 		if ($args['entity'] == 'shopping_list' || $args['entity'] == 'shopping_lists')
 		{
-			User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_DELETE);
+			User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_DELETE);
 		}
 		elseif ($args['entity'] == 'recipes' || $args['entity'] == 'recipes_pos' || $args['entity'] == 'recipes_nestings')
 		{
-			User::checkPermission($request, User::PERMISSION_RECIPES);
+			User::CheckPermission($request, User::PERMISSION_RECIPES);
 		}
 		elseif ($args['entity'] == 'meal_plan')
 		{
-			User::checkPermission($request, User::PERMISSION_RECIPES_MEALPLAN);
+			User::CheckPermission($request, User::PERMISSION_RECIPES_MEALPLAN);
 		}
 		elseif ($args['entity'] == 'equipment')
 		{
-			User::checkPermission($request, User::PERMISSION_EQUIPMENT);
+			User::CheckPermission($request, User::PERMISSION_EQUIPMENT);
 		}
 		elseif ($args['entity'] == 'api_keys')
 		{
@@ -96,17 +99,17 @@ class GenericEntityApiController extends BaseApiController
 		}
 		else
 		{
-			User::checkPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
+			User::CheckPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
 		}
 
 		if ($this->IsValidExposedEntity($args['entity']) && !$this->IsEntityWithNoDelete($args['entity']))
 		{
 			if ($this->IsEntityWithEditRequiresAdmin($args['entity']))
 			{
-				User::checkPermission($request, User::PERMISSION_ADMIN);
+				User::CheckPermission($request, User::PERMISSION_ADMIN);
 			}
 
-			$row = $this->getDatabase()->{$args['entity']}($args['objectId']);
+			$row = $this->DB->{$args['entity']}($args['objectId']);
 			if ($row == null)
 			{
 				return $this->GenericErrorResponse($response, 'Object not found', 400);
@@ -126,30 +129,30 @@ class GenericEntityApiController extends BaseApiController
 	{
 		if ($args['entity'] == 'shopping_list' || $args['entity'] == 'shopping_lists')
 		{
-			User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+			User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 		}
 		elseif ($args['entity'] == 'recipes' || $args['entity'] == 'recipes_pos' || $args['entity'] == 'recipes_nestings')
 		{
-			User::checkPermission($request, User::PERMISSION_RECIPES);
+			User::CheckPermission($request, User::PERMISSION_RECIPES);
 		}
 		elseif ($args['entity'] == 'meal_plan')
 		{
-			User::checkPermission($request, User::PERMISSION_RECIPES_MEALPLAN);
+			User::CheckPermission($request, User::PERMISSION_RECIPES_MEALPLAN);
 		}
 		elseif ($args['entity'] == 'equipment')
 		{
-			User::checkPermission($request, User::PERMISSION_EQUIPMENT);
+			User::CheckPermission($request, User::PERMISSION_EQUIPMENT);
 		}
 		else
 		{
-			User::checkPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
+			User::CheckPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
 		}
 
 		if ($this->IsValidExposedEntity($args['entity']) && !$this->IsEntityWithNoEdit($args['entity']))
 		{
 			if ($this->IsEntityWithEditRequiresAdmin($args['entity']))
 			{
-				User::checkPermission($request, User::PERMISSION_ADMIN);
+				User::CheckPermission($request, User::PERMISSION_ADMIN);
 			}
 
 			$requestBody = $this->GetParsedAndFilteredRequestBody($request);
@@ -161,7 +164,7 @@ class GenericEntityApiController extends BaseApiController
 					throw new \Exception('Request body could not be parsed (probably invalid JSON format or missing/wrong Content-Type header)');
 				}
 
-				$row = $this->getDatabase()->{$args['entity']}($args['objectId']);
+				$row = $this->DB->{$args['entity']}($args['objectId']);
 				if ($row == null)
 				{
 					return $this->GenericErrorResponse($response, 'Object not found', 400);
@@ -170,9 +173,9 @@ class GenericEntityApiController extends BaseApiController
 				$row->update($requestBody);
 
 				// TODO: This should be better done somehow in StockService
-				if ($args['entity'] == 'products' && boolval($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
+				if ($args['entity'] == 'products' && boolval(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
 				{
-					$this->getStockService()->AddMissingProductsToShoppingList($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
+					StockService::GetInstance()->AddMissingProductsToShoppingList(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
 				}
 
 				return $this->EmptyApiResponse($response);
@@ -195,7 +198,7 @@ class GenericEntityApiController extends BaseApiController
 			return $this->GenericErrorResponse($response, 'Entity does not exist or is not exposed');
 		}
 
-		$object = $this->getDatabase()->{$args['entity']}($args['objectId']);
+		$object = $this->DB->{$args['entity']}($args['objectId']);
 		if ($object == null)
 		{
 			return $this->GenericErrorResponse($response, 'Object not found', 404);
@@ -207,7 +210,7 @@ class GenericEntityApiController extends BaseApiController
 		{
 			$referencingId = $object->stock_id;
 		}
-		$userfields = $this->getUserfieldsService()->GetValues($args['entity'], $referencingId);
+		$userfields = UserfieldsService::GetInstance()->GetValues($args['entity'], $referencingId);
 		if (count($userfields) === 0)
 		{
 			$userfields = null;
@@ -224,12 +227,12 @@ class GenericEntityApiController extends BaseApiController
 			return $this->GenericErrorResponse($response, 'Entity does not exist or is not exposed');
 		}
 
-		$objects = $this->queryData($this->getDatabase()->{$args['entity']}(), $request->getQueryParams());
+		$objects = $this->QueryData($this->DB->{$args['entity']}(), $request->getQueryParams());
 
-		$userfields = $this->getUserfieldsService()->GetFields($args['entity']);
+		$userfields = UserfieldsService::GetInstance()->GetFields($args['entity']);
 		if (count($userfields) > 0)
 		{
-			$allUserfieldValues = $this->getUserfieldsService()->GetAllValues($args['entity']);
+			$allUserfieldValues = UserfieldsService::GetInstance()->GetAllValues($args['entity']);
 
 			foreach ($objects as $object)
 			{
@@ -265,7 +268,7 @@ class GenericEntityApiController extends BaseApiController
 	{
 		try
 		{
-			return $this->ApiResponse($response, $this->getUserfieldsService()->GetValues($args['entity'], $args['objectId']));
+			return $this->ApiResponse($response, UserfieldsService::GetInstance()->GetValues($args['entity'], $args['objectId']));
 		}
 		catch (\Exception $ex)
 		{
@@ -275,7 +278,7 @@ class GenericEntityApiController extends BaseApiController
 
 	public function SetUserfields(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
+		User::CheckPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -286,7 +289,7 @@ class GenericEntityApiController extends BaseApiController
 				throw new \Exception('Request body could not be parsed (probably invalid JSON format or missing/wrong Content-Type header)');
 			}
 
-			$this->getUserfieldsService()->SetValues($args['entity'], $args['objectId'], $requestBody);
+			UserfieldsService::GetInstance()->SetValues($args['entity'], $args['objectId'], $requestBody);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -297,26 +300,26 @@ class GenericEntityApiController extends BaseApiController
 
 	private function IsEntityWithEditRequiresAdmin($entity)
 	{
-		return in_array($entity, $this->getOpenApiSpec()->components->schemas->ExposedEntityEditRequiresAdmin->enum);
+		return in_array($entity, $this->GetOpenApispec()->components->schemas->ExposedEntityEditRequiresAdmin->enum);
 	}
 
 	private function IsEntityWithNoListing($entity)
 	{
-		return in_array($entity, $this->getOpenApiSpec()->components->schemas->ExposedEntityNoListing->enum);
+		return in_array($entity, $this->GetOpenApispec()->components->schemas->ExposedEntityNoListing->enum);
 	}
 
 	private function IsEntityWithNoEdit($entity)
 	{
-		return in_array($entity, $this->getOpenApiSpec()->components->schemas->ExposedEntityNoEdit->enum);
+		return in_array($entity, $this->GetOpenApispec()->components->schemas->ExposedEntityNoEdit->enum);
 	}
 
 	private function IsEntityWithNoDelete($entity)
 	{
-		return in_array($entity, $this->getOpenApiSpec()->components->schemas->ExposedEntityNoDelete->enum);
+		return in_array($entity, $this->GetOpenApispec()->components->schemas->ExposedEntityNoDelete->enum);
 	}
 
 	private function IsValidExposedEntity($entity)
 	{
-		return in_array($entity, $this->getOpenApiSpec()->components->schemas->ExposedEntity->enum);
+		return in_array($entity, $this->GetOpenApispec()->components->schemas->ExposedEntity->enum);
 	}
 }

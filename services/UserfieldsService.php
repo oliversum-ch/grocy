@@ -23,7 +23,7 @@ class UserfieldsService extends BaseService
 
 	public function GetAllFields()
 	{
-		return $this->getDatabase()->userfields()->orderBy('name', 'COLLATE NOCASE')->fetchAll();
+		return $this->DB->userfields()->orderBy('name', 'COLLATE NOCASE')->fetchAll();
 	}
 
 	public function GetAllValues($entity)
@@ -34,16 +34,16 @@ class UserfieldsService extends BaseService
 		}
 
 		$userfields = $this->GetFields($entity);
-		return $this->getDatabase()->userfield_values_resolved()->where('entity', $entity)->orderBy('name', 'COLLATE NOCASE')->fetchAll();
+		return $this->DB->userfield_values_resolved()->where('entity', $entity)->orderBy('name', 'COLLATE NOCASE')->fetchAll();
 	}
 
 	public function GetEntities()
 	{
-		$exposedDefaultEntities = $this->getOpenApiSpec()->components->schemas->ExposedEntity->enum;
+		$exposedDefaultEntities = $this->GetOpenApispec()->components->schemas->ExposedEntity->enum;
 		$userEntities = [];
 		$specialEntities = ['users'];
 
-		foreach ($this->getDatabase()->userentities()->orderBy('name', 'COLLATE NOCASE') as $userentity)
+		foreach ($this->DB->userentities()->orderBy('name', 'COLLATE NOCASE') as $userentity)
 		{
 			$userEntities[] = 'userentity-' . $userentity->name;
 		}
@@ -55,7 +55,7 @@ class UserfieldsService extends BaseService
 
 	public function GetField($fieldId)
 	{
-		return $this->getDatabase()->userfields($fieldId);
+		return $this->DB->userfields($fieldId);
 	}
 
 	public function GetFieldTypes()
@@ -70,7 +70,7 @@ class UserfieldsService extends BaseService
 			throw new \Exception('Entity does not exist or is not exposed');
 		}
 
-		return $this->getDatabase()->userfields()->where('entity', $entity)->orderBy('sort_number')->orderBy('name', 'COLLATE NOCASE')->fetchAll();
+		return $this->DB->userfields()->where('entity', $entity)->orderBy('sort_number')->orderBy('name', 'COLLATE NOCASE')->fetchAll();
 	}
 
 	public function GetValues($entity, $objectId)
@@ -81,7 +81,7 @@ class UserfieldsService extends BaseService
 		}
 
 		$userfields = $this->GetFields($entity);
-		$userfieldValues = $this->getDatabase()->userfield_values_resolved()->where('entity = :1 AND object_id = :2', $entity, $objectId)->orderBy('name', 'COLLATE NOCASE')->fetchAll();
+		$userfieldValues = $this->DB->userfield_values_resolved()->where('entity = :1 AND object_id = :2', $entity, $objectId)->orderBy('name', 'COLLATE NOCASE')->fetchAll();
 
 		$userfieldKeyValuePairs = [];
 		foreach ($userfields as $userfield)
@@ -109,7 +109,7 @@ class UserfieldsService extends BaseService
 
 		foreach ($userfields as $key => $value)
 		{
-			$fieldRow = $this->getDatabase()->userfields()->where('entity = :1 AND name = :2', $entity, $key)->fetch();
+			$fieldRow = $this->DB->userfields()->where('entity = :1 AND name = :2', $entity, $key)->fetch();
 
 			if ($fieldRow === null)
 			{
@@ -118,27 +118,25 @@ class UserfieldsService extends BaseService
 
 			$fieldId = $fieldRow->id;
 
-			$alreadyExistingEntry = $this->getDatabase()->userfield_values()->where('field_id = :1 AND object_id = :2', $fieldId, $objectId)->fetch();
+			$alreadyExistingEntry = $this->DB->userfield_values()->where('field_id = :1 AND object_id = :2', $fieldId, $objectId)->fetch();
 
-			if ($alreadyExistingEntry)
-			{ // Update
-				$alreadyExistingEntry->update([
-					'value' => $value
-				]);
+			if ($alreadyExistingEntry) // Update
+			{$alreadyExistingEntry->update([
+				'value' => $value
+			]);
 			}
-			else
-			{ // Insert
-				$newRow = $this->getDatabase()->userfield_values()->createRow([
-					'field_id' => $fieldId,
-					'object_id' => $objectId,
-					'value' => $value
-				]);
+			else // Insert
+			{$newRow = $this->DB->userfield_values()->createRow([
+				'field_id' => $fieldId,
+				'object_id' => $objectId,
+				'value' => $value
+			]);
 				$newRow->save();
 			}
 		}
 	}
 
-	protected function getOpenApispec()
+	protected function GetOpenApispec()
 	{
 		if ($this->OpenApiSpec == null)
 		{

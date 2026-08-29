@@ -8,10 +8,10 @@ class TasksService extends BaseService
 {
 	public function GetCurrent(): Result
 	{
-		$users = $this->getUsersService()->GetUsersAsDto();
-		$categories = $this->getDatabase()->task_categories()->where('active = 1');
+		$users = UsersService::GetInstance()->GetUsersAsDto();
+		$categories = $this->DB->task_categories()->where('active = 1');
 
-		$tasks = $this->getDatabase()->tasks_current();
+		$tasks = $this->DB->tasks_current();
 		foreach ($tasks as $task)
 		{
 			if (!empty($task->assigned_to_user_id))
@@ -43,7 +43,7 @@ class TasksService extends BaseService
 			throw new \Exception('Task does not exist');
 		}
 
-		$taskRow = $this->getDatabase()->tasks()->where('id = :1', $taskId)->fetch();
+		$taskRow = $this->DB->tasks()->where('id = :1', $taskId)->fetch();
 		$taskRow->update([
 			'done' => 1,
 			'done_timestamp' => $doneTime
@@ -59,7 +59,7 @@ class TasksService extends BaseService
 			throw new \Exception('Task does not exist');
 		}
 
-		$taskRow = $this->getDatabase()->tasks()->where('id = :1', $taskId)->fetch();
+		$taskRow = $this->DB->tasks()->where('id = :1', $taskId)->fetch();
 		$taskRow->update([
 			'done' => 0,
 			'done_timestamp' => null
@@ -70,7 +70,7 @@ class TasksService extends BaseService
 
 	private function TaskExists($taskId)
 	{
-		$taskRow = $this->getDatabase()->tasks()->where('id = :1', $taskId)->fetch();
+		$taskRow = $this->DB->tasks()->where('id = :1', $taskId)->fetch();
 		return $taskRow !== null;
 	}
 }

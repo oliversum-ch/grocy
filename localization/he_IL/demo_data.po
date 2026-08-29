@@ -33,23 +33,6 @@ msgstr "ארון הממתקים"
 msgid "Tinned food cupboard"
 msgstr "ארון השימורים"
 
-msgid "Fridge"
-msgstr "מקרר"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "חתיכה"
-msgstr[1] "חתיכות"
-msgstr[2] "חתיכות"
-msgstr[3] "חתיכות"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "אריזה"
-msgstr[1] "אריזות"
-msgstr[2] "אריזות"
-msgstr[3] "אריזות"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "צנצנת"

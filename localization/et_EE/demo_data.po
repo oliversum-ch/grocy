@@ -33,19 +33,6 @@ msgstr "Kommisahtel"
 msgid "Tinned food cupboard"
 msgstr "Konservisahtel"
 
-msgid "Fridge"
-msgstr "Külmkapp"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Tükk"
-msgstr[1] "Tükki"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pakk"
-msgstr[1] "Pakki"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Klaas"

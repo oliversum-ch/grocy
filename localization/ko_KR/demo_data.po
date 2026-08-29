@@ -32,17 +32,6 @@ msgstr "간식 찬장"
 msgid "Tinned food cupboard"
 msgstr "통조림 찬장"
 
-msgid "Fridge"
-msgstr "냉장고"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "조각"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "팩"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "잔"

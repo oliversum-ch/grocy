@@ -1,8 +1,9 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
+use Grocy\Services\TasksService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -10,12 +11,12 @@ class TasksApiController extends BaseApiController
 {
 	public function Current(Request $request, Response $response, array $args)
 	{
-		return $this->FilteredApiResponse($response, $this->getTasksService()->GetCurrent(), $request->getQueryParams());
+		return $this->FilteredApiResponse($response, TasksService::GetInstance()->GetCurrent(), $request->getQueryParams());
 	}
 
 	public function MarkTaskAsCompleted(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_TASKS_MARK_COMPLETED);
+		User::CheckPermission($request, User::PERMISSION_TASKS_MARK_COMPLETED);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -28,7 +29,7 @@ class TasksApiController extends BaseApiController
 				$doneTime = $requestBody['done_time'];
 			}
 
-			$this->getTasksService()->MarkTaskAsCompleted($args['taskId'], $doneTime);
+			TasksService::GetInstance()->MarkTaskAsCompleted($args['taskId'], $doneTime);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -39,11 +40,11 @@ class TasksApiController extends BaseApiController
 
 	public function UndoTask(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_TASKS_UNDO_EXECUTION);
+		User::CheckPermission($request, User::PERMISSION_TASKS_UNDO_EXECUTION);
 
 		try
 		{
-			$this->getTasksService()->UndoTask($args['taskId']);
+			TasksService::GetInstance()->UndoTask($args['taskId']);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)

@@ -40,43 +40,43 @@ class User
 
 	public function __construct()
 	{
-		$this->db = DatabaseService::getInstance()->GetDbConnection();
+		$this->DB = DatabaseService::GetInstance()->GetDbConnection();
 	}
 
-	protected $db;
+	protected $DB;
 
 	public static function PermissionList()
 	{
 		$user = new self();
-		return $user->getPermissionList();
+		return $user->GetPermissionList();
 	}
 
-	public static function checkPermission($request, string $permission): void
+	public static function CheckPermission($request, string $permission): void
 	{
 		$user = new self();
-		if (!$user->hasPermission($permission))
+		if (!$user->HasPermission($permission))
 		{
 			throw new PermissionMissingException($request, $permission);
 		}
 	}
 
-	public function getPermissionList()
+	public function GetPermissionList()
 	{
-		return $this->db->uihelper_user_permissions()->where('user_id', GROCY_USER_ID);
+		return $this->DB->uihelper_user_permissions()->where('user_id', GROCY_USER_ID);
 	}
 
-	public function hasPermission(string $permission): bool
+	public function HasPermission(string $permission): bool
 	{
-		return $this->getPermissions()->where('permission_name', $permission)->fetch() !== null;
+		return $this->GetPermissions()->where('permission_name', $permission)->fetch() !== null;
 	}
 
-	public static function hasPermissions(string ...$permissions)
+	public static function HasPermissions(string ...$permissions)
 	{
 		$user = new self();
 
 		foreach ($permissions as $permission)
 		{
-			if (!$user->hasPermission($permission))
+			if (!$user->HasPermission($permission))
 			{
 				return false;
 			}
@@ -85,8 +85,8 @@ class User
 		return true;
 	}
 
-	protected function getPermissions(): Result
+	protected function GetPermissions(): Result
 	{
-		return $this->db->user_permissions_resolved()->where('user_id', GROCY_USER_ID);
+		return $this->DB->user_permissions_resolved()->where('user_id', GROCY_USER_ID);
 	}
 }

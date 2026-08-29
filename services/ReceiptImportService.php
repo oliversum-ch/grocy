@@ -30,12 +30,12 @@ class ReceiptImportService extends BaseService
 		WHERE p.active = 1 AND p.no_own_stock = 0
 		ORDER BY p.name COLLATE NOCASE";
 
-		return $this->getDatabaseService()->GetDbConnectionRaw()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+		return DatabaseService::GetInstance()->GetDbConnectionRaw()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
 	public function GetShoppingLocations(): array
 	{
-		return $this->getDatabaseService()->GetDbConnectionRaw()
+		return DatabaseService::GetInstance()->GetDbConnectionRaw()
 			->query('SELECT id, name FROM shopping_locations WHERE active = 1 ORDER BY name COLLATE NOCASE')
 			->fetchAll(\PDO::FETCH_ASSOC);
 	}
@@ -56,7 +56,7 @@ class ReceiptImportService extends BaseService
 			$productsByNormalizedName[$this->Parser->NormalizeLabel($product['name'])] = $product;
 		}
 
-		$aliasStatement = $this->getDatabaseService()->GetDbConnectionRaw()->prepare(
+		$aliasStatement = DatabaseService::GetInstance()->GetDbConnectionRaw()->prepare(
 			'SELECT a.product_id, a.amount_multiplier, p.name
 			 FROM receipt_import_aliases a
 			 JOIN products p ON p.id = a.product_id
@@ -116,7 +116,7 @@ class ReceiptImportService extends BaseService
 			throw new \InvalidArgumentException('This receipt has already been imported');
 		}
 
-		$pdo = $this->getDatabaseService()->GetDbConnectionRaw();
+		$pdo = DatabaseService::GetInstance()->GetDbConnectionRaw();
 		$pdo->beginTransaction();
 
 		try
@@ -173,7 +173,7 @@ class ReceiptImportService extends BaseService
 				$transactionId = null;
 				$note = sprintf('Receipt import #%d: %s', $receiptImportId, mb_substr($item['raw_label'], 0, 120));
 
-				$this->getStockService()->AddProduct(
+				StockService::GetInstance()->AddProduct(
 					intval($product['id']),
 					$stockAmount,
 					$bestBeforeDate,
@@ -237,7 +237,7 @@ class ReceiptImportService extends BaseService
 			{
 				try
 				{
-					$this->getStockService()->CompactStockEntries($productId);
+					StockService::GetInstance()->CompactStockEntries($productId);
 				}
 				catch (\Throwable $ex)
 				{
@@ -264,7 +264,7 @@ class ReceiptImportService extends BaseService
 
 	public function Undo(int $receiptImportId): array
 	{
-		$pdo = $this->getDatabaseService()->GetDbConnectionRaw();
+		$pdo = DatabaseService::GetInstance()->GetDbConnectionRaw();
 		$receiptStatement = $pdo->prepare('SELECT id, status FROM receipt_imports WHERE id = ?');
 		$receiptStatement->execute([$receiptImportId]);
 		$receipt = $receiptStatement->fetch(\PDO::FETCH_ASSOC);
@@ -290,7 +290,7 @@ class ReceiptImportService extends BaseService
 		{
 			foreach ($transactionIds as $transactionId)
 			{
-				$this->getStockService()->UndoTransaction($transactionId);
+				StockService::GetInstance()->UndoTransaction($transactionId);
 			}
 
 			$update = $pdo->prepare("UPDATE receipt_imports SET status = 'undone', undone_timestamp = datetime('now', 'localtime') WHERE id = ?");
@@ -322,12 +322,12 @@ class ReceiptImportService extends BaseService
 		ORDER BY r.id DESC
 		LIMIT " . $limit;
 
-		return $this->getDatabaseService()->GetDbConnectionRaw()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+		return DatabaseService::GetInstance()->GetDbConnectionRaw()->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
 	private function FindDuplicate(string $receiptHash): ?array
 	{
-		$statement = $this->getDatabaseService()->GetDbConnectionRaw()->prepare(
+		$statement = DatabaseService::GetInstance()->GetDbConnectionRaw()->prepare(
 			'SELECT id, retailer_name, receipt_date, receipt_total, status FROM receipt_imports WHERE receipt_hash = ?'
 		);
 		$statement->execute([$receiptHash]);
@@ -424,7 +424,7 @@ class ReceiptImportService extends BaseService
 
 	private function GetValidatedProduct(int $productId): array
 	{
-		$statement = $this->getDatabaseService()->GetDbConnectionRaw()->prepare(
+		$statement = DatabaseService::GetInstance()->GetDbConnectionRaw()->prepare(
 			'SELECT p.*, qs.name AS stock_unit_name, l.is_freezer AS default_location_is_freezer
 			 FROM products p
 			 JOIN quantity_units qs ON qs.id = p.qu_id_stock
@@ -468,7 +468,7 @@ class ReceiptImportService extends BaseService
 			return;
 		}
 
-		$statement = $this->getDatabaseService()->GetDbConnectionRaw()->prepare('SELECT COUNT(*) FROM shopping_locations WHERE id = ? AND active = 1');
+		$statement = DatabaseService::GetInstance()->GetDbConnectionRaw()->prepare('SELECT COUNT(*) FROM shopping_locations WHERE id = ? AND active = 1');
 		$statement->execute([$shoppingLocationId]);
 		if (intval($statement->fetchColumn()) !== 1)
 		{
@@ -478,7 +478,7 @@ class ReceiptImportService extends BaseService
 
 	private function TransactionExists(string $transactionId, int $productId): bool
 	{
-		$statement = $this->getDatabaseService()->GetDbConnectionRaw()->prepare(
+		$statement = DatabaseService::GetInstance()->GetDbConnectionRaw()->prepare(
 			'SELECT COUNT(*) FROM stock_log WHERE transaction_id = ? AND product_id = ? AND undone = 0'
 		);
 		$statement->execute([$transactionId, $productId]);

@@ -39,17 +39,6 @@ msgstr "糖果柜"
 msgid "Tinned food cupboard"
 msgstr "罐头食品橱"
 
-msgid "Fridge"
-msgstr "冰箱"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "件"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "包"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "杯"

@@ -4,7 +4,7 @@
 
 use Grocy\Services\RecipesService;
 
-$recipesService = RecipesService::getInstance();
+$recipesService = RecipesService::GetInstance();
 
 for ($i = 1; $i <= 87; $i++)
 {

@@ -1,10 +1,11 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
-use Grocy\Helpers\WebhookRunner;
 use Grocy\Helpers\Grocycode;
+use Grocy\Helpers\WebhookRunner;
+use Grocy\Services\ChoresService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -17,23 +18,22 @@ class ChoresApiController extends BaseApiController
 			$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
 			$choreId = null;
-
 			if (array_key_exists('chore_id', $requestBody) && !empty($requestBody['chore_id']) && is_numeric($requestBody['chore_id']))
 			{
-				$choreId = intval($requestBody['chore_id']);
+				$choreId = $requestBody['chore_id'];
 			}
 
 			if ($choreId === null)
 			{
-				$chores = $this->getDatabase()->chores();
+				$chores = $this->DB->chores();
 				foreach ($chores as $chore)
 				{
-					$this->getChoresService()->CalculateNextExecutionAssignment($chore->id);
+					ChoresService::GetInstance()->CalculateNextExecutionAssignment($chore->id);
 				}
 			}
 			else
 			{
-				$this->getChoresService()->CalculateNextExecutionAssignment($choreId);
+				ChoresService::GetInstance()->CalculateNextExecutionAssignment($choreId);
 			}
 
 			return $this->EmptyApiResponse($response);
@@ -48,7 +48,7 @@ class ChoresApiController extends BaseApiController
 	{
 		try
 		{
-			return $this->ApiResponse($response, $this->getChoresService()->GetChoreDetails($args['choreId']));
+			return $this->ApiResponse($response, ChoresService::GetInstance()->GetChoreDetails($args['choreId']));
 		}
 		catch (\Exception $ex)
 		{
@@ -58,7 +58,7 @@ class ChoresApiController extends BaseApiController
 
 	public function Current(Request $request, Response $response, array $args)
 	{
-		return $this->FilteredApiResponse($response, $this->getChoresService()->GetCurrent(), $request->getQueryParams());
+		return $this->FilteredApiResponse($response, ChoresService::GetInstance()->GetCurrent(), $request->getQueryParams());
 	}
 
 	public function TrackChoreExecution(Request $request, Response $response, array $args)
@@ -67,7 +67,7 @@ class ChoresApiController extends BaseApiController
 
 		try
 		{
-			User::checkPermission($request, User::PERMISSION_CHORE_TRACK_EXECUTION);
+			User::CheckPermission($request, User::PERMISSION_CHORE_TRACK_EXECUTION);
 
 			$trackedTime = date('Y-m-d H:i:s');
 			if (array_key_exists('tracked_time', $requestBody) && (IsIsoDateTime($requestBody['tracked_time']) || IsIsoDate($requestBody['tracked_time'])))
@@ -89,11 +89,11 @@ class ChoresApiController extends BaseApiController
 
 			if ($doneBy != GROCY_USER_ID)
 			{
-				User::checkPermission($request, User::PERMISSION_CHORE_TRACK_EXECUTION);
+				User::CheckPermission($request, User::PERMISSION_CHORE_TRACK_EXECUTION);
 			}
 
-			$choreExecutionId = $this->getChoresService()->TrackChore($args['choreId'], $trackedTime, $doneBy, $skipped);
-			return $this->ApiResponse($response, $this->getDatabase()->chores_log($choreExecutionId));
+			$choreExecutionId = ChoresService::GetInstance()->TrackChore($args['choreId'], $trackedTime, $doneBy, $skipped);
+			return $this->ApiResponse($response, $this->DB->chores_log($choreExecutionId));
 		}
 		catch (\Exception $ex)
 		{
@@ -105,9 +105,9 @@ class ChoresApiController extends BaseApiController
 	{
 		try
 		{
-			User::checkPermission($request, User::PERMISSION_CHORE_UNDO_EXECUTION);
+			User::CheckPermission($request, User::PERMISSION_CHORE_UNDO_EXECUTION);
 
-			$this->ApiResponse($response, $this->getChoresService()->UndoChoreExecution($args['executionId']));
+			$this->ApiResponse($response, ChoresService::GetInstance()->UndoChoreExecution($args['executionId']));
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -120,7 +120,7 @@ class ChoresApiController extends BaseApiController
 	{
 		try
 		{
-			$choreDetails = (object)$this->getChoresService()->GetChoreDetails($args['choreId']);
+			$choreDetails = (object)ChoresService::GetInstance()->GetChoreDetails($args['choreId']);
 
 			$webhookData = array_merge([
 				'chore' => $choreDetails->chore->name,
@@ -143,7 +143,7 @@ class ChoresApiController extends BaseApiController
 
 	public function MergeChores(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
+		User::CheckPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
 
 		try
 		{
@@ -152,7 +152,7 @@ class ChoresApiController extends BaseApiController
 				throw new \Exception('Provided {choreIdToKeep} or {choreIdToRemove} is not a valid integer');
 			}
 
-			$this->ApiResponse($response, $this->getChoresService()->MergeChores($args['choreIdToKeep'], $args['choreIdToRemove']));
+			$this->ApiResponse($response, ChoresService::GetInstance()->MergeChores($args['choreIdToKeep'], $args['choreIdToRemove']));
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)

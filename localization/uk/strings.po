@@ -1,7 +1,7 @@
 # Translators:
 # Ivan Gavryliuk <igavryliuk@solusvm.com>, 2020
-# Oleksii Filonenko <brightone@protonmail.com>, 2020
 # Aleksey Zaremskiy, 2022
+# Oleksii Filonenko <brightone@protonmail.com>, 2026
 # 
 msgid ""
 msgstr ""
@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: Aleksey Zaremskiy, 2022\n"
+"Last-Translator: Oleksii Filonenko <brightone@protonmail.com>, 2026\n"
 "Language-Team: Ukrainian (https://app.transifex.com/grocy/teams/93189/uk/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -719,11 +719,8 @@ msgstr "Група продуктів"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr ""
 
-msgid "Stay logged in permanently"
-msgstr "Залишатись авторизованим"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "Якщо не обрано, вас буде деавторизовано через 30 днів"
+msgid "Remember Me"
+msgstr ""
 
 msgid "Status"
 msgstr "Статус"
@@ -1714,9 +1711,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr "Є морозильною камерою"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "Не може бути тим же місцем, що й \"з\""
-
 msgid "Thawed"
 msgstr "Розморожене"
 
@@ -1774,9 +1768,6 @@ msgstr "Видалити цей пункт"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr ""
 
-msgid "Calories"
-msgstr "Калорії"
-
 msgid "means %1$s per %2$s"
 msgstr "одначає %1$s на %2$s"
 
@@ -1825,8 +1816,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "Очистити фільтр"
 
-msgid "Permissions for user %s"
-msgstr "Права користувача %s"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "Ви впевнені, що хочете позбавити себе повних прав?"
@@ -2807,4 +2798,48 @@ msgstr ""
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "Холодильник"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "Одиниця"
+msgstr[1] "Одиниці"
+msgstr[2] "Одиниць"
+msgstr[3] "Одиниць"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "Пакет"
+msgstr[1] "Пакети"
+msgstr[2] "Пакетів"
+msgstr[3] "Пакетів"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

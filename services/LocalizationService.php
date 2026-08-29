@@ -6,13 +6,14 @@ use Gettext\Translation;
 use Gettext\Translations;
 use Gettext\Translator;
 
-class LocalizationService
+class LocalizationService extends BaseService
 {
-	public function __construct(string $culture)
+	public function __construct(string $locale)
 	{
-		$this->Culture = $culture;
+		parent::__construct();
 
-		$this->LoadLocalizations($culture);
+		$this->Locale = $locale;
+		$this->LoadLocalizations($locale);
 	}
 
 	protected $Po;
@@ -21,8 +22,8 @@ class LocalizationService
 	protected $PotMain;
 	protected $Translator;
 	protected $TranslatorQu;
-	protected $Culture;
-	private static $instanceMap = [];
+	protected $Locale;
+	private static $InstanceMap = [];
 
 	public function CheckAndAddMissingTranslationToPot($text)
 	{
@@ -111,29 +112,24 @@ class LocalizationService
 		}
 	}
 
-	public static function getInstance(string $culture)
+	public static function GetInstance(string $locale = '')
 	{
-		if (!in_array($culture, self::$instanceMap))
+		if (empty($locale))
 		{
-			self::$instanceMap[$culture] = new self($culture);
+			$locale = GROCY_LOCALE;
 		}
 
-		return self::$instanceMap[$culture];
-	}
+		if (!in_array($locale, self::$InstanceMap))
+		{
+			self::$InstanceMap[$locale] = new self($locale);
+		}
 
-	protected function getDatabaseService()
-	{
-		return DatabaseService::getInstance();
-	}
-
-	protected function getdatabase()
-	{
-		return $this->getDatabaseService()->GetDbConnection();
+		return self::$InstanceMap[$locale];
 	}
 
 	private function LoadLocalizations()
 	{
-		$culture = $this->Culture;
+		$locale = $this->Locale;
 
 		if (GROCY_MODE === 'dev')
 		{
@@ -147,53 +143,49 @@ class LocalizationService
 			$this->Pot = $this->Pot->mergeWith(Translations::fromPoFile(__DIR__ . '/../localization/userfield_types.pot'));
 			$this->Pot = $this->Pot->mergeWith(Translations::fromPoFile(__DIR__ . '/../localization/permissions.pot'));
 			$this->Pot = $this->Pot->mergeWith(Translations::fromPoFile(__DIR__ . '/../localization/locales.pot'));
-
-			if (GROCY_MODE !== 'production')
-			{
-				$this->Pot = $this->Pot->mergeWith(Translations::fromPoFile(__DIR__ . '/../localization/demo_data.pot'));
-			}
+			$this->Pot = $this->Pot->mergeWith(Translations::fromPoFile(__DIR__ . '/../localization/demo_data.pot'));
 		}
 
-		$this->Po = Translations::fromPoFile(__DIR__ . "/../localization/$culture/strings.po");
+		$this->Po = Translations::fromPoFile(__DIR__ . "/../localization/$locale/strings.po");
 
-		if (file_exists(__DIR__ . "/../localization/$culture/chore_assignment_types.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/chore_assignment_types.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/chore_assignment_types.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/chore_assignment_types.po"));
 		}
 
-		if (file_exists(__DIR__ . "/../localization/$culture/component_translations.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/component_translations.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/component_translations.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/component_translations.po"));
 		}
 
-		if (file_exists(__DIR__ . "/../localization/$culture/stock_transaction_types.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/stock_transaction_types.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/stock_transaction_types.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/stock_transaction_types.po"));
 		}
 
-		if (file_exists(__DIR__ . "/../localization/$culture/chore_period_types.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/chore_period_types.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/chore_period_types.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/chore_period_types.po"));
 		}
 
-		if (file_exists(__DIR__ . "/../localization/$culture/userfield_types.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/userfield_types.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/userfield_types.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/userfield_types.po"));
 		}
 
-		if (file_exists(__DIR__ . "/../localization/$culture/permissions.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/permissions.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/permissions.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/permissions.po"));
 		}
 
-		if (file_exists(__DIR__ . "/../localization/$culture/locales.po"))
+		if (file_exists(__DIR__ . "/../localization/$locale/locales.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/locales.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/locales.po"));
 		}
 
-		if (GROCY_MODE !== 'production' && file_exists(__DIR__ . "/../localization/$culture/demo_data.po"))
+		if (GROCY_MODE !== 'production' && file_exists(__DIR__ . "/../localization/$locale/demo_data.po"))
 		{
-			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$culture/demo_data.po"));
+			$this->Po = $this->Po->mergeWith(Translations::fromPoFile(__DIR__ . "/../localization/$locale/demo_data.po"));
 		}
 
 		$this->Translator = new Translator();
@@ -204,7 +196,7 @@ class LocalizationService
 		$quantityUnits = null;
 		try
 		{
-			$quantityUnits = $this->getDatabase()->quantity_units()->where('active = 1')->fetchAll();
+			$quantityUnits = $this->DB->quantity_units()->where('active = 1')->fetchAll();
 		}
 		catch (\Exception $ex)
 		{

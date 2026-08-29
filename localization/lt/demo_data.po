@@ -32,23 +32,6 @@ msgstr "Saldainių spinta"
 msgid "Tinned food cupboard"
 msgstr "Konservuotų maisto produktų spinta"
 
-msgid "Fridge"
-msgstr "Šaldytuvas"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Vienetas"
-msgstr[1] "Vienetai"
-msgstr[2] "Vienetų"
-msgstr[3] "Vienetų"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pakuotė"
-msgstr[1] "Pakuotės"
-msgstr[2] "Pakuočių"
-msgstr[3] "Pakuočių"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Stiklinė"

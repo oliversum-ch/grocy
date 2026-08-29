@@ -3,8 +3,6 @@
 namespace Grocy\Helpers;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\ExceptionRequestException;
-use Psr\Http\Message\ResponseInterface;
 
 class WebhookRunner
 {

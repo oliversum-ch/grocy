@@ -34,19 +34,6 @@ msgstr "Ντουλάπι γλυκών"
 msgid "Tinned food cupboard"
 msgstr "Ντουλάπι κονσερβών"
 
-msgid "Fridge"
-msgstr "Ψυγείο"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Τεμάχιο"
-msgstr[1] "Τεμάχια"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Πακέτο"
-msgstr[1] "Πακέτα"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Ποτήρι"

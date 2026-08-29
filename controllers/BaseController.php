@@ -2,24 +2,12 @@
 
 namespace Grocy\Controllers;
 
-use Grocy\Controllers\Users\User;
-use Grocy\Services\ApiKeyService;
-use Grocy\Services\ApplicationService;
-use Grocy\Services\BatteriesService;
-use Grocy\Services\CalendarService;
-use Grocy\Services\ChoresService;
-use Grocy\Services\DatabaseService;
-use Grocy\Services\FilesService;
-use Grocy\Services\LocalizationService;
-use Grocy\Services\PrintService;
-use Grocy\Services\RecipesService;
-use Grocy\Services\ReceiptImportService;
-use Grocy\Services\SessionService;
-use Grocy\Services\StockService;
-use Grocy\Services\TasksService;
-use Grocy\Services\UserfieldsService;
-use Grocy\Services\UsersService;
 use DI\Container;
+use Grocy\Controllers\Users\User;
+use Grocy\Services\ApplicationService;
+use Grocy\Services\DatabaseService;
+use Grocy\Services\LocalizationService;
+use Grocy\Services\UsersService;
 
 class BaseController
 {
@@ -27,109 +15,21 @@ class BaseController
 	{
 		$this->AppContainer = $container;
 		$this->View = $container->get('view');
+		$this->DB = DatabaseService::GetInstance()->GetDbConnection();
 	}
 
 	protected $AppContainer;
 	protected $View;
+	protected $DB;
 
-	protected function getApiKeyService()
-	{
-		return ApiKeyService::getInstance();
-	}
-
-	protected function getApplicationservice()
-	{
-		return ApplicationService::getInstance();
-	}
-
-	protected function getBatteriesService()
-	{
-		return BatteriesService::getInstance();
-	}
-
-	protected function getCalendarService()
-	{
-		return CalendarService::getInstance();
-	}
-
-	protected function getChoresService()
-	{
-		return ChoresService::getInstance();
-	}
-
-	protected function getDatabase()
-	{
-		return $this->getDatabaseService()->GetDbConnection();
-	}
-
-	protected function getDatabaseService()
-	{
-		return DatabaseService::getInstance();
-	}
-
-	protected function getFilesService()
-	{
-		return FilesService::getInstance();
-	}
-
-	protected function getLocalizationService()
-	{
-		if (!defined('GROCY_LOCALE'))
-		{
-			define('GROCY_LOCALE', GROCY_DEFAULT_LOCALE);
-		}
-
-		return LocalizationService::getInstance(GROCY_LOCALE);
-	}
-
-	protected function getRecipesService()
-	{
-		return RecipesService::getInstance();
-	}
-
-	protected function getReceiptImportService()
-	{
-		return ReceiptImportService::getInstance();
-	}
-
-	protected function getSessionService()
-	{
-		return SessionService::getInstance();
-	}
-
-	protected function getStockService()
-	{
-		return StockService::getInstance();
-	}
-
-	protected function getPrintService()
-	{
-		return PrintService::getInstance();
-	}
-
-	protected function getTasksService()
-	{
-		return TasksService::getInstance();
-	}
-
-	protected function getUserfieldsService()
-	{
-		return UserfieldsService::getInstance();
-	}
-
-	protected function getUsersService()
-	{
-		return UsersService::getInstance();
-	}
-
-	protected function render($response, $viewName, $data = [])
+	protected function Render($response, $viewName, $data = [])
 	{
 		$container = $this->AppContainer;
 
-		$versionInfo = $this->getApplicationService()->GetInstalledVersion();
+		$versionInfo = ApplicationService::GetInstance()->GetInstalledVersion();
 		$this->View->set('version', $versionInfo->Version);
 
-		$localizationService = $this->getLocalizationService();
+		$localizationService = LocalizationService::GetInstance();
 		$this->View->set('__t', function (string $text, ...$placeholderValues) use ($localizationService)
 		{
 			return $localizationService->__t($text, $placeholderValues);
@@ -175,7 +75,7 @@ class BaseController
 		{
 			$this->View->set('permissions', User::PermissionList());
 
-			$decimalPlacesAmounts = $this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'stock_decimal_places_amounts');
+			$decimalPlacesAmounts = UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'stock_decimal_places_amounts');
 			if ($decimalPlacesAmounts <= 0)
 			{
 				$defaultMinAmount = 1;
@@ -189,15 +89,15 @@ class BaseController
 
 		$this->View->set('viewName', $viewName);
 
-		return $this->View->render($response, $viewName, $data);
+		return $this->View->Render($response, $viewName, $data);
 	}
 
-	protected function renderPage($response, $viewName, $data = [])
+	protected function RenderPage($response, $viewName, $data = [])
 	{
-		$this->View->set('userentitiesForSidebar', $this->getDatabase()->userentities()->where('show_in_sidebar_menu = 1')->orderBy('name'));
+		$this->View->set('userentitiesForSidebar', $this->DB->userentities()->where('show_in_sidebar_menu = 1')->orderBy('name'));
 		try
 		{
-			$usersService = $this->getUsersService();
+			$usersService = UsersService::GetInstance();
 			if (defined('GROCY_USER_ID'))
 			{
 				$this->View->set('userSettings', $usersService->GetUserSettings(GROCY_USER_ID));
@@ -212,6 +112,6 @@ class BaseController
 			// Happens when database is not initialised or migrated...
 		}
 
-		return $this->render($response, $viewName, $data);
+		return $this->Render($response, $viewName, $data);
 	}
 }

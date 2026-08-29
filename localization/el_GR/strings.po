@@ -8,6 +8,7 @@
 # Dimitris, 2022
 # Lefteris Garyfalakis, 2022
 # Vasilis Mourtzis, 2023
+# datablitz7 <plant7@gmail.com>, 2026
 # 
 msgid ""
 msgstr ""
@@ -15,7 +16,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: Vasilis Mourtzis, 2023\n"
+"Last-Translator: datablitz7 <plant7@gmail.com>, 2026\n"
 "Language-Team: Greek (Greece) (https://app.transifex.com/grocy/teams/93189/el_GR/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -699,11 +700,8 @@ msgstr "Ομάδα προϊόντων"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr ""
 
-msgid "Stay logged in permanently"
-msgstr "Μείνετε μόνιμα συνδεδεμένοι"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "Όταν δεν ρυθμιστεί, θα αποσυνδεθείτε το αργότερο μετά από 30 ημέρες"
+msgid "Remember Me"
+msgstr ""
 
 msgid "Status"
 msgstr "Κατάσταση"
@@ -1657,9 +1655,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr "Είναι καταψύκτης"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "Αυτό δεν μπορεί να είναι το ίδιο με την τοποθεσία \"Από\""
-
 msgid "Thawed"
 msgstr "Αποψυχθεί"
 
@@ -1717,9 +1712,6 @@ msgstr "Διαγραφή αυτού του αντικειμένου"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr "Εμφάνιση ενός εικονιδίου εάν το προϊόν βρίσκεται ήδη στη λίστα αγορών"
 
-msgid "Calories"
-msgstr "Θερμίδες"
-
 msgid "means %1$s per %2$s"
 msgstr "σημαίνει %1$s ανά %2$s"
 
@@ -1768,8 +1760,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "Απόθεμα μονάδας ποσότητας"
 
-msgid "Permissions for user %s"
-msgstr "Αγορά παράγοντα σε μονάδα ποσότητας αποθεμάτων %s"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "Δημιουργία τοποθεσίας"
@@ -2710,4 +2702,44 @@ msgstr ""
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "Ψυγείο"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "Τεμάχιο"
+msgstr[1] "Τεμάχια"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "Πακέτο"
+msgstr[1] "Πακέτα"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

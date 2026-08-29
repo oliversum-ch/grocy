@@ -8,17 +8,17 @@ class UsersService extends BaseService
 {
 	public function CreateUser(string $username, ?string $firstName, ?string $lastName, string $password, ?string $pictureFileName = null)
 	{
-		$newUserRow = $this->getDatabase()->users()->createRow([
+		$newUserRow = $this->DB->users()->createRow([
 			'username' => $username,
 			'first_name' => $firstName,
 			'last_name' => $lastName,
-			'password' => password_hash($password, PASSWORD_DEFAULT),
+			'password' => password_hash($password, PASSWORD_ARGON2ID),
 			'picture_file_name' => $pictureFileName
 		]);
 		$newUserRow = $newUserRow->save();
 		$permList = [];
 
-		foreach ($this->getDatabase()->permission_hierarchy()->where('name', GROCY_DEFAULT_PERMISSIONS)->fetchAll() as $perm)
+		foreach ($this->DB->permission_hierarchy()->where('name', GROCY_DEFAULT_PERMISSIONS)->fetchAll() as $perm)
 		{
 			$permList[] = [
 				'user_id' => $newUserRow->id,
@@ -26,14 +26,14 @@ class UsersService extends BaseService
 			];
 		}
 
-		$this->getDatabase()->user_permissions()->insert($permList);
+		$this->DB->user_permissions()->insert($permList);
 
 		return $newUserRow;
 	}
 
 	public function DeleteUser($userId)
 	{
-		$row = $this->getDatabase()->users($userId);
+		$row = $this->DB->users($userId);
 		$row->delete();
 	}
 
@@ -44,7 +44,7 @@ class UsersService extends BaseService
 			throw new \Exception('User does not exist');
 		}
 
-		$user = $this->getDatabase()->users($userId);
+		$user = $this->DB->users($userId);
 
 		if ($password == null || empty($password))
 		{
@@ -61,7 +61,7 @@ class UsersService extends BaseService
 				'username' => $username,
 				'first_name' => $firstName,
 				'last_name' => $lastName,
-				'password' => password_hash($password, PASSWORD_DEFAULT),
+				'password' => password_hash($password, PASSWORD_ARGON2ID),
 				'picture_file_name' => $pictureFileName
 			]);
 		}
@@ -81,7 +81,7 @@ class UsersService extends BaseService
 		}
 
 		$value = null;
-		$settingRow = $this->getDatabase()->user_settings()->where('user_id = :1 AND key = :2', $userId, $settingKey)->fetch();
+		$settingRow = $this->DB->user_settings()->where('user_id = :1 AND key = :2', $userId, $settingKey)->fetch();
 		if ($settingRow !== null)
 		{
 			$value = $settingRow->value;
@@ -103,7 +103,7 @@ class UsersService extends BaseService
 	public function GetUserSettings($userId)
 	{
 		$settings = [];
-		$settingRows = $this->getDatabase()->user_settings()->where('user_id = :1', $userId)->fetchAll();
+		$settingRows = $this->DB->user_settings()->where('user_id = :1', $userId)->fetchAll();
 		foreach ($settingRows as $settingRow)
 		{
 			$settings[$settingRow->key] = $settingRow->value;
@@ -116,7 +116,7 @@ class UsersService extends BaseService
 
 	public function GetUsersAsDto(): Result
 	{
-		return $this->getDatabase()->users_dto();
+		return $this->DB->users_dto();
 	}
 
 	public function SetUserSetting($userId, $settingKey, $settingValue)
@@ -127,7 +127,7 @@ class UsersService extends BaseService
 		}
 		self::$UserSettingsCache[$userId][$settingKey] = $settingValue;
 
-		$settingRow = $this->getDatabase()->user_settings()->where('user_id = :1 AND key = :2', $userId, $settingKey)->fetch();
+		$settingRow = $this->DB->user_settings()->where('user_id = :1 AND key = :2', $userId, $settingKey)->fetch();
 		if ($settingRow !== null)
 		{
 			$settingRow->update([
@@ -137,7 +137,7 @@ class UsersService extends BaseService
 		}
 		else
 		{
-			$settingRow = $this->getDatabase()->user_settings()->createRow([
+			$settingRow = $this->DB->user_settings()->createRow([
 				'user_id' => $userId,
 				'key' => $settingKey,
 				'value' => $settingValue
@@ -154,12 +154,12 @@ class UsersService extends BaseService
 		}
 		unset(self::$UserSettingsCache[$userId][$settingKey]);
 
-		$this->getDatabase()->user_settings()->where('user_id = :1 AND key = :2', $userId, $settingKey)->delete();
+		$this->DB->user_settings()->where('user_id = :1 AND key = :2', $userId, $settingKey)->delete();
 	}
 
 	private function UserExists($userId)
 	{
-		$userRow = $this->getDatabase()->users()->where('id = :1', $userId)->fetch();
+		$userRow = $this->DB->users()->where('id = :1', $userId)->fetch();
 		return $userRow !== null;
 	}
 }

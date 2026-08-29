@@ -38,23 +38,6 @@ msgstr "Шкаф для конфет"
 msgid "Tinned food cupboard"
 msgstr "Шкаф для консервов"
 
-msgid "Fridge"
-msgstr "Холодильник"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Штука"
-msgstr[1] "Штуки"
-msgstr[2] "Штук"
-msgstr[3] "Штук"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Упаковка"
-msgstr[1] "Упаковки"
-msgstr[2] "Упаковок"
-msgstr[3] "Упаковок"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Стакан"

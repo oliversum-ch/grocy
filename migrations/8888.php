@@ -4,12 +4,14 @@
 
 // This is executed inside DatabaseMigrationService class/context
 
+use Grocy\Services\DatabaseService;
+
 // When FEATURE_FLAG_STOCK_LOCATION_TRACKING is disabled,
 // some places assume that there exists a location with id 1,
 // so make sure that this location is available in that case
 if (!GROCY_FEATURE_FLAG_STOCK_LOCATION_TRACKING)
 {
-	$db = $this->getDatabaseService()->GetDbConnection();
+	$db = DatabaseService::GetInstance()->GetDbConnection();
 
 	if ($db->locations()->where('id', 1)->count() === 0)
 	{

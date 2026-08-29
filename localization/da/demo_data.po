@@ -39,19 +39,6 @@ msgstr "Slikskuffe"
 msgid "Tinned food cupboard"
 msgstr "Dåsemadsskab"
 
-msgid "Fridge"
-msgstr "Køleskab"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "stk"
-msgstr[1] "stk"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pakke"
-msgstr[1] "Pakker"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Glas"

@@ -2,7 +2,9 @@
 
 namespace Grocy\Controllers;
 
+use Grocy\Controllers\Api\BaseApiController;
 use Grocy\Controllers\Users\User;
+use Grocy\Services\ReceiptImportService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -20,7 +22,7 @@ class ReceiptImportApiController extends BaseApiController
 				throw new \InvalidArgumentException('Receipt text and fingerprint are required');
 			}
 
-			return $this->ApiResponse($response, $this->getReceiptImportService()->Preview(
+			return $this->ApiResponse($response, ReceiptImportService::GetInstance()->Preview(
 				(string)$body['raw_text'],
 				(string)$body['receipt_hash']
 			));
@@ -54,7 +56,7 @@ class ReceiptImportApiController extends BaseApiController
 				$shoppingLocationId = intval($validatedLocationId);
 			}
 
-			return $this->ApiResponse($response, $this->getReceiptImportService()->Commit(
+			return $this->ApiResponse($response, ReceiptImportService::GetInstance()->Commit(
 				(string)$body['raw_text'],
 				(string)$body['receipt_hash'],
 				isset($body['source_filename']) ? (string)$body['source_filename'] : null,
@@ -81,7 +83,7 @@ class ReceiptImportApiController extends BaseApiController
 				throw new \InvalidArgumentException('The receipt import id is invalid');
 			}
 
-			return $this->ApiResponse($response, $this->getReceiptImportService()->Undo(intval($receiptImportId)));
+			return $this->ApiResponse($response, ReceiptImportService::GetInstance()->Undo(intval($receiptImportId)));
 		}
 		catch (\Throwable $ex)
 		{
@@ -92,12 +94,12 @@ class ReceiptImportApiController extends BaseApiController
 	public function History(Request $request, Response $response, array $args)
 	{
 		User::checkPermission($request, User::PERMISSION_STOCK_PURCHASE);
-		return $this->ApiResponse($response, $this->getReceiptImportService()->GetHistory());
+		return $this->ApiResponse($response, ReceiptImportService::GetInstance()->GetHistory());
 	}
 
 	public function Products(Request $request, Response $response, array $args)
 	{
 		User::checkPermission($request, User::PERMISSION_STOCK_PURCHASE);
-		return $this->ApiResponse($response, $this->getReceiptImportService()->GetProductCatalog());
+		return $this->ApiResponse($response, ReceiptImportService::GetInstance()->GetProductCatalog());
 	}
 }

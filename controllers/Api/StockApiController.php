@@ -1,11 +1,12 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
-use Grocy\Services\StockService;
-use Grocy\Helpers\WebhookRunner;
 use Grocy\Helpers\Grocycode;
+use Grocy\Helpers\WebhookRunner;
+use Grocy\Services\LocalizationService;
+use Grocy\Services\StockService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -13,7 +14,7 @@ class StockApiController extends BaseApiController
 {
 	public function AddMissingProductsToShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 
 		try
 		{
@@ -23,10 +24,10 @@ class StockApiController extends BaseApiController
 
 			if (array_key_exists('list_id', $requestBody) && !empty($requestBody['list_id']) && is_numeric($requestBody['list_id']))
 			{
-				$listId = intval($requestBody['list_id']);
+				$listId = $requestBody['list_id'];
 			}
 
-			$this->getStockService()->AddMissingProductsToShoppingList($listId);
+			StockService::GetInstance()->AddMissingProductsToShoppingList($listId);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -37,20 +38,19 @@ class StockApiController extends BaseApiController
 
 	public function AddOverdueProductsToShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 
 		try
 		{
 			$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
 			$listId = 1;
-
 			if (array_key_exists('list_id', $requestBody) && !empty($requestBody['list_id']) && is_numeric($requestBody['list_id']))
 			{
-				$listId = intval($requestBody['list_id']);
+				$listId = $requestBody['list_id'];
 			}
 
-			$this->getStockService()->AddOverdueProductsToShoppingList($listId);
+			StockService::GetInstance()->AddOverdueProductsToShoppingList($listId);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -61,20 +61,19 @@ class StockApiController extends BaseApiController
 
 	public function AddExpiredProductsToShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 
 		try
 		{
 			$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
 			$listId = 1;
-
 			if (array_key_exists('list_id', $requestBody) && !empty($requestBody['list_id']) && is_numeric($requestBody['list_id']))
 			{
-				$listId = intval($requestBody['list_id']);
+				$listId = $requestBody['list_id'];
 			}
 
-			$this->getStockService()->AddExpiredProductsToShoppingList($listId);
+			StockService::GetInstance()->AddExpiredProductsToShoppingList($listId);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -85,7 +84,7 @@ class StockApiController extends BaseApiController
 
 	public function AddProduct(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_PURCHASE);
+		User::CheckPermission($request, User::PERMISSION_STOCK_PURCHASE);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -140,7 +139,7 @@ class StockApiController extends BaseApiController
 			$stockLabelType = 0;
 			if (array_key_exists('stock_label_type', $requestBody) && is_numeric($requestBody['stock_label_type']))
 			{
-				$stockLabelType = intval($requestBody['stock_label_type']);
+				$stockLabelType = $requestBody['stock_label_type'];
 			}
 
 			$note = null;
@@ -149,7 +148,7 @@ class StockApiController extends BaseApiController
 				$note = $requestBody['note'];
 			}
 
-			$transactionId = $this->getStockService()->AddProduct($args['productId'], $requestBody['amount'], $bestBeforeDate, $transactionType, $purchasedDate, $price, $locationId, $shoppingLocationId, $unusedTransactionId, $stockLabelType, false, $note);
+			$transactionId = StockService::GetInstance()->AddProduct($args['productId'], $requestBody['amount'], $bestBeforeDate, $transactionType, $purchasedDate, $price, $locationId, $shoppingLocationId, $unusedTransactionId, $stockLabelType, false, $note);
 
 			$args['transactionId'] = $transactionId;
 			return $this->StockTransactions($request, $response, $args);
@@ -164,7 +163,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$args['productId'] = $this->getStockService()->GetProductIdFromBarcode($args['barcode']);
+			$args['productId'] = StockService::GetInstance()->GetProductIdFromBarcode($args['barcode']);
 			return $this->AddProduct($request, $response, $args);
 		}
 		catch (\Exception $ex)
@@ -175,7 +174,7 @@ class StockApiController extends BaseApiController
 
 	public function AddProductToShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 
 		try
 		{
@@ -189,17 +188,17 @@ class StockApiController extends BaseApiController
 
 			if (array_key_exists('list_id', $requestBody) && !empty($requestBody['list_id']) && is_numeric($requestBody['list_id']))
 			{
-				$listId = intval($requestBody['list_id']);
+				$listId = $requestBody['list_id'];
 			}
 
 			if (array_key_exists('product_amount', $requestBody) && !empty($requestBody['product_amount']) && is_numeric($requestBody['product_amount']))
 			{
-				$amount = intval($requestBody['product_amount']);
+				$amount = $requestBody['product_amount'];
 			}
 
 			if (array_key_exists('product_id', $requestBody) && !empty($requestBody['product_id']) && is_numeric($requestBody['product_id']))
 			{
-				$productId = intval($requestBody['product_id']);
+				$productId = $requestBody['product_id'];
 			}
 
 			if (array_key_exists('note', $requestBody) && !empty($requestBody['note']))
@@ -217,7 +216,7 @@ class StockApiController extends BaseApiController
 				throw new \Exception('No product id was supplied');
 			}
 
-			$this->getStockService()->AddProductToShoppingList($productId, $amount, $quId, $note, $listId);
+			StockService::GetInstance()->AddProductToShoppingList($productId, $amount, $quId, $note, $listId);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -228,7 +227,7 @@ class StockApiController extends BaseApiController
 
 	public function ClearShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_DELETE);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_DELETE);
 
 		try
 		{
@@ -237,7 +236,7 @@ class StockApiController extends BaseApiController
 			$listId = 1;
 			if (array_key_exists('list_id', $requestBody) && !empty($requestBody['list_id']) && is_numeric($requestBody['list_id']))
 			{
-				$listId = intval($requestBody['list_id']);
+				$listId = $requestBody['list_id'];
 			}
 
 			$doneOnly = false;
@@ -246,7 +245,7 @@ class StockApiController extends BaseApiController
 				$doneOnly = boolval($requestBody['done_only']);
 			}
 
-			$this->getStockService()->ClearShoppingList($listId, $doneOnly);
+			StockService::GetInstance()->ClearShoppingList($listId, $doneOnly);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -257,7 +256,7 @@ class StockApiController extends BaseApiController
 
 	public function ConsumeProduct(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_CONSUME);
+		User::CheckPermission($request, User::PERMISSION_STOCK_CONSUME);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -316,7 +315,7 @@ class StockApiController extends BaseApiController
 			}
 
 			$transactionId = null;
-			$transactionId = $this->getStockService()->ConsumeProduct($args['productId'], $requestBody['amount'], $spoiled, $transactionType, $specificStockEntryId, $recipeId, $locationId, $transactionId, $allowSubproductSubstitution, $consumeExact);
+			$transactionId = StockService::GetInstance()->ConsumeProduct($args['productId'], $requestBody['amount'], $spoiled, $transactionType, $specificStockEntryId, $recipeId, $locationId, $transactionId, $allowSubproductSubstitution, $consumeExact);
 			$args['transactionId'] = $transactionId;
 			return $this->StockTransactions($request, $response, $args);
 		}
@@ -330,7 +329,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$args['productId'] = $this->getStockService()->GetProductIdFromBarcode($args['barcode']);
+			$args['productId'] = StockService::GetInstance()->GetProductIdFromBarcode($args['barcode']);
 
 			if (Grocycode::Validate($args['barcode']))
 			{
@@ -353,7 +352,7 @@ class StockApiController extends BaseApiController
 
 	public function CurrentStock(Request $request, Response $response, array $args)
 	{
-		return $this->ApiResponse($response, $this->getStockService()->GetCurrentStock());
+		return $this->ApiResponse($response, StockService::GetInstance()->GetCurrentStock());
 	}
 
 	public function CurrentVolatileStock(Request $request, Response $response, array $args)
@@ -365,10 +364,10 @@ class StockApiController extends BaseApiController
 			$nextXDays = $request->getQueryParams()['due_soon_days'];
 		}
 
-		$dueProducts = $this->getStockService()->GetDueProducts($nextXDays, true);
-		$overdueProducts = $this->getStockService()->GetDueProducts(-1);
-		$expiredProducts = $this->getStockService()->GetExpiredProducts();
-		$missingProducts = $this->getStockService()->GetMissingProducts();
+		$dueProducts = StockService::GetInstance()->GetDueProducts($nextXDays, true);
+		$overdueProducts = StockService::GetInstance()->GetDueProducts(-1);
+		$expiredProducts = StockService::GetInstance()->GetExpiredProducts();
+		$missingProducts = StockService::GetInstance()->GetMissingProducts();
 		return $this->ApiResponse($response, [
 			'due_products' => $dueProducts,
 			'overdue_products' => $overdueProducts,
@@ -379,7 +378,7 @@ class StockApiController extends BaseApiController
 
 	public function EditStockEntry(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_EDIT);
+		User::CheckPermission($request, User::PERMISSION_STOCK_EDIT);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -425,7 +424,7 @@ class StockApiController extends BaseApiController
 				$note = $requestBody['note'];
 			}
 
-			$transactionId = $this->getStockService()->EditStockEntry($args['entryId'], $requestBody['amount'], $bestBeforeDate, $locationId, $shoppingLocationId, $price, $requestBody['open'], $requestBody['purchased_date'], $note);
+			$transactionId = StockService::GetInstance()->EditStockEntry($args['entryId'], $requestBody['amount'], $bestBeforeDate, $locationId, $shoppingLocationId, $price, $requestBody['open'], $requestBody['purchased_date'], $note);
 			$args['transactionId'] = $transactionId;
 			return $this->StockTransactions($request, $response, $args);
 		}
@@ -437,7 +436,7 @@ class StockApiController extends BaseApiController
 
 	public function ExternalBarcodeLookup(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
+		User::CheckPermission($request, User::PERMISSION_MASTER_DATA_EDIT);
 
 		try
 		{
@@ -447,7 +446,7 @@ class StockApiController extends BaseApiController
 				$addFoundProduct = true;
 			}
 
-			return $this->ApiResponse($response, $this->getStockService()->ExternalBarcodeLookup($args['barcode'], $addFoundProduct));
+			return $this->ApiResponse($response, StockService::GetInstance()->ExternalBarcodeLookup($args['barcode'], $addFoundProduct));
 		}
 		catch (\Exception $ex)
 		{
@@ -457,7 +456,7 @@ class StockApiController extends BaseApiController
 
 	public function InventoryProduct(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_INVENTORY);
+		User::CheckPermission($request, User::PERMISSION_STOCK_INVENTORY);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -506,7 +505,7 @@ class StockApiController extends BaseApiController
 			$stockLabelType = 0;
 			if (array_key_exists('stock_label_type', $requestBody) && is_numeric($requestBody['stock_label_type']))
 			{
-				$stockLabelType = intval($requestBody['stock_label_type']);
+				$stockLabelType = $requestBody['stock_label_type'];
 			}
 
 			$note = null;
@@ -515,7 +514,7 @@ class StockApiController extends BaseApiController
 				$note = $requestBody['note'];
 			}
 
-			$transactionId = $this->getStockService()->InventoryProduct($args['productId'], $requestBody['new_amount'], $bestBeforeDate, $locationId, $price, $shoppingLocationId, $purchasedDate, $stockLabelType, $note);
+			$transactionId = StockService::GetInstance()->InventoryProduct($args['productId'], $requestBody['new_amount'], $bestBeforeDate, $locationId, $price, $shoppingLocationId, $purchasedDate, $stockLabelType, $note);
 			$args['transactionId'] = $transactionId;
 			return $this->StockTransactions($request, $response, $args);
 		}
@@ -529,7 +528,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$args['productId'] = $this->getStockService()->GetProductIdFromBarcode($args['barcode']);
+			$args['productId'] = StockService::GetInstance()->GetProductIdFromBarcode($args['barcode']);
 			return $this->InventoryProduct($request, $response, $args);
 		}
 		catch (\Exception $ex)
@@ -540,7 +539,7 @@ class StockApiController extends BaseApiController
 
 	public function OpenProduct(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_OPEN);
+		User::CheckPermission($request, User::PERMISSION_STOCK_OPEN);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -569,7 +568,7 @@ class StockApiController extends BaseApiController
 			}
 
 			$transactionId = null;
-			$transactionId = $this->getStockService()->OpenProduct($args['productId'], $requestBody['amount'], $specificStockEntryId, $transactionId, $allowSubproductSubstitution);
+			$transactionId = StockService::GetInstance()->OpenProduct($args['productId'], $requestBody['amount'], $specificStockEntryId, $transactionId, $allowSubproductSubstitution);
 			$args['transactionId'] = $transactionId;
 			return $this->StockTransactions($request, $response, $args);
 		}
@@ -583,7 +582,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$args['productId'] = $this->getStockService()->GetProductIdFromBarcode($args['barcode']);
+			$args['productId'] = StockService::GetInstance()->GetProductIdFromBarcode($args['barcode']);
 
 			if (Grocycode::Validate($args['barcode']))
 			{
@@ -608,7 +607,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			return $this->ApiResponse($response, $this->getStockService()->GetProductDetails($args['productId']));
+			return $this->ApiResponse($response, StockService::GetInstance()->GetProductDetails($args['productId']));
 		}
 		catch (\Exception $ex)
 		{
@@ -620,8 +619,8 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$productId = $this->getStockService()->GetProductIdFromBarcode($args['barcode']);
-			return $this->ApiResponse($response, $this->getStockService()->GetProductDetails($productId));
+			$productId = StockService::GetInstance()->GetProductIdFromBarcode($args['barcode']);
+			return $this->ApiResponse($response, StockService::GetInstance()->GetProductDetails($productId));
 		}
 		catch (\Exception $ex)
 		{
@@ -633,7 +632,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			return $this->ApiResponse($response, $this->getStockService()->GetProductPriceHistory($args['productId']));
+			return $this->ApiResponse($response, StockService::GetInstance()->GetProductPriceHistory($args['productId']));
 		}
 		catch (\Exception $ex)
 		{
@@ -649,12 +648,12 @@ class StockApiController extends BaseApiController
 			$allowSubproductSubstitution = true;
 		}
 
-		return $this->FilteredApiResponse($response, $this->getStockService()->GetProductStockEntries($args['productId'], false, $allowSubproductSubstitution), $request->getQueryParams());
+		return $this->FilteredApiResponse($response, StockService::GetInstance()->GetProductStockEntries($args['productId'], false, $allowSubproductSubstitution), $request->getQueryParams());
 	}
 
 	public function LocationStockEntries(Request $request, Response $response, array $args)
 	{
-		return $this->FilteredApiResponse($response, $this->getStockService()->GetLocationStockEntries($args['locationId']), $request->getQueryParams());
+		return $this->FilteredApiResponse($response, StockService::GetInstance()->GetLocationStockEntries($args['locationId']), $request->getQueryParams());
 	}
 
 	public function ProductStockLocations(Request $request, Response $response, array $args)
@@ -665,14 +664,14 @@ class StockApiController extends BaseApiController
 			$allowSubproductSubstitution = true;
 		}
 
-		return $this->FilteredApiResponse($response, $this->getStockService()->GetProductStockLocations($args['productId'], $allowSubproductSubstitution), $request->getQueryParams());
+		return $this->FilteredApiResponse($response, StockService::GetInstance()->GetProductStockLocations($args['productId'], $allowSubproductSubstitution), $request->getQueryParams());
 	}
 
 	public function ProductPrintLabel(Request $request, Response $response, array $args)
 	{
 		try
 		{
-			$productDetails = (object)$this->getStockService()->GetProductDetails($args['productId']);
+			$productDetails = (object)StockService::GetInstance()->GetProductDetails($args['productId']);
 
 			$webhookData = array_merge([
 				'product' => $productDetails->product->name,
@@ -697,8 +696,8 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$stockEntry = $this->getDatabase()->stock()->where('id', $args['entryId'])->fetch();
-			$productDetails = (object)$this->getStockService()->GetProductDetails($stockEntry->product_id);
+			$stockEntry = $this->DB->stock()->where('id', $args['entryId'])->fetch();
+			$productDetails = (object)StockService::GetInstance()->GetProductDetails($stockEntry->product_id);
 
 			$webhookData = array_merge([
 				'product' => $productDetails->product->name,
@@ -709,7 +708,7 @@ class StockApiController extends BaseApiController
 
 			if (GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)
 			{
-				$webhookData['due_date'] = $this->getLocalizationService()->__t('DD') . ': ' . $stockEntry->best_before_date;
+				$webhookData['due_date'] = LocalizationService::GetInstance()->__t('DD') . ': ' . $stockEntry->best_before_date;
 			}
 
 			if (GROCY_LABEL_PRINTER_RUN_SERVER)
@@ -727,7 +726,7 @@ class StockApiController extends BaseApiController
 
 	public function RemoveProductFromShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_DELETE);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_DELETE);
 
 		try
 		{
@@ -739,17 +738,17 @@ class StockApiController extends BaseApiController
 
 			if (array_key_exists('list_id', $requestBody) && !empty($requestBody['list_id']) && is_numeric($requestBody['list_id']))
 			{
-				$listId = intval($requestBody['list_id']);
+				$listId = $requestBody['list_id'];
 			}
 
 			if (array_key_exists('product_amount', $requestBody) && !empty($requestBody['product_amount']) && is_numeric($requestBody['product_amount']))
 			{
-				$amount = intval($requestBody['product_amount']);
+				$amount = $requestBody['product_amount'];
 			}
 
 			if (array_key_exists('product_id', $requestBody) && !empty($requestBody['product_id']) && is_numeric($requestBody['product_id']))
 			{
-				$productId = intval($requestBody['product_id']);
+				$productId = $requestBody['product_id'];
 			}
 
 			if ($productId == null)
@@ -757,7 +756,7 @@ class StockApiController extends BaseApiController
 				throw new \Exception('No product id was supplied');
 			}
 
-			$this->getStockService()->RemoveProductFromShoppingList($productId, $amount, $listId);
+			StockService::GetInstance()->RemoveProductFromShoppingList($productId, $amount, $listId);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -770,7 +769,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$stockLogRow = $this->getDatabase()->stock_log($args['bookingId']);
+			$stockLogRow = $this->DB->stock_log($args['bookingId']);
 
 			if ($stockLogRow === null)
 			{
@@ -787,14 +786,14 @@ class StockApiController extends BaseApiController
 
 	public function StockEntry(Request $request, Response $response, array $args)
 	{
-		return $this->ApiResponse($response, $this->getStockService()->GetStockEntry($args['entryId']));
+		return $this->ApiResponse($response, StockService::GetInstance()->GetStockEntry($args['entryId']));
 	}
 
 	public function StockTransactions(Request $request, Response $response, array $args)
 	{
 		try
 		{
-			$transactionRows = $this->getDatabase()->stock_log()->where('transaction_id = :1', $args['transactionId'])->fetchAll();
+			$transactionRows = $this->DB->stock_log()->where('transaction_id = :1', $args['transactionId'])->fetchAll();
 			if (count($transactionRows) === 0)
 			{
 				throw new \Exception('No transaction was found by the given transaction id');
@@ -810,7 +809,7 @@ class StockApiController extends BaseApiController
 
 	public function TransferProduct(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_TRANSFER);
+		User::CheckPermission($request, User::PERMISSION_STOCK_TRANSFER);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -843,7 +842,7 @@ class StockApiController extends BaseApiController
 				$specificStockEntryId = $requestBody['stock_entry_id'];
 			}
 
-			$transactionId = $this->getStockService()->TransferProduct($args['productId'], $requestBody['amount'], $requestBody['location_id_from'], $requestBody['location_id_to'], $specificStockEntryId);
+			$transactionId = StockService::GetInstance()->TransferProduct($args['productId'], $requestBody['amount'], $requestBody['location_id_from'], $requestBody['location_id_to'], $specificStockEntryId);
 			$args['transactionId'] = $transactionId;
 			return $this->StockTransactions($request, $response, $args);
 		}
@@ -857,7 +856,7 @@ class StockApiController extends BaseApiController
 	{
 		try
 		{
-			$args['productId'] = $this->getStockService()->GetProductIdFromBarcode($args['barcode']);
+			$args['productId'] = StockService::GetInstance()->GetProductIdFromBarcode($args['barcode']);
 
 			if (Grocycode::Validate($args['barcode']))
 			{
@@ -880,11 +879,11 @@ class StockApiController extends BaseApiController
 
 	public function UndoBooking(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_EDIT);
+		User::CheckPermission($request, User::PERMISSION_STOCK_EDIT);
 
 		try
 		{
-			$this->ApiResponse($response, $this->getStockService()->UndoBooking($args['bookingId']));
+			$this->ApiResponse($response, StockService::GetInstance()->UndoBooking($args['bookingId']));
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -895,11 +894,11 @@ class StockApiController extends BaseApiController
 
 	public function UndoTransaction(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_EDIT);
+		User::CheckPermission($request, User::PERMISSION_STOCK_EDIT);
 
 		try
 		{
-			$this->ApiResponse($response, $this->getStockService()->UndoTransaction($args['transactionId']));
+			$this->ApiResponse($response, StockService::GetInstance()->UndoTransaction($args['transactionId']));
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -910,7 +909,7 @@ class StockApiController extends BaseApiController
 
 	public function MergeProducts(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_EDIT);
+		User::CheckPermission($request, User::PERMISSION_STOCK_EDIT);
 
 		try
 		{
@@ -919,7 +918,7 @@ class StockApiController extends BaseApiController
 				throw new \Exception('Provided {productIdToKeep} or {productIdToRemove} is not a valid integer');
 			}
 
-			$this->ApiResponse($response, $this->getStockService()->MergeProducts($args['productIdToKeep'], $args['productIdToRemove']));
+			$this->ApiResponse($response, StockService::GetInstance()->MergeProducts($args['productIdToKeep'], $args['productIdToRemove']));
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)

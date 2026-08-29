@@ -9,7 +9,7 @@
 $('#tasks-table tbody').removeClass("d-none");
 tasksTable.columns.adjust().draw();
 
-$("#search").on("keyup", Delay(function()
+$("#search").on("keyup", Delay(function ()
 {
 	var value = $(this).val();
 	if (value === "all")
@@ -20,7 +20,7 @@ $("#search").on("keyup", Delay(function()
 	tasksTable.search(value).draw();
 }, Grocy.FormFocusDelay));
 
-$("#status-filter").on("change", function()
+$("#status-filter").on("change", function ()
 {
 	var value = $(this).val();
 	if (value === "all")
@@ -34,7 +34,22 @@ $("#status-filter").on("change", function()
 	tasksTable.column(tasksTable.colReorder.transpose(5)).search(value).draw();
 });
 
-$("#category-filter").on("change", function()
+$("#user-filter").on("change", function ()
+{
+	var value = $(this).val();
+	if (value === "all")
+	{
+		value = "";
+	}
+	else
+	{
+		"^" + $.fn.dataTable.util.escapeRegex(value) + "$"
+	}
+
+	tasksTable.column(tasksTable.colReorder.transpose(4)).search(value, true, false).draw();
+});
+
+$("#category-filter").on("change", function ()
 {
 	var value = $(this).val();
 	if (value === "all")
@@ -45,7 +60,7 @@ $("#category-filter").on("change", function()
 	tasksTable.column(tasksTable.colReorder.transpose(3)).search(value).draw();
 });
 
-$("#clear-filter-button").on("click", function()
+$("#clear-filter-button").on("click", function ()
 {
 	$("#search").val("");
 	$("#status-filter").val("all");
@@ -53,17 +68,18 @@ $("#clear-filter-button").on("click", function()
 	$("#search").trigger("keyup");
 	$("#status-filter").trigger("change");
 	$("#category-filter").trigger("change");
+	$("#user-filter").val("all");
 	$("#show-done-tasks").trigger('checked', false);
 });
 
-$(".status-filter-message").on("click", function()
+$(".status-filter-message").on("click", function ()
 {
 	var value = $(this).data("status-filter");
 	$("#status-filter").val(value);
 	$("#status-filter").trigger("change");
 });
 
-$(document).on('click', '.do-task-button', function(e)
+$(document).on('click', '.do-task-button', function (e)
 {
 	e.preventDefault();
 
@@ -74,11 +90,11 @@ $(document).on('click', '.do-task-button', function(e)
 	var doneTime = moment().format('YYYY-MM-DD HH:mm:ss');
 
 	Grocy.Api.Post('tasks/' + taskId + '/complete', { 'done_time': doneTime },
-		function()
+		function ()
 		{
 			if (!$("#show-done-tasks").is(":checked"))
 			{
-				animateCSS("#task-" + taskId + "-row", "fadeOut", function()
+				animateCSS("#task-" + taskId + "-row", "fadeOut", function ()
 				{
 					$("#task-" + taskId + "-row").remove();
 				});
@@ -95,7 +111,7 @@ $(document).on('click', '.do-task-button', function(e)
 			RefreshContextualTimeago("#task-" + taskId + "-row");
 			RefreshStatistics();
 		},
-		function(xhr)
+		function (xhr)
 		{
 			Grocy.FrontendHelpers.EndUiBusy();
 			console.error(xhr);
@@ -103,7 +119,7 @@ $(document).on('click', '.do-task-button', function(e)
 	);
 });
 
-$(document).on('click', '.undo-task-button', function(e)
+$(document).on('click', '.undo-task-button', function (e)
 {
 	e.preventDefault();
 
@@ -113,11 +129,11 @@ $(document).on('click', '.undo-task-button', function(e)
 	var taskName = $(e.currentTarget).attr('data-task-name');
 
 	Grocy.Api.Post('tasks/' + taskId + '/undo', {},
-		function()
+		function ()
 		{
 			window.location.reload();
 		},
-		function(xhr)
+		function (xhr)
 		{
 			Grocy.FrontendHelpers.EndUiBusy();
 			console.error(xhr);
@@ -125,7 +141,7 @@ $(document).on('click', '.undo-task-button', function(e)
 	);
 });
 
-$(document).on('click', '.delete-task-button', function(e)
+$(document).on('click', '.delete-task-button', function (e)
 {
 	e.preventDefault();
 
@@ -145,19 +161,19 @@ $(document).on('click', '.delete-task-button', function(e)
 				className: 'btn-danger'
 			}
 		},
-		callback: function(result)
+		callback: function (result)
 		{
 			if (result === true)
 			{
 				Grocy.Api.Delete('objects/tasks/' + objectId, {},
-					function(result)
+					function (result)
 					{
-						animateCSS("#task-" + objectId + "-row", "fadeOut", function()
+						animateCSS("#task-" + objectId + "-row", "fadeOut", function ()
 						{
 							$("#task-" + objectId + "-row").remove();
 						});
 					},
-					function(xhr)
+					function (xhr)
 					{
 						console.error(xhr);
 					}
@@ -167,7 +183,7 @@ $(document).on('click', '.delete-task-button', function(e)
 	});
 });
 
-$("#show-done-tasks").change(function()
+$("#show-done-tasks").change(function ()
 {
 	if (this.checked)
 	{
@@ -188,7 +204,7 @@ function RefreshStatistics()
 {
 	var nextXDays = $("#info-due-soon-tasks").data("next-x-days");
 	Grocy.Api.Get('tasks',
-		function(result)
+		function (result)
 		{
 			var dueTodayCount = 0;
 			var dueSoonCount = 0;
@@ -223,7 +239,7 @@ function RefreshStatistics()
 			$("#info-due-soon-tasks").html('<span class="d-block d-md-none">' + dueSoonCount + ' <i class="fa-solid fa-clock"></i></span><span class="d-none d-md-block">' + __n(dueSoonCount, '%s task is due to be done', '%s tasks are due to be done') + ' ' + __n(nextXDays, 'within the next day', 'within the next %s days'));
 			$("#info-overdue-tasks").html('<span class="d-block d-md-none">' + overdueCount + ' <i class="fa-solid fa-times-circle"></i></span><span class="d-none d-md-block">' + __n(overdueCount, '%s task is overdue to be done', '%s tasks are overdue to be done'));
 		},
-		function(xhr)
+		function (xhr)
 		{
 			console.error(xhr);
 		}

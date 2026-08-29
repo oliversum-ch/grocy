@@ -667,10 +667,7 @@ msgstr ""
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr ""
 
-msgid "Stay logged in permanently"
-msgstr ""
-
-msgid "When not set, you will get logged out at latest after 30 days"
+msgid "Remember Me"
 msgstr ""
 
 msgid "Status"
@@ -1516,9 +1513,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr ""
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr ""
-
 msgid "Thawed"
 msgstr ""
 
@@ -1576,9 +1570,6 @@ msgstr ""
 msgid "Show an icon if the product is already on the shopping list"
 msgstr ""
 
-msgid "Calories"
-msgstr ""
-
 msgid "means %1$s per %2$s"
 msgstr ""
 
@@ -1624,7 +1615,7 @@ msgstr ""
 msgid "Clear filter"
 msgstr ""
 
-msgid "Permissions for user %s"
+msgid "Permissions"
 msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
@@ -2472,4 +2463,44 @@ msgid "List actions"
 msgstr ""
 
 msgid "After this product was once in stock and when the desired quantity unit cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr ""
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] ""
+msgstr[1] ""
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

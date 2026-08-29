@@ -3,6 +3,9 @@
 namespace Grocy\Controllers;
 
 use Grocy\Helpers\Grocycode;
+use Grocy\Services\ChoresService;
+use Grocy\Services\UserfieldsService;
+use Grocy\Services\UsersService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -12,30 +15,30 @@ class ChoresController extends BaseController
 
 	public function ChoreEditForm(Request $request, Response $response, array $args)
 	{
-		$usersService = $this->getUsersService();
+		$usersService = UsersService::GetInstance();
 		$users = $usersService->GetUsersAsDto();
 
 		if ($args['choreId'] == 'new')
 		{
-			return $this->renderPage($response, 'choreform', [
+			return $this->RenderPage($response, 'choreform', [
 				'periodTypes' => GetClassConstants('\Grocy\Services\ChoresService', 'CHORE_PERIOD_TYPE_'),
 				'mode' => 'create',
-				'userfields' => $this->getUserfieldsService()->GetFields('chores'),
+				'userfields' => UserfieldsService::GetInstance()->GetFields('chores'),
 				'assignmentTypes' => GetClassConstants('\Grocy\Services\ChoresService', 'CHORE_ASSIGNMENT_TYPE_'),
 				'users' => $users,
-				'products' => $this->getDatabase()->products()->orderBy('name', 'COLLATE NOCASE')
+				'products' => $this->DB->products()->orderBy('name', 'COLLATE NOCASE')
 			]);
 		}
 		else
 		{
-			return $this->renderPage($response, 'choreform', [
-				'chore' => $this->getDatabase()->chores($args['choreId']),
+			return $this->RenderPage($response, 'choreform', [
+				'chore' => $this->DB->chores($args['choreId']),
 				'periodTypes' => GetClassConstants('\Grocy\Services\ChoresService', 'CHORE_PERIOD_TYPE_'),
 				'mode' => 'edit',
-				'userfields' => $this->getUserfieldsService()->GetFields('chores'),
+				'userfields' => UserfieldsService::GetInstance()->GetFields('chores'),
 				'assignmentTypes' => GetClassConstants('\Grocy\Services\ChoresService', 'CHORE_ASSIGNMENT_TYPE_'),
 				'users' => $users,
-				'products' => $this->getDatabase()->products()->orderBy('name', 'COLLATE NOCASE')
+				'products' => $this->DB->products()->orderBy('name', 'COLLATE NOCASE')
 			]);
 		}
 	}
@@ -44,23 +47,23 @@ class ChoresController extends BaseController
 	{
 		if (isset($request->getQueryParams()['include_disabled']))
 		{
-			$chores = $this->getDatabase()->chores()->orderBy('name', 'COLLATE NOCASE');
+			$chores = $this->DB->chores()->orderBy('name', 'COLLATE NOCASE');
 		}
 		else
 		{
-			$chores = $this->getDatabase()->chores()->where('active = 1')->orderBy('name', 'COLLATE NOCASE');
+			$chores = $this->DB->chores()->where('active = 1')->orderBy('name', 'COLLATE NOCASE');
 		}
 
-		return $this->renderPage($response, 'chores', [
+		return $this->RenderPage($response, 'chores', [
 			'chores' => $chores,
-			'userfields' => $this->getUserfieldsService()->GetFields('chores'),
-			'userfieldValues' => $this->getUserfieldsService()->GetAllValues('chores')
+			'userfields' => UserfieldsService::GetInstance()->GetFields('chores'),
+			'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('chores')
 		]);
 	}
 
 	public function ChoresSettings(Request $request, Response $response, array $args)
 	{
-		return $this->renderPage($response, 'choressettings');
+		return $this->RenderPage($response, 'choressettings');
 	}
 
 	public function Journal(Request $request, Response $response, array $args)
@@ -82,22 +85,22 @@ class ChoresController extends BaseController
 			$where .= " AND chore_id = $choreId";
 		}
 
-		return $this->renderPage($response, 'choresjournal', [
-			'choresLog' => $this->getDatabase()->chores_log()->where($where)->orderBy('tracked_time', 'DESC'),
-			'chores' => $this->getDatabase()->chores()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
-			'users' => $this->getDatabase()->users()->orderBy('username'),
-			'userfields' => $this->getUserfieldsService()->GetFields('chores_log'),
-			'userfieldValues' => $this->getUserfieldsService()->GetAllValues('chores_log')
+		return $this->RenderPage($response, 'choresjournal', [
+			'choresLog' => $this->DB->chores_log()->where($where)->orderBy('tracked_time', 'DESC'),
+			'chores' => $this->DB->chores()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
+			'users' => $this->DB->users()->orderBy('username'),
+			'userfields' => UserfieldsService::GetInstance()->GetFields('chores_log'),
+			'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('chores_log')
 		]);
 	}
 
 	public function Overview(Request $request, Response $response, array $args)
 	{
-		$usersService = $this->getUsersService();
+		$usersService = UsersService::GetInstance();
 		$nextXDays = $usersService->GetUserSettings(GROCY_USER_ID)['chores_due_soon_days'];
 
-		$chores = $this->getDatabase()->chores()->orderBy('name', 'COLLATE NOCASE');
-		$currentChores = $this->getChoresService()->GetCurrent();
+		$chores = $this->DB->chores()->orderBy('name', 'COLLATE NOCASE');
+		$currentChores = ChoresService::GetInstance()->GetCurrent();
 		foreach ($currentChores as $currentChore)
 		{
 			if (!empty($currentChore->next_estimated_execution_time))
@@ -117,22 +120,22 @@ class ChoresController extends BaseController
 			}
 		}
 
-		return $this->renderPage($response, 'choresoverview', [
+		return $this->RenderPage($response, 'choresoverview', [
 			'chores' => $chores,
 			'currentChores' => $currentChores,
 			'nextXDays' => $nextXDays,
-			'userfields' => $this->getUserfieldsService()->GetFields('chores'),
-			'userfieldValues' => $this->getUserfieldsService()->GetAllValues('chores'),
+			'userfields' => UserfieldsService::GetInstance()->GetFields('chores'),
+			'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('chores'),
 			'users' => $usersService->GetUsersAsDto()
 		]);
 	}
 
 	public function TrackChoreExecution(Request $request, Response $response, array $args)
 	{
-		return $this->renderPage($response, 'choretracking', [
-			'chores' => $this->getDatabase()->chores()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
-			'users' => $this->getDatabase()->users()->orderBy('username'),
-			'userfields' => $this->getUserfieldsService()->GetFields('chores_log'),
+		return $this->RenderPage($response, 'choretracking', [
+			'chores' => $this->DB->chores()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
+			'users' => $this->DB->users()->orderBy('username'),
+			'userfields' => UserfieldsService::GetInstance()->GetFields('chores_log'),
 		]);
 	}
 

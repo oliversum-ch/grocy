@@ -2,7 +2,7 @@
 
 // This is executed inside DatabaseMigrationService class/context
 
-$db = $this->getDatabaseService();
+$db = \Grocy\Services\DatabaseService::GetInstance();
 
 $locationColumnExists = $db->ExecuteDbQuery("SELECT COUNT(*) FROM pragma_table_info('equipment') WHERE name = 'location_id'")->fetchColumn() > 0;
 

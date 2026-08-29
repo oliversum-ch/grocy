@@ -2,4 +2,6 @@
 
 // This is executed inside DatabaseMigrationService class/context
 
-$this->getStockService()->CompactStockEntries();
+use Grocy\Services\StockService;
+
+StockService::GetInstance()->CompactStockEntries();

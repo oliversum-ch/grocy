@@ -36,21 +36,6 @@ msgstr "Armário dos doces"
 msgid "Tinned food cupboard"
 msgstr "Armário dos enlatados"
 
-msgid "Fridge"
-msgstr "Frigorifico"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Pedaço"
-msgstr[1] "Pedaços"
-msgstr[2] "Pedaços"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pacote"
-msgstr[1] "Pacotes"
-msgstr[2] "Pacotes"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Copo"

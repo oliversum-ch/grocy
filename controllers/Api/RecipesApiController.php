@@ -1,10 +1,11 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
-use Grocy\Helpers\WebhookRunner;
 use Grocy\Helpers\Grocycode;
+use Grocy\Helpers\WebhookRunner;
+use Grocy\Services\RecipesService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -12,7 +13,7 @@ class RecipesApiController extends BaseApiController
 {
 	public function AddNotFulfilledProductsToShoppingList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
+		User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST_ITEMS_ADD);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 		$excludedProductIds = null;
@@ -22,17 +23,17 @@ class RecipesApiController extends BaseApiController
 			$excludedProductIds = $requestBody['excludedProductIds'];
 		}
 
-		$this->getRecipesService()->AddNotFulfilledProductsToShoppingList($args['recipeId'], $excludedProductIds);
+		RecipesService::GetInstance()->AddNotFulfilledProductsToShoppingList($args['recipeId'], $excludedProductIds);
 		return $this->EmptyApiResponse($response);
 	}
 
 	public function ConsumeRecipe(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_STOCK_CONSUME);
+		User::CheckPermission($request, User::PERMISSION_STOCK_CONSUME);
 
 		try
 		{
-			$this->getRecipesService()->ConsumeRecipe($args['recipeId']);
+			RecipesService::GetInstance()->ConsumeRecipe($args['recipeId']);
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -47,10 +48,10 @@ class RecipesApiController extends BaseApiController
 		{
 			if (!isset($args['recipeId']))
 			{
-				return $this->FilteredApiResponse($response, $this->getRecipesService()->GetRecipesResolved(), $request->getQueryParams());
+				return $this->FilteredApiResponse($response, RecipesService::GetInstance()->GetRecipesResolved(), $request->getQueryParams());
 			}
 
-			$recipeResolved = FindObjectInArrayByPropertyValue($this->getRecipesService()->GetRecipesResolved(), 'recipe_id', $args['recipeId']);
+			$recipeResolved = FindObjectInArrayByPropertyValue(RecipesService::GetInstance()->GetRecipesResolved(), 'recipe_id', $args['recipeId']);
 
 			if (!$recipeResolved)
 			{
@@ -72,7 +73,7 @@ class RecipesApiController extends BaseApiController
 		try
 		{
 			return $this->ApiResponse($response, [
-				'created_object_id' => $this->getRecipesService()->CopyRecipe($args['recipeId'])
+				'created_object_id' => RecipesService::GetInstance()->CopyRecipe($args['recipeId'])
 			]);
 		}
 		catch (\Exception $ex)
@@ -85,7 +86,7 @@ class RecipesApiController extends BaseApiController
 	{
 		try
 		{
-			$recipe = $this->getDatabase()->recipes()->where('id', $args['recipeId'])->fetch();
+			$recipe = $this->DB->recipes()->where('id', $args['recipeId'])->fetch();
 
 			$webhookData = array_merge([
 				'recipe' => $recipe->name,

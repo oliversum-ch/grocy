@@ -24,9 +24,8 @@ class UrlManager
 		{
 			return rtrim($this->BasePath, '/') . $relativePath;
 		}
-		else
-		{ // Is not a resource and URL rewriting is disabled
-			return rtrim($this->BasePath, '/') . '/index.php' . $relativePath;
+		else // Is not a resource and URL rewriting is disabled
+		{return rtrim($this->BasePath, '/') . '/index.php' . $relativePath;
 		}
 	}
 

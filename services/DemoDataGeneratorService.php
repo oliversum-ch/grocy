@@ -4,22 +4,18 @@ namespace Grocy\Services;
 
 class DemoDataGeneratorService extends BaseService
 {
-	public function __construct()
-	{
-		$this->LocalizationService = new LocalizationService(GROCY_DEFAULT_LOCALE);
-	}
-
-	protected $LocalizationService;
 	private $LastSupermarketId = 1;
 
 	public function PopulateDemoData($skip = false)
 	{
-		$rowCount = $this->getDatabaseService()->ExecuteDbQuery('SELECT COUNT(*) FROM migrations WHERE migration = -1')->fetchColumn();
+		$db = DatabaseService::GetInstance();
+
+		$rowCount = $db->ExecuteDbQuery('SELECT COUNT(*) FROM migrations WHERE migration = -1')->fetchColumn();
 		if ($rowCount == 0)
 		{
 			if ($skip)
 			{
-				$this->getDatabaseService()->ExecuteDbStatement('INSERT INTO migrations (migration) VALUES (-1);');
+				$db->ExecuteDbStatement('INSERT INTO migrations (migration) VALUES (-1);');
 				return;
 			}
 
@@ -34,7 +30,7 @@ class DemoDataGeneratorService extends BaseService
 			$saturdayThisWeek = date('Y-m-d', strtotime('saturday this week'));
 			$sundayThisWeek = date('Y-m-d', strtotime('sunday this week'));
 
-			$sql = "
+			$db->ExecuteDbStatement("
 				UPDATE users SET username = '{$this->__t_sql('Demo User')}' WHERE id = 1;
 				INSERT INTO users (username, password) VALUES ('{$this->__t_sql('Demo User')} 2', 'x'); --2
 				INSERT INTO users (username, password) VALUES ('{$this->__t_sql('Demo User')} 3', 'x'); --3
@@ -42,15 +38,21 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO user_permissions (permission_id, user_id) VALUES (1, 2);
 				INSERT INTO user_permissions (permission_id, user_id) VALUES (1, 3);
 				INSERT INTO user_permissions (permission_id, user_id) VALUES (1, 4);
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO locations (name) VALUES ('{$this->__t_sql('Pantry')}'); --3
 				INSERT INTO locations (name) VALUES ('{$this->__t_sql('Candy cupboard')}'); --4
 				INSERT INTO locations (name) VALUES ('{$this->__t_sql('Tinned food cupboard')}'); --5
 				INSERT INTO locations (name, is_freezer) VALUES ('{$this->__t_sql('Freezer')}', 1); --6
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO shopping_locations (name) VALUES ('{$this->__t_sql('DemoSupermarket1')}'); --1
 				INSERT INTO shopping_locations (name) VALUES ('{$this->__t_sql('DemoSupermarket2')}'); --2
+			");
 
+			$db->ExecuteDbStatement("
 				DELETE FROM quantity_units WHERE name = '{$this->__t_sql('Glass')}';
 				INSERT INTO quantity_units (id, name, name_plural) VALUES (4, '{$this->__n_sql(1, 'Glass', 'Glasses')}', '{$this->__n_sql(2, 'Glass', 'Glasses')}'); --4
 				DELETE FROM quantity_units WHERE name = '{$this->__t_sql('Tin')}';
@@ -73,7 +75,9 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO quantity_units (id, name, name_plural) VALUES (13, '{$this->__n_sql(1, 'Kilogram', 'Kilograms')}', '{$this->__n_sql(2, 'Kilogram', 'Kilograms')}'); --13
 				DELETE FROM quantity_units WHERE name = '{$this->__t_sql('Pint')}';
 				INSERT INTO quantity_units (id, name, name_plural) VALUES (14, '{$this->__n_sql(1, 'Pint', 'Pints')}', '{$this->__n_sql(2, 'Pint', 'Pint')}'); --14
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO product_groups(name) VALUES ('01 {$this->__t_sql('Sweets')}'); --1
 				INSERT INTO product_groups(name) VALUES ('02 {$this->__t_sql('Bakery products')}'); --2
 				INSERT INTO product_groups(name) VALUES ('03 {$this->__t_sql('Tinned food')}'); --3
@@ -81,7 +85,9 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO product_groups(name) VALUES ('05 {$this->__t_sql('Vegetables/Fruits')}'); --5
 				INSERT INTO product_groups(name) VALUES ('06 {$this->__t_sql('Refrigerated products')}'); --6
 				INSERT INTO product_groups(name) VALUES ('07 {$this->__t_sql('Beverages')}'); --7'
+			");
 
+			$db->ExecuteDbStatement("
 				DELETE FROM sqlite_sequence WHERE name = 'products'; --Just to keep IDs in order as mentioned here...
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, min_stock_amount, product_group_id, picture_file_name) VALUES ('{$this->__t_sql('Cookies')}', 4, 3, 3, 8, 1, 'cookies.jpg'); --1
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, min_stock_amount, product_group_id, cumulate_min_stock_amount_of_sub_products) VALUES ('{$this->__t_sql('Chocolate')}', 4, 3, 3, 8, 1, 1); --2
@@ -91,7 +97,7 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Noodles')}', 3, 3, 3, 6); --6
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Pickles')}', 5, 4, 4, 3); --7
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Gulash soup')}', 5, 5, 5, 3); --8
-				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Yogurt')}', 2, 6, 6, 6); --9
+				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Yogurt')}', 2, 4, 4, 6); --9
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Cheese')}', 2, 3, 3, 6); --10
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id, description) VALUES ('{$this->__t_sql('Cold cuts')}', 2, 3, 3, 6, '{$loremIpsum}'); --11
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id, picture_file_name, default_best_before_days) VALUES ('{$this->__t_sql('Paprika')}', 2, 2, 2, 5, 'paprika.jpg', 7); --12
@@ -110,19 +116,18 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id, parent_product_id) VALUES ('{$this->__t_sql('Dark Chocolate')}', 4, 3, 3, 1, 2); --25
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Waffle rolls')}', 4, 3, 3, 1); --26
 				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Ice Cream')}', 6, 14, 14, 1); --27
-				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Soda')}', 2, 6, 6, 7); --28
-				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Beer')}', 2, 6, 6, 7); --29
-
+				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Soda')}', 2, 10, 10, 7); --28
+				INSERT INTO products (name, location_id, qu_id_purchase, qu_id_stock, product_group_id) VALUES ('{$this->__t_sql('Beer')}', 2, 10, 10, 7); --29
 				UPDATE products SET calories = 123 WHERE IFNULL(calories, 0) = 0;
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO product_barcodes (product_id, barcode) VALUES (8, '22111968');
 				INSERT INTO product_barcodes (product_id, barcode) VALUES (8, '22114358');
 				INSERT INTO product_barcodes (product_id, barcode) VALUES (4, '42141099');
+			");
 
-				/* Prevent invalid quantity unit assignments */
-				UPDATE products SET qu_id_stock = (SELECT MIN(id) FROM quantity_units) WHERE id IN (SELECT id FROM products WHERE qu_id_stock NOT IN (SELECT id FROM quantity_units));
-				UPDATE products SET qu_id_purchase = (SELECT MIN(id) FROM quantity_units) WHERE id IN (SELECT id FROM products WHERE qu_id_purchase NOT IN (SELECT id FROM quantity_units));
-
+			$db->ExecuteDbStatement('
 				INSERT INTO quantity_unit_conversions (from_qu_id, to_qu_id, factor, product_id) VALUES (3, 12, 10, 10);
 				INSERT INTO quantity_unit_conversions (from_qu_id, to_qu_id, factor, product_id) VALUES (3, 8, 1000, 22);
 				INSERT INTO quantity_unit_conversions (from_qu_id, to_qu_id, factor, product_id) VALUES (10, 9, 1, 23);
@@ -131,18 +136,24 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO quantity_unit_conversions (from_qu_id, to_qu_id, factor) VALUES (13, 8, 1000);
 				INSERT INTO quantity_unit_conversions (from_qu_id, to_qu_id, factor) VALUES (9, 11, 1000);
 				UPDATE quantity_unit_conversions SET factor = 10 WHERE product_id = 5 AND from_qu_id = 3 AND to_qu_id = 2;
+			');
 
+			$db->ExecuteDbStatement("
 				INSERT INTO shopping_list (note, amount) VALUES ('{$this->__t_sql('Some good snacks')}', 1);
 				INSERT INTO shopping_list (product_id, amount) VALUES (20, 1);
 				INSERT INTO shopping_list (product_id, amount) VALUES (17, 1);
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO recipes (name, description, picture_file_name) VALUES ('{$this->__t_sql('Pizza')}', '{$loremIpsumWithHtmlFormattings}', 'pizza.jpg'); --1
 				INSERT INTO recipes (name, description, picture_file_name) VALUES ('{$this->__t_sql('Spaghetti bolognese')}', '{$loremIpsumWithHtmlFormattings}', 'spaghetti.jpg'); --2
 				INSERT INTO recipes (name, description, picture_file_name) VALUES ('{$this->__t_sql('Sandwiches')}', '{$loremIpsumWithHtmlFormattings}', 'sandwiches.jpg'); --3
 				INSERT INTO recipes (name, description, picture_file_name) VALUES ('{$this->__t_sql('Pancakes')}', '{$loremIpsumWithHtmlFormattings}', 'pancakes.jpg'); --4
 				INSERT INTO recipes (name, description, picture_file_name) VALUES ('{$this->__t_sql('Chocolate sauce')}', '{$loremIpsumWithHtmlFormattings}', 'chocolate_sauce.jpg'); --5
 				INSERT INTO recipes (name, description, picture_file_name) VALUES ('{$this->__t_sql('Pancakes')} / {$this->__t_sql('Chocolate sauce')}', '{$loremIpsumWithHtmlFormattings}', 'pancakes_chocolate_sauce.jpg'); --6
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO recipes_pos (recipe_id, product_id, amount, ingredient_group) VALUES (1, 16, 1, '{$this->__t_sql('Bottom')}');
 				INSERT INTO recipes_pos (recipe_id, product_id, amount, ingredient_group) VALUES (1, 17, 1, '{$this->__t_sql('Topping')}');
 				INSERT INTO recipes_pos (recipe_id, product_id, amount, note, ingredient_group) VALUES (1, 18, 1, '{$this->__t_sql('This is the note content of the recipe ingredient')}', '{$this->__t_sql('Topping')}');
@@ -158,14 +169,20 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO recipes_pos (recipe_id, product_id, amount, qu_id, only_check_single_unit_in_stock) VALUES (4, 22, 200, 8, 1);
 				INSERT INTO recipes_pos (recipe_id, product_id, amount) VALUES (5, 2, 1);
 				INSERT INTO recipes_pos (recipe_id, product_id, amount, qu_id, only_check_single_unit_in_stock, price_factor) VALUES (5, 23, 200, 11, 1, 0.001);
+			");
 
+			$db->ExecuteDbStatement('
 				INSERT INTO recipes_nestings(recipe_id, includes_recipe_id) VALUES (6, 4);
 				INSERT INTO recipes_nestings(recipe_id, includes_recipe_id) VALUES (6, 5);
+			');
 
+			$db->ExecuteDbStatement("
 				INSERT INTO meal_plan_sections (name, sort_number) VALUES ('{$this->__t_sql('Breakfast')}', 10);
 				INSERT INTO meal_plan_sections (name, sort_number) VALUES ('{$this->__t_sql('Lunch')}', 20);
 				INSERT INTO meal_plan_sections (name, sort_number) VALUES ('{$this->__t_sql('Dinner')}', 30);
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO meal_plan(day, recipe_id, section_id) VALUES ('{$mondayThisWeek}', 1, 2);
 				INSERT INTO meal_plan(day, recipe_id, section_id) VALUES ('{$tuesdayThisWeek}', 2, 2);
 				INSERT INTO meal_plan(day, recipe_id, section_id) VALUES ('{$wednesdayThisWeek}', 3, 3);
@@ -178,7 +195,9 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO meal_plan(day, type, product_id, product_amount, section_id) VALUES (DATE('{$tuesdayThisWeek}', '-1 days'), 'product', 9, 1, 1);
 				INSERT INTO meal_plan(day, type, product_id, product_amount, section_id) VALUES (DATE('{$thursdayThisWeek}', '-1 days'), 'product', 25, 1, 1);
 				INSERT INTO meal_plan(day, type, note, section_id) VALUES ('{$saturdayThisWeek}', 'note', '{$this->__t_sql('Some good snacks')}', 3);
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO chores (name, period_type, period_interval, track_date_only, assignment_type, assignment_config, next_execution_assigned_to_user_id) VALUES ('{$this->__t_sql('Change towels in the bathroom')}', 'hourly', 3*24, 1, 'random', '1,2,3,4', 2); --1
 				INSERT INTO chores (name, period_type, period_interval, track_date_only, period_config, assignment_type, assignment_config, next_execution_assigned_to_user_id) VALUES ('{$this->__t_sql('Mop the kitchen floor')}', 'weekly', 1, 1, 'monday,thursday', 'random', '1,2,3,4', 1); --2
 				INSERT INTO chores (name, period_type, period_interval, assignment_type, assignment_config, next_execution_assigned_to_user_id, track_date_only) VALUES ('{$this->__t_sql('Take out the trash')}', 'hourly', 2*24, 'random', '1,2,3,4', 1, 1); --3
@@ -186,16 +205,22 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO chores (name, period_type, period_interval, track_date_only, assignment_type, assignment_config, next_execution_assigned_to_user_id) VALUES ('{$this->__t_sql('Clean the litter box')}', 'hourly', 1*24, 1, 'random', '1,2,3,4', 3); --5
 				INSERT INTO chores (name, period_type, period_interval, period_config, track_date_only, assignment_type) VALUES ('{$this->__t_sql('Change the bed sheets')}', 'weekly', 3, 'monday', 1, 'no-assignment'); --6
 				UPDATE chores SET start_date = DATE((CAST(STRFTIME('%Y', DATE('now')) AS INT) - 1) || '-01-01');
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO batteries (name, description, used_in, charge_interval_days) VALUES ('{$this->__t_sql('Battery')}1', '{$this->__t_sql('Warranty ends')} 2023', '{$this->__t_sql('TV remote control')}', 180); --1
 				INSERT INTO batteries (name, description, used_in) VALUES ('{$this->__t_sql('Battery')}2', '{$this->__t_sql('Warranty ends')} 2022', '{$this->__t_sql('Alarm clock')}'); --2
 				INSERT INTO batteries (name, description, used_in, charge_interval_days) VALUES ('{$this->__t_sql('Battery')}3', '{$this->__t_sql('Warranty ends')} 2022', '{$this->__t_sql('Heat remote control')}', 60); --3
 				INSERT INTO batteries (name, description, used_in, charge_interval_days) VALUES ('{$this->__t_sql('Battery')}4', '{$this->__t_sql('Warranty ends')} 2028', '{$this->__t_sql('Heat remote control')}', 60); --4
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO task_categories (name) VALUES ('{$this->__t_sql('Category')}1'); --1
 				INSERT INTO task_categories (name) VALUES ('{$this->__t_sql('Category')}2'); --2
 				INSERT INTO task_categories (name) VALUES ('{$this->__t_sql('Category')}3'); --3
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO tasks (name) VALUES ('{$this->__t_sql('Task')}1');
 				INSERT INTO tasks (name, category_id, due_date, assigned_to_user_id) VALUES ('{$this->__t_sql('Task')}2', 1, date(datetime('now', 'localtime'), '-1 day'), 1);
 				INSERT INTO tasks (name, category_id, due_date, assigned_to_user_id) VALUES ('{$this->__t_sql('Task')}3', 1, date(datetime('now', 'localtime')), 1);
@@ -203,29 +228,42 @@ class DemoDataGeneratorService extends BaseService
 				INSERT INTO tasks (name, due_date) VALUES ('{$this->__t_sql('Task')}5', date(datetime('now', 'localtime'), '+20 day'));
 				INSERT INTO tasks (name, due_date, done) VALUES ('{$this->__t_sql('Task')}6', date(datetime('now', 'localtime'), '-10 day'), 1);
 				INSERT INTO tasks (name, due_date, done) VALUES ('{$this->__t_sql('Task')}7', date(datetime('now', 'localtime'), '-20 day'), 1);
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO equipment (name, description, instruction_manual_file_name) VALUES ('{$this->__t_sql('Coffee machine')}', '{$loremIpsumWithHtmlFormattings}', 'loremipsum.pdf'); --1
 				INSERT INTO equipment (name, description) VALUES ('{$this->__t_sql('Dishwasher')}', '{$loremIpsumWithHtmlFormattings}'); --2
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO userentities (name, caption, description, show_in_sidebar_menu, icon_css_class) VALUES ('exampleuserentity', '{$this->__t_sql('Example userentity')}', '{$this->__t_sql('This is an example user entity...')}', 1, 'fa-solid fa-smile'); --1
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO userfields (entity, name, caption, type, show_as_column_in_tables) VALUES ('userentity-exampleuserentity', 'customfield1', '{$this->__t_sql('Custom field')} 1', 'text-single-line', 1); --1
 				INSERT INTO userfields (entity, name, caption, type, show_as_column_in_tables) VALUES ('userentity-exampleuserentity', 'customfield2', '{$this->__t_sql('Custom field')} 2', 'text-single-line', 1); --2
+			");
 
+			$db->ExecuteDbStatement('
 				INSERT INTO userobjects (userentity_id) VALUES (1); --1
 				INSERT INTO userobjects (userentity_id) VALUES (1); --2
+			');
 
+			$db->ExecuteDbStatement("
 				INSERT INTO userfield_values (field_id, object_id, value) VALUES (1, 1, '{$this->__t_sql('Example field value...')}');
 				INSERT INTO userfield_values (field_id, object_id, value) VALUES (2, 1, '{$this->__t_sql('Example field value...')}');
 				INSERT INTO userfield_values (field_id, object_id, value) VALUES (1, 2, '{$this->__t_sql('Example field value...')}');
 				INSERT INTO userfield_values (field_id, object_id, value) VALUES (2, 2, '{$this->__t_sql('Example field value...')}');
+			");
 
+			$db->ExecuteDbStatement("
 				INSERT INTO user_settings(user_id, key, value) VALUES (1, 'product_presets_location_id', '3'); -- Pantry
 				INSERT INTO user_settings(user_id, key, value) VALUES (1, 'product_presets_qu_id', '3'); -- Pack
+			");
 
+			$db->ExecuteDbStatement('
 				INSERT INTO migrations (migration) VALUES (-1);
-			";
-			$this->getDatabaseService()->ExecuteDbStatement($sql);
+			');
 
 			$stockTransactionId = uniqid();
 			$stockService = new StockService();
@@ -323,7 +361,7 @@ class DemoDataGeneratorService extends BaseService
 			$choresService = new ChoresService();
 			for ($i = 1; $i <= 25; $i++)
 			{
-				foreach ($this->getDatabase()->chores() as $chore)
+				foreach ($this->DB->chores() as $chore)
 				{
 					$hours = $chore->period_interval;
 					if ($chore->period_type == 'weekly')
@@ -341,7 +379,7 @@ class DemoDataGeneratorService extends BaseService
 			}
 			$choresService->TrackChore(1, date('Y-m-d'), array_rand([1, 2, 3, 4]) + 1);
 			$choresService->TrackChore(4, date('Y-m-d'), array_rand([1, 2, 3, 4]) + 1);
-			$this->getDatabaseService()->ExecuteDbStatement("UPDATE chores SET rescheduled_date = DATE(DATE('now', 'localtime'), '+10 days') WHERE id = 6");
+			$db->ExecuteDbStatement("UPDATE chores SET rescheduled_date = DATE(DATE('now', 'localtime'), '+10 days') WHERE id = 6");
 
 			$batteriesService = new BatteriesService();
 			$batteriesService->TrackChargeCycle(1, date('Y-m-d H:i:s', strtotime('-720 days')));
@@ -427,13 +465,13 @@ class DemoDataGeneratorService extends BaseService
 
 	private function __n_sql($number, string $singularForm, string $pluralForm)
 	{
-		$localizedText = $this->getLocalizationService()->__n($number, $singularForm, $pluralForm);
+		$localizedText = LocalizationService::GetInstance()->__n($number, $singularForm, $pluralForm);
 		return str_replace("'", "''", $localizedText);
 	}
 
 	private function __t_sql(string $text)
 	{
-		$localizedText = $this->getLocalizationService()->__t($text, null);
+		$localizedText = LocalizationService::GetInstance()->__t($text, null);
 		return str_replace("'", "''", $localizedText);
 	}
 }

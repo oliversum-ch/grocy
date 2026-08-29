@@ -31,19 +31,6 @@ msgstr "மிட்டாய் அலமாரி"
 msgid "Tinned food cupboard"
 msgstr "தகர குவளை உணவு அலமாரி"
 
-msgid "Fridge"
-msgstr "ஃப்ரிட்ஜ்"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "துண்டு"
-msgstr[1] "துண்டுகள்"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "தொகுப்பு"
-msgstr[1] "தொகுப்புகள்"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "கண்ணாடி"

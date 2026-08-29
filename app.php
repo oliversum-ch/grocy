@@ -1,10 +1,9 @@
 <?php
 
 use Grocy\Controllers\ExceptionController;
-use Grocy\Helpers\UrlManager;
 use Grocy\Helpers\SlimBladeView;
+use Grocy\Helpers\UrlManager;
 use Grocy\Middleware\LocaleMiddleware;
-use Grocy\Middleware\CorsMiddleware;
 use Psr\Container\ContainerInterface as Container;
 use Slim\Factory\AppFactory;
 
@@ -109,25 +108,15 @@ if (!empty(GROCY_BASE_PATH))
 	$app->setBasePath(GROCY_BASE_PATH);
 }
 
-if (GROCY_MODE === 'production' || GROCY_MODE === 'dev')
-{
-	$app->add(new LocaleMiddleware($container));
-}
-else
-{
-	define('GROCY_LOCALE', GROCY_DEFAULT_LOCALE);
-}
-
+$app->add(new LocaleMiddleware($container, $app->getResponseFactory()));
 $authMiddlewareClass = GROCY_AUTH_CLASS;
 $app->add(new $authMiddlewareClass($container, $app->getResponseFactory()));
+
 // Add default middleware
+$app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 $errorMiddleware = $app->addErrorMiddleware(true, false, false);
-$errorMiddleware->setDefaultErrorHandler(
-	new ExceptionController($app, $container)
-);
-
-$app->add(new CorsMiddleware($app->getResponseFactory()));
+$errorMiddleware->setDefaultErrorHandler(new ExceptionController($container, $app->getResponseFactory()));
 
 $app->getRouteCollector()->setCacheFile(GROCY_DATAPATH . '/viewcache/route_cache.php');
 

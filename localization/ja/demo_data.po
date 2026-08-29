@@ -35,17 +35,6 @@ msgstr "菓子収納"
 msgid "Tinned food cupboard"
 msgstr "缶詰収納"
 
-msgid "Fridge"
-msgstr "冷蔵庫"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "ピース"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "パック"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "瓶"

@@ -32,23 +32,6 @@ msgstr "Omara za sladkarije"
 msgid "Tinned food cupboard"
 msgstr "Omara za konzervirano hrano"
 
-msgid "Fridge"
-msgstr "Hladilnik"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Kos"
-msgstr[1] "Kosa"
-msgstr[2] "Kosi"
-msgstr[3] "Kosov"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Paket"
-msgstr[1] "Paketa"
-msgstr[2] "Paketi"
-msgstr[3] "Paketov"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Kozarec"

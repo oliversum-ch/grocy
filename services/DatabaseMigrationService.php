@@ -12,7 +12,7 @@ class DatabaseMigrationService extends BaseService
 
 	public function MigrateDatabase()
 	{
-		$this->getDatabaseService()->ExecuteDbStatement("CREATE TABLE IF NOT EXISTS migrations (migration INTEGER NOT NULL PRIMARY KEY UNIQUE, execution_time_timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
+		DatabaseService::GetInstance()->ExecuteDbStatement("CREATE TABLE IF NOT EXISTS migrations (migration INTEGER NOT NULL PRIMARY KEY UNIQUE, execution_time_timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
 		$migrationFiles = [];
 		foreach (new \FilesystemIterator(__DIR__ . '/../migrations') as $file)
@@ -38,20 +38,20 @@ class DatabaseMigrationService extends BaseService
 
 		if ($migrationCounter > 0)
 		{
-			$this->getDatabaseService()->ExecuteDbStatement('VACUUM');
+			DatabaseService::GetInstance()->ExecuteDbStatement('VACUUM');
 		}
 	}
 
 	private function ExecutePhpMigrationWhenNeeded(int $migrationId, string $phpFile, int &$migrationCounter)
 	{
-		$rowCount = $this->getDatabaseService()->ExecuteDbQuery('SELECT COUNT(*) FROM migrations WHERE migration = ' . $migrationId)->fetchColumn();
+		$rowCount = DatabaseService::GetInstance()->ExecuteDbQuery('SELECT COUNT(*) FROM migrations WHERE migration = ' . $migrationId)->fetchColumn();
 		if ($rowCount == 0 || $migrationId == self::EMERGENCY_MIGRATION_ID || $migrationId == self::DOALWAYS_MIGRATION_ID)
 		{
 			include $phpFile;
 
 			if ($migrationId != self::EMERGENCY_MIGRATION_ID && $migrationId != self::DOALWAYS_MIGRATION_ID)
 			{
-				$this->getDatabaseService()->ExecuteDbStatement('INSERT INTO migrations (migration) VALUES (' . $migrationId . ')');
+				DatabaseService::GetInstance()->ExecuteDbStatement('INSERT INTO migrations (migration) VALUES (' . $migrationId . ')');
 				$migrationCounter++;
 			}
 		}
@@ -59,28 +59,28 @@ class DatabaseMigrationService extends BaseService
 
 	private function ExecuteSqlMigrationWhenNeeded(int $migrationId, string $sql, int &$migrationCounter)
 	{
-		$rowCount = $this->getDatabaseService()->ExecuteDbQuery('SELECT COUNT(*) FROM migrations WHERE migration = ' . $migrationId)->fetchColumn();
+		$rowCount = DatabaseService::GetInstance()->ExecuteDbQuery('SELECT COUNT(*) FROM migrations WHERE migration = ' . $migrationId)->fetchColumn();
 		if ($rowCount == 0 || $migrationId == self::EMERGENCY_MIGRATION_ID || $migrationId == self::DOALWAYS_MIGRATION_ID)
 		{
-			$this->getDatabaseService()->GetDbConnectionRaw()->beginTransaction();
+			DatabaseService::GetInstance()->GetDbConnectionRaw()->beginTransaction();
 
 			try
 			{
-				$this->getDatabaseService()->ExecuteDbStatement($sql);
+				DatabaseService::GetInstance()->ExecuteDbStatement($sql);
 
 				if ($migrationId != self::EMERGENCY_MIGRATION_ID && $migrationId != self::DOALWAYS_MIGRATION_ID)
 				{
-					$this->getDatabaseService()->ExecuteDbStatement('INSERT INTO migrations (migration) VALUES (' . $migrationId . ')');
+					DatabaseService::GetInstance()->ExecuteDbStatement('INSERT INTO migrations (migration) VALUES (' . $migrationId . ')');
 					$migrationCounter++;
 				}
 			}
 			catch (\Exception $ex)
 			{
-				$this->getDatabaseService()->GetDbConnectionRaw()->rollback();
+				DatabaseService::GetInstance()->GetDbConnectionRaw()->rollback();
 				throw $ex;
 			}
 
-			$this->getDatabaseService()->GetDbConnectionRaw()->commit();
+			DatabaseService::GetInstance()->GetDbConnectionRaw()->commit();
 		}
 	}
 }

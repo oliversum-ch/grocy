@@ -11,16 +11,23 @@ class LocaleMiddleware extends BaseMiddleware
 {
 	public function __invoke(Request $request, RequestHandler $handler): Response
 	{
-		$locale = $this->getLocale($request);
-		define('GROCY_LOCALE', $locale);
+		define('GROCY_LOCALE', $this->GetLocale($request));
+
 		return $handler->handle($request);
 	}
 
-	protected function getLocale(Request $request)
+	private function GetLocale(Request $request)
 	{
+		// Demo and Prerelease modes are fixed to the default locale
+		if (GROCY_MODE === 'demo' || GROCY_MODE === 'prerelease')
+		{
+			return GROCY_DEFAULT_LOCALE;
+		}
+
+		// Prefer user setting
 		if (defined('GROCY_AUTHENTICATED') && GROCY_AUTHENTICATED)
 		{
-			$locale = UsersService::getInstance()->GetUserSetting(GROCY_USER_ID, 'locale');
+			$locale = UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'locale');
 			if (isset($locale) && !empty($locale))
 			{
 				if (in_array($locale, scandir(__DIR__ . '/../localization')))
@@ -30,11 +37,9 @@ class LocaleMiddleware extends BaseMiddleware
 			}
 		}
 
-		$langs = implode(',', $request->getHeader('Accept-Language'));
-
-		// Src: https://gist.github.com/spolischook/0cde9c6286415cddc088
-		$prefLocales = array_reduce(
-			explode(',', $langs),
+		// Otherwise use Browser prefered locale
+		$browserPreferedLocales = array_reduce(
+			explode(',', implode(',', $request->getHeader('Accept-Language'))),
 			function ($res, $el)
 			{
 				list($l, $q) = array_merge(explode(';q=', $el), [1]);
@@ -43,10 +48,10 @@ class LocaleMiddleware extends BaseMiddleware
 			},
 			[]
 		);
-		arsort($prefLocales);
+		arsort($browserPreferedLocales);
 
 		$availableLocales = scandir(__DIR__ . '/../localization');
-		foreach ($prefLocales as $locale => $q)
+		foreach ($browserPreferedLocales as $locale => $q)
 		{
 			if (in_array($locale, $availableLocales))
 			{
@@ -66,6 +71,7 @@ class LocaleMiddleware extends BaseMiddleware
 			}
 		}
 
+		// Falback to default locale
 		return GROCY_DEFAULT_LOCALE;
 	}
 }

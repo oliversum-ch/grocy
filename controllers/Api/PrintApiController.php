@@ -1,8 +1,10 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
+use Grocy\Services\PrintService;
+use Grocy\Services\StockService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -12,7 +14,7 @@ class PrintApiController extends BaseApiController
 	{
 		try
 		{
-			User::checkPermission($request, User::PERMISSION_SHOPPINGLIST);
+			User::CheckPermission($request, User::PERMISSION_SHOPPINGLIST);
 
 			$params = $request->getQueryParams();
 
@@ -27,8 +29,8 @@ class PrintApiController extends BaseApiController
 			{
 				$printHeader = ($params['printHeader'] === 'true');
 			}
-			$items = $this->getStockService()->GetShoppinglistInPrintableStrings($listId);
-			return $this->ApiResponse($response, $this->getPrintService()->printShoppingList($printHeader, $items));
+			$items = StockService::GetInstance()->GetShoppinglistInPrintableStrings($listId);
+			return $this->ApiResponse($response, PrintService::GetInstance()->printShoppingList($printHeader, $items));
 		}
 		catch (\Exception $ex)
 		{

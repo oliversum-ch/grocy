@@ -3,6 +3,8 @@
 namespace Grocy\Controllers;
 
 use Grocy\Controllers\Users\User;
+use Grocy\Services\SessionService;
+use Grocy\Services\UserfieldsService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -10,10 +12,10 @@ class UsersController extends BaseController
 {
 	public function PermissionList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_USERS_READ);
-		return $this->renderPage($response, 'userpermissions', [
-			'user' => $this->getDatabase()->users($args['userId']),
-			'permissions' => $this->getDatabase()->uihelper_user_permissions()
+		User::CheckPermission($request, User::PERMISSION_USERS_READ);
+		return $this->RenderPage($response, 'userpermissions', [
+			'user' => $this->DB->users($args['userId']),
+			'permissions' => $this->DB->uihelper_user_permissions()
 				->where('parent IS NULL')->where('user_id', $args['userId'])
 		]);
 	}
@@ -22,35 +24,35 @@ class UsersController extends BaseController
 	{
 		if ($args['userId'] == 'new')
 		{
-			User::checkPermission($request, User::PERMISSION_USERS_CREATE);
-			return $this->renderPage($response, 'userform', [
+			User::CheckPermission($request, User::PERMISSION_USERS_CREATE);
+			return $this->RenderPage($response, 'userform', [
 				'mode' => 'create',
-				'userfields' => $this->getUserfieldsService()->GetFields('users')
+				'userfields' => UserfieldsService::GetInstance()->GetFields('users')
 			]);
 		}
 		else
 		{
 			if ($args['userId'] == GROCY_USER_ID)
 			{
-				User::checkPermission($request, User::PERMISSION_USERS_EDIT_SELF);
+				User::CheckPermission($request, User::PERMISSION_USERS_EDIT_SELF);
 			}
 			else
 			{
-				User::checkPermission($request, User::PERMISSION_USERS_EDIT);
+				User::CheckPermission($request, User::PERMISSION_USERS_EDIT);
 			}
 
-			return $this->renderPage($response, 'userform', [
-				'user' => $this->getDatabase()->users($args['userId']),
+			return $this->RenderPage($response, 'userform', [
+				'user' => $this->DB->users($args['userId']),
 				'mode' => 'edit',
-				'userfields' => $this->getUserfieldsService()->GetFields('users'),
-				'userfieldValues' => $this->getUserfieldsService()->GetAllValues('users')
+				'userfields' => UserfieldsService::GetInstance()->GetFields('users'),
+				'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('users')
 			]);
 		}
 	}
 
 	public function UserSettings(Request $request, Response $response, array $args)
 	{
-		return $this->renderPage($response, 'usersettings', [
+		return $this->RenderPage($response, 'usersettings', [
 			'languages' => array_filter(scandir(__DIR__ . '/../localization'), function ($item)
 			{
 				if ($item == '.' || $item == '..')
@@ -65,11 +67,39 @@ class UsersController extends BaseController
 
 	public function UsersList(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_USERS_READ);
-		return $this->renderPage($response, 'users', [
-			'users' => $this->getDatabase()->users()->orderBy('username'),
-			'userfields' => $this->getUserfieldsService()->GetFields('users'),
-			'userfieldValues' => $this->getUserfieldsService()->GetAllValues('users')
+		User::CheckPermission($request, User::PERMISSION_USERS_READ);
+		return $this->RenderPage($response, 'users', [
+			'users' => $this->DB->users()->orderBy('username'),
+			'userfields' => UserfieldsService::GetInstance()->GetFields('users'),
+			'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('users')
+		]);
+	}
+
+	public function SessionList(Request $request, Response $response, array $args)
+	{
+		if ($args['userId'] == GROCY_USER_ID)
+		{
+			User::CheckPermission($request, User::PERMISSION_USERS_EDIT_SELF);
+		}
+		else
+		{
+			User::CheckPermission($request, User::PERMISSION_USERS_EDIT);
+		}
+
+		$thisSessionTokenHashes = [];
+		if (isset($_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_ACCESS]))
+		{
+			$thisSessionTokenHashes[] = hash('sha256', $_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_ACCESS]);
+		}
+		if (isset($_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_REMEMBER_ME]))
+		{
+			$thisSessionTokenHashes[] = hash('sha256', $_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_REMEMBER_ME]);
+		}
+
+		return $this->RenderPage($response, 'managesessions', [
+			'user' => $this->DB->users($args['userId']),
+			'thisSessionTokenHashes' => $thisSessionTokenHashes,
+			'sessionRows' => $this->DB->sessions()->where('user_id', $args['userId'])->orderBy('id')
 		]);
 	}
 }

@@ -1,7 +1,6 @@
 # Translators:
 # 8a6ec6ba31fecee74183669e4744ef28_7d4badd <d361cc5e10b554e8c048e8ae22413142_453062>, 2019
 # bigoudo, 2019
-# Matthieu K, 2019
 # Antonin DESFONTAINES <antonin.desfontaines@outlook.com>, 2019
 # sebastien GRANDJEAN <maluseb@hotmail.fr>, 2020
 # Jordan COUTON <couton.jordan@gmail.com>, 2020
@@ -43,21 +42,6 @@ msgstr "Placard à bonbons"
 
 msgid "Tinned food cupboard"
 msgstr "Placard à conserves"
-
-msgid "Fridge"
-msgstr "Réfrigérateur"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Piece"
-msgstr[1] "Unités"
-msgstr[2] "Unités"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Pack"
-msgstr[1] "Packs"
-msgstr[2] "Packs"
 
 msgid "Glass"
 msgid_plural "Glasses"

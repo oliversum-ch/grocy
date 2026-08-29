@@ -1,9 +1,7 @@
 # Translators:
 # Agata Prymuszewska <a.prymuszewska@gmail.com>, 2019
-# Marcin Redlica <marcin.redlica@gmail.com>, 2019
 # Bernd Bestel <bernd@berrnd.de>, 2019
 # Zbigniew Żołnierowicz <zbigniew.zolnierowicz@gmail.com>, 2019
-# Maczuga <maczugapl@gmail.com>, 2019
 # Piotr Oleszczyk <piotr.oleszczyk@gmail.com>, 2020
 # Teiron, 2020
 # Pro Peller <smiglo@tuta.io>, 2020
@@ -22,7 +20,9 @@
 # Marcin Lewandowski <email.marcina.lewandowskiego@gmail.com>, 2023
 # Peter Patalong <piotrpatalong@gmail.com>, 2024
 # Dawid K., 2025
-# Michal G-K, 2025
+# Marcin Redlica <marcin.redlica@gmail.com>, 2026
+# Maczuga <maczugapl@gmail.com>, 2026
+# Michal G-K, 2026
 # 
 msgid ""
 msgstr ""
@@ -30,7 +30,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: Michal G-K, 2025\n"
+"Last-Translator: Michal G-K, 2026\n"
 "Language-Team: Polish (https://app.transifex.com/grocy/teams/93189/pl/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -743,11 +743,8 @@ msgstr "Grupa produktów"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr "Czy na pewno chcesz usunąć grupę produktów \"%s\"?"
 
-msgid "Stay logged in permanently"
-msgstr "Pozostań zalogowany na zawsze"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "Gdy nie ustawione - zostaniesz wylogowany/a po najpóźniej 30 dniach"
+msgid "Remember Me"
+msgstr ""
 
 msgid "Status"
 msgstr "Status"
@@ -1751,9 +1748,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr "Jest zamrażalnikiem"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "Nie może być tożsame z lokalizacją \"od\""
-
 msgid "Thawed"
 msgstr "Rozmrożone"
 
@@ -1811,9 +1805,6 @@ msgstr "Usuń tą pozycję"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr "Pokaż ikonkę, jeżeli produkt znajduje się już na liście zakupów"
 
-msgid "Calories"
-msgstr "Kalorie"
-
 msgid "means %1$s per %2$s"
 msgstr "oznacza %1$s na %2$s"
 
@@ -1862,8 +1853,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "Wyczyść filtr"
 
-msgid "Permissions for user %s"
-msgstr "Uprawnienia dla użytkownika %s"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "Czy na pewno chcesz usunąć dla siebie pełne uprawnienia?"
@@ -2905,4 +2896,48 @@ msgstr ""
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "Lodówka"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "Sztuka"
+msgstr[1] "Sztuki"
+msgstr[2] "Sztuk"
+msgstr[3] "Sztuk"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "Paczka"
+msgstr[1] "Paczki"
+msgstr[2] "Paczek"
+msgstr[3] "Opakowań"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

@@ -3,6 +3,8 @@
 namespace Grocy\Controllers;
 
 use Grocy\Controllers\Users\User;
+use Grocy\Services\ReceiptImportService;
+use Grocy\Services\StockService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -13,17 +15,18 @@ class ReceiptImportController extends BaseController
 		User::checkPermission($request, User::PERMISSION_STOCK_PURCHASE);
 		try
 		{
-			$externalBarcodeLookupPluginName = $this->getStockService()->GetExternalBarcodeLookupPluginName();
+			$externalBarcodeLookupPluginName = StockService::GetInstance()->GetExternalBarcodeLookupPluginName();
 		}
 		catch (\Throwable)
 		{
 			$externalBarcodeLookupPluginName = '';
 		}
 
-		return $this->renderPage($response, 'receiptimport', [
-			'products' => $this->getReceiptImportService()->GetProductCatalog(),
-			'shoppingLocations' => $this->getReceiptImportService()->GetShoppingLocations(),
-			'importHistory' => $this->getReceiptImportService()->GetHistory(),
+		$receiptImportService = ReceiptImportService::GetInstance();
+		return $this->RenderPage($response, 'receiptimport', [
+			'products' => $receiptImportService->GetProductCatalog(),
+			'shoppingLocations' => $receiptImportService->GetShoppingLocations(),
+			'importHistory' => $receiptImportService->GetHistory(),
 			'canCreateProducts' => User::hasPermissions(User::PERMISSION_MASTER_DATA_EDIT),
 			'externalBarcodeLookupPluginName' => $externalBarcodeLookupPluginName
 		]);

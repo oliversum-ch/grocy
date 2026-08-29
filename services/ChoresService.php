@@ -23,7 +23,7 @@ class ChoresService extends BaseService
 			throw new \Exception('Chore does not exist');
 		}
 
-		$chore = $this->getDatabase()->chores($choreId);
+		$chore = $this->DB->chores($choreId);
 
 		if (!empty($chore->rescheduled_next_execution_assigned_to_user_id))
 		{
@@ -31,11 +31,11 @@ class ChoresService extends BaseService
 		}
 		else
 		{
-			$choreLastTrackedTime = $this->getDatabase()->chores_log()->where('chore_id = :1 AND undone = 0', $choreId)->max('tracked_time');
-			$lastChoreLogRow = $this->getDatabase()->chores_log()->where('chore_id = :1 AND tracked_time = :2 AND undone = 0', $choreId, $choreLastTrackedTime)->orderBy('row_created_timestamp', 'DESC')->fetch();
+			$choreLastTrackedTime = $this->DB->chores_log()->where('chore_id = :1 AND undone = 0', $choreId)->max('tracked_time');
+			$lastChoreLogRow = $this->DB->chores_log()->where('chore_id = :1 AND tracked_time = :2 AND undone = 0', $choreId, $choreLastTrackedTime)->orderBy('row_created_timestamp', 'DESC')->fetch();
 			$lastDoneByUserId = $lastChoreLogRow->done_by_user_id;
 
-			$users = $this->getUsersService()->GetUsersAsDto();
+			$users = UsersService::GetInstance()->GetUsersAsDto();
 			$assignedUsers = [];
 			foreach ($users as $user)
 			{
@@ -88,7 +88,7 @@ class ChoresService extends BaseService
 			}
 			elseif ($chore->assignment_type == self::CHORE_ASSIGNMENT_TYPE_WHO_LEAST_DID_FIRST)
 			{
-				$row = $this->getDatabase()->chores_execution_users_statistics()->where('chore_id = :1', $choreId)->orderBy('execution_count')->limit(1)->fetch();
+				$row = $this->DB->chores_execution_users_statistics()->where('chore_id = :1', $choreId)->orderBy('execution_count')->limit(1)->fetch();
 				if ($row != null)
 				{
 					$nextExecutionUserId = $row->user_id;
@@ -108,15 +108,15 @@ class ChoresService extends BaseService
 			throw new \Exception('Chore does not exist');
 		}
 
-		$users = $this->getUsersService()->GetUsersAsDto();
+		$users = UsersService::GetInstance()->GetUsersAsDto();
 
-		$chore = $this->getDatabase()->chores($choreId);
-		$choreTrackedCount = $this->getDatabase()->chores_log()->where('chore_id = :1 AND undone = 0 AND skipped = 0', $choreId)->count();
-		$choreLastTrackedTime = $this->getDatabase()->chores_log()->where('chore_id = :1 AND undone = 0 AND skipped = 0', $choreId)->max('tracked_time');
-		$nextExecutionTime = $this->getDatabase()->chores_current()->where('chore_id', $choreId)->min('next_estimated_execution_time');
-		$averageExecutionFrequency = $this->getDatabase()->chores_execution_average_frequency()->where('chore_id', $choreId)->min('average_frequency_hours');
+		$chore = $this->DB->chores($choreId);
+		$choreTrackedCount = $this->DB->chores_log()->where('chore_id = :1 AND undone = 0 AND skipped = 0', $choreId)->count();
+		$choreLastTrackedTime = $this->DB->chores_log()->where('chore_id = :1 AND undone = 0 AND skipped = 0', $choreId)->max('tracked_time');
+		$nextExecutionTime = $this->DB->chores_current()->where('chore_id', $choreId)->min('next_estimated_execution_time');
+		$averageExecutionFrequency = $this->DB->chores_execution_average_frequency()->where('chore_id', $choreId)->min('average_frequency_hours');
 
-		$lastChoreLogRow = $this->getDatabase()->chores_log()->where('chore_id = :1 AND tracked_time = :2 AND undone = 0', $choreId, $choreLastTrackedTime)->fetch();
+		$lastChoreLogRow = $this->DB->chores_log()->where('chore_id = :1 AND tracked_time = :2 AND undone = 0', $choreId, $choreLastTrackedTime)->fetch();
 		$lastDoneByUser = null;
 		if ($lastChoreLogRow !== null && !empty($lastChoreLogRow))
 		{
@@ -142,9 +142,9 @@ class ChoresService extends BaseService
 
 	public function GetCurrent()
 	{
-		$users = $this->getUsersService()->GetUsersAsDto();
+		$users = UsersService::GetInstance()->GetUsersAsDto();
 
-		$chores = $this->getDatabase()->chores_current();
+		$chores = $this->DB->chores_current();
 		foreach ($chores as $chore)
 		{
 			if (!empty($chore->next_execution_assigned_to_user_id))
@@ -167,13 +167,13 @@ class ChoresService extends BaseService
 			throw new \Exception('Chore does not exist');
 		}
 
-		$userRow = $this->getDatabase()->users()->where('id = :1', $doneBy)->fetch();
+		$userRow = $this->DB->users()->where('id = :1', $doneBy)->fetch();
 		if ($userRow === null)
 		{
 			throw new \Exception('User does not exist');
 		}
 
-		$chore = $this->getDatabase()->chores($choreId);
+		$chore = $this->DB->chores($choreId);
 		if ($chore->track_date_only == 1)
 		{
 			$trackedTime = substr($trackedTime, 0, 10) . ' 00:00:00';
@@ -187,8 +187,8 @@ class ChoresService extends BaseService
 			}
 		}
 
-		$scheduledExecutionTime = $this->getDatabase()->chores_current()->where('chore_id = :1', $chore->id)->fetch()->next_estimated_execution_time;
-		$logRow = $this->getDatabase()->chores_log()->createRow([
+		$scheduledExecutionTime = $this->DB->chores_current()->where('chore_id = :1', $chore->id)->fetch()->next_estimated_execution_time;
+		$logRow = $this->DB->chores_log()->createRow([
 			'chore_id' => $choreId,
 			'tracked_time' => $trackedTime,
 			'done_by_user_id' => $doneBy,
@@ -196,12 +196,12 @@ class ChoresService extends BaseService
 			'scheduled_execution_time' => $scheduledExecutionTime
 		]);
 		$logRow->save();
-		$lastInsertId = $this->getDatabase()->lastInsertId();
+		$lastInsertId = $this->DB->lastInsertId();
 
 		if ($chore->consume_product_on_execution == 1 && !empty($chore->product_id))
 		{
 			$transactionId = uniqid();
-			$this->getStockService()->ConsumeProduct($chore->product_id, $chore->product_amount, false, StockService::TRANSACTION_TYPE_CONSUME, 'default', null, null, $transactionId, true);
+			StockService::GetInstance()->ConsumeProduct($chore->product_id, $chore->product_amount, false, StockService::TRANSACTION_TYPE_CONSUME, 'default', null, null, $transactionId, true);
 		}
 
 		if (!empty($chore->rescheduled_date))
@@ -225,7 +225,7 @@ class ChoresService extends BaseService
 
 	public function UndoChoreExecution($executionId)
 	{
-		$logRow = $this->getDatabase()->chores_log()->where('id = :1 AND undone = 0', $executionId)->fetch();
+		$logRow = $this->DB->chores_log()->where('id = :1 AND undone = 0', $executionId)->fetch();
 		if ($logRow == null)
 		{
 			throw new \Exception('Execution does not exist or was already undone');
@@ -257,26 +257,26 @@ class ChoresService extends BaseService
 			throw new \Exception('$choreIdToKeep cannot equal $choreIdToRemove');
 		}
 
-		$this->getDatabaseService()->GetDbConnectionRaw()->beginTransaction();
+		DatabaseService::GetInstance()->GetDbConnectionRaw()->beginTransaction();
 		try
 		{
-			$choreToKeep = $this->getDatabase()->chores($choreIdToKeep);
-			$choreToRemove = $this->getDatabase()->chores($choreIdToRemove);
+			$choreToKeep = $this->DB->chores($choreIdToKeep);
+			$choreToRemove = $this->DB->chores($choreIdToRemove);
 
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE chores_log SET chore_id = ' . $choreIdToKeep . ' WHERE chore_id = ' . $choreIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('DELETE FROM chores WHERE id = ' . $choreIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE chores_log SET chore_id = ' . $choreIdToKeep . ' WHERE chore_id = ' . $choreIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('DELETE FROM chores WHERE id = ' . $choreIdToRemove);
 		}
 		catch (\Exception $ex)
 		{
-			$this->getDatabaseService()->GetDbConnectionRaw()->rollback();
+			DatabaseService::GetInstance()->GetDbConnectionRaw()->rollback();
 			throw $ex;
 		}
-		$this->getDatabaseService()->GetDbConnectionRaw()->commit();
+		DatabaseService::GetInstance()->GetDbConnectionRaw()->commit();
 	}
 
 	private function ChoreExists($choreId)
 	{
-		$choreRow = $this->getDatabase()->chores()->where('id = :1', $choreId)->fetch();
+		$choreRow = $this->DB->chores()->where('id = :1', $choreId)->fetch();
 		return $choreRow !== null;
 	}
 }

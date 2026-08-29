@@ -1,8 +1,7 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
-use Grocy\Services\ApiKeyService;
 use Eluceo\iCal\Domain\Entity\Calendar;
 use Eluceo\iCal\Domain\Entity\Event;
 use Eluceo\iCal\Domain\Entity\TimeZone;
@@ -11,6 +10,8 @@ use Eluceo\iCal\Domain\ValueObject\DateTime;
 use Eluceo\iCal\Domain\ValueObject\SingleDay;
 use Eluceo\iCal\Domain\ValueObject\TimeSpan;
 use Eluceo\iCal\Presentation\Factory\CalendarFactory;
+use Grocy\Services\ApiKeyService;
+use Grocy\Services\CalendarService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -20,7 +21,7 @@ class CalendarApiController extends BaseApiController
 	{
 		try
 		{
-			$events = $this->getCalendarService()->GetEvents();
+			$events = CalendarService::GetInstance()->GetEvents();
 			$minDate = null;
 			$maxDate = null;
 
@@ -95,7 +96,7 @@ class CalendarApiController extends BaseApiController
 		try
 		{
 			return $this->ApiResponse($response, [
-				'url' => $this->AppContainer->get('UrlManager')->ConstructUrl('/api/calendar/ical?secret=' . $this->getApiKeyService()->GetOrCreateApiKey(ApiKeyService::API_KEY_TYPE_SPECIAL_PURPOSE_CALENDAR_ICAL))
+				'url' => $this->AppContainer->get('UrlManager')->ConstructUrl('/api/calendar/ical?secret=' . ApiKeyService::GetInstance()->GetOrCreateApiKey(ApiKeyService::API_KEY_TYPE_SPECIAL_PURPOSE_CALENDAR_ICAL))
 			]);
 		}
 		catch (\Exception $ex)

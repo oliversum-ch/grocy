@@ -8,6 +8,7 @@ class CalendarService extends BaseService
 {
 	public function __construct()
 	{
+		parent::__construct();
 		$this->UrlManager = new UrlManager(GROCY_BASE_URL);
 	}
 
@@ -15,15 +16,15 @@ class CalendarService extends BaseService
 
 	public function GetEvents()
 	{
-		$usersService = $this->getUsersService();
+		$usersService = UsersService::GetInstance();
 
 		$stockEvents = [];
 		if (GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)
 		{
-			$products = $this->getDatabase()->products();
-			$titlePrefix = $this->getLocalizationService()->__t('Product due') . ': ';
+			$products = $this->DB->products();
+			$titlePrefix = LocalizationService::GetInstance()->__t('Product due') . ': ';
 
-			foreach ($this->getStockService()->GetCurrentStock() as $currentStockEntry)
+			foreach (StockService::GetInstance()->GetCurrentStock() as $currentStockEntry)
 			{
 				if ($currentStockEntry->amount > 0)
 				{
@@ -41,9 +42,9 @@ class CalendarService extends BaseService
 		$taskEvents = [];
 		if (GROCY_FEATURE_FLAG_TASKS)
 		{
-			$titlePrefix = $this->getLocalizationService()->__t('Task due') . ': ';
+			$titlePrefix = LocalizationService::GetInstance()->__t('Task due') . ': ';
 
-			foreach ($this->getTasksService()->GetCurrent() as $currentTaskEntry)
+			foreach (TasksService::GetInstance()->GetCurrent() as $currentTaskEntry)
 			{
 				$taskEvents[] = [
 					'title' => $titlePrefix . $currentTaskEntry->name,
@@ -58,18 +59,18 @@ class CalendarService extends BaseService
 		$choreEvents = [];
 		if (GROCY_FEATURE_FLAG_CHORES)
 		{
-			$users = $this->getUsersService()->GetUsersAsDto();
-			$chores = $this->getDatabase()->chores()->where('active = 1');
-			$titlePrefix = $this->getLocalizationService()->__t('Chore due') . ': ';
+			$users = UsersService::GetInstance()->GetUsersAsDto();
+			$chores = $this->DB->chores()->where('active = 1');
+			$titlePrefix = LocalizationService::GetInstance()->__t('Chore due') . ': ';
 
-			foreach ($this->getChoresService()->GetCurrent() as $currentChoreEntry)
+			foreach (ChoresService::GetInstance()->GetCurrent() as $currentChoreEntry)
 			{
 				$chore = FindObjectInArrayByPropertyValue($chores, 'id', $currentChoreEntry->chore_id);
 
 				$assignedToText = '';
 				if (!empty($currentChoreEntry->next_execution_assigned_to_user_id))
 				{
-					$assignedToText = ' (' . $this->getLocalizationService()->__t('assigned to %s', FindObjectInArrayByPropertyValue($users, 'id', $currentChoreEntry->next_execution_assigned_to_user_id)->display_name) . ')';
+					$assignedToText = ' (' . LocalizationService::GetInstance()->__t('assigned to %s', FindObjectInArrayByPropertyValue($users, 'id', $currentChoreEntry->next_execution_assigned_to_user_id)->display_name) . ')';
 				}
 
 				$choreEvents[] = [
@@ -86,10 +87,10 @@ class CalendarService extends BaseService
 		$batteryEvents = [];
 		if (GROCY_FEATURE_FLAG_BATTERIES)
 		{
-			$batteries = $this->getDatabase()->batteries()->where('active = 1');
-			$titlePrefix = $this->getLocalizationService()->__t('Battery charge cycle due') . ': ';
+			$batteries = $this->DB->batteries()->where('active = 1');
+			$titlePrefix = LocalizationService::GetInstance()->__t('Battery charge cycle due') . ': ';
 
-			foreach ($this->getBatteriesService()->GetCurrent() as $currentBatteryEntry)
+			foreach (BatteriesService::GetInstance()->GetCurrent() as $currentBatteryEntry)
 			{
 				$batteryEvents[] = [
 					'title' => $titlePrefix . FindObjectInArrayByPropertyValue($batteries, 'id', $currentBatteryEntry->battery_id)->name,
@@ -106,11 +107,11 @@ class CalendarService extends BaseService
 		$mealPlanProductEvents = [];
 		if (GROCY_FEATURE_FLAG_RECIPES_MEALPLAN)
 		{
-			$mealPlanSections = $this->getDatabase()->meal_plan_sections();
+			$mealPlanSections = $this->DB->meal_plan_sections();
 
-			$recipes = $this->getDatabase()->recipes()->where('type', 'normal');
-			$mealPlanDayRecipes = $this->getDatabase()->meal_plan()->where('type', 'recipe');
-			$titlePrefix = $this->getLocalizationService()->__t('Meal plan recipe') . ': ';
+			$recipes = $this->DB->recipes()->where('type', 'normal');
+			$mealPlanDayRecipes = $this->DB->meal_plan()->where('type', 'recipe');
+			$titlePrefix = LocalizationService::GetInstance()->__t('Meal plan recipe') . ': ';
 			foreach ($mealPlanDayRecipes as $mealPlanDayRecipe)
 			{
 				$start = $mealPlanDayRecipe->day;
@@ -138,8 +139,8 @@ class CalendarService extends BaseService
 				];
 			}
 
-			$mealPlanDayNotes = $this->getDatabase()->meal_plan()->where('type', 'note');
-			$titlePrefix = $this->getLocalizationService()->__t('Meal plan note') . ': ';
+			$mealPlanDayNotes = $this->DB->meal_plan()->where('type', 'note');
+			$titlePrefix = LocalizationService::GetInstance()->__t('Meal plan note') . ': ';
 			foreach ($mealPlanDayNotes as $mealPlanDayNote)
 			{
 				$start = $mealPlanDayNote->day;
@@ -167,9 +168,9 @@ class CalendarService extends BaseService
 				];
 			}
 
-			$products = $this->getDatabase()->products();
-			$mealPlanDayProducts = $this->getDatabase()->meal_plan()->where('type', 'product');
-			$titlePrefix = $this->getLocalizationService()->__t('Meal plan product') . ': ';
+			$products = $this->DB->products();
+			$mealPlanDayProducts = $this->DB->meal_plan()->where('type', 'product');
+			$titlePrefix = LocalizationService::GetInstance()->__t('Meal plan product') . ': ';
 			foreach ($mealPlanDayProducts as $mealPlanDayProduct)
 			{
 				$start = $mealPlanDayProduct->day;

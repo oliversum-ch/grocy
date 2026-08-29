@@ -1,6 +1,5 @@
 # Translators:
 # Llewy <carlvanoene@gmail.com>, 2019
-# Adriaan Peeters <apeeters@lashout.net>, 2019
 # Grocy NL, 2019
 # Bernd Bestel <bernd@berrnd.de>, 2019
 # Jelte L <jelte@ollavogala.org>, 2019
@@ -35,6 +34,8 @@
 # ren touw, 2025
 # M B, 2025
 # Kaj Rumpff, 2026
+# Adriaan Peeters <apeeters@lashout.net>, 2026
+# Engelbert Mercelis <engelbertmercelis@gmail.com>, 2026
 # 
 msgid ""
 msgstr ""
@@ -42,7 +43,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: Kaj Rumpff, 2026\n"
+"Last-Translator: Engelbert Mercelis <engelbertmercelis@gmail.com>, 2026\n"
 "Language-Team: Dutch (https://app.transifex.com/grocy/teams/93189/nl/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -726,11 +727,8 @@ msgstr "Productcategorie"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr "Weet je zeker dat je productcategorie \"%s\" wilt verwijderen?"
 
-msgid "Stay logged in permanently"
-msgstr "Permanent aangemeld blijven"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "Wanneer niet aangevinkt zal je na maximum 30 dagen afgemeld worden"
+msgid "Remember Me"
+msgstr ""
 
 msgid "Status"
 msgstr "Status"
@@ -1715,9 +1713,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr "Is diepvries"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "Dit kan niet hetzelfde zijn als de “Van” locatie"
-
 msgid "Thawed"
 msgstr "Ontdooid"
 
@@ -1776,9 +1771,6 @@ msgid "Show an icon if the product is already on the shopping list"
 msgstr ""
 "Toon een symbool indien dit product al op het boodschappenlijstje staat"
 
-msgid "Calories"
-msgstr "Calorieën"
-
 msgid "means %1$s per %2$s"
 msgstr "Betekent %1$s per %2$s"
 
@@ -1828,8 +1820,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "Wis filter"
 
-msgid "Permissions for user %s"
-msgstr "Rechten voor gebruiker %s"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr "Weet u zeker dat u alle rechten wilt verwijderen van uzelf?"
@@ -2879,4 +2871,44 @@ msgstr "Lijst acties"
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "Koelkast"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "Stuk"
+msgstr[1] "Stuks"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "pak"
+msgstr[1] "pakken"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""

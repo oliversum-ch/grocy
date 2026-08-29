@@ -28,10 +28,10 @@ class StockService extends BaseService
 		$missingProducts = $this->GetMissingProducts();
 		foreach ($missingProducts as $missingProduct)
 		{
-			$product = $this->getDatabase()->products()->where('id', $missingProduct->id)->fetch();
+			$product = $this->DB->products()->where('id', $missingProduct->id)->fetch();
 			$amountToAdd = round($missingProduct->amount_missing, 2);
 
-			$alreadyExistingEntry = $this->getDatabase()->shopping_list()->where('product_id', $missingProduct->id)->fetch();
+			$alreadyExistingEntry = $this->DB->shopping_list()->where('product_id', $missingProduct->id)->fetch();
 			if ($alreadyExistingEntry)
 			{
 				// Update
@@ -46,7 +46,7 @@ class StockService extends BaseService
 			else
 			{
 				// Insert
-				$shoppinglistRow = $this->getDatabase()->shopping_list()->createRow([
+				$shoppinglistRow = $this->DB->shopping_list()->createRow([
 					'product_id' => $missingProduct->id,
 					'amount' => $amountToAdd,
 					'shopping_list_id' => $listId,
@@ -67,12 +67,12 @@ class StockService extends BaseService
 		$overdueProducts = $this->GetDueProducts(-1);
 		foreach ($overdueProducts as $overdueProduct)
 		{
-			$product = $this->getDatabase()->products()->where('id', $overdueProduct->product_id)->fetch();
+			$product = $this->DB->products()->where('id', $overdueProduct->product_id)->fetch();
 
-			$alreadyExistingEntry = $this->getDatabase()->shopping_list()->where('product_id', $overdueProduct->product_id)->fetch();
+			$alreadyExistingEntry = $this->DB->shopping_list()->where('product_id', $overdueProduct->product_id)->fetch();
 			if (!$alreadyExistingEntry)
 			{
-				$shoppinglistRow = $this->getDatabase()->shopping_list()->createRow([
+				$shoppinglistRow = $this->DB->shopping_list()->createRow([
 					'product_id' => $overdueProduct->product_id,
 					'amount' => 1,
 					'shopping_list_id' => $listId,
@@ -93,12 +93,12 @@ class StockService extends BaseService
 		$expiredProducts = $this->GetExpiredProducts();
 		foreach ($expiredProducts as $expiredProduct)
 		{
-			$product = $this->getDatabase()->products()->where('id', $expiredProduct->product_id)->fetch();
+			$product = $this->DB->products()->where('id', $expiredProduct->product_id)->fetch();
 
-			$alreadyExistingEntry = $this->getDatabase()->shopping_list()->where('product_id', $expiredProduct->product_id)->fetch();
+			$alreadyExistingEntry = $this->DB->shopping_list()->where('product_id', $expiredProduct->product_id)->fetch();
 			if (!$alreadyExistingEntry)
 			{
-				$shoppinglistRow = $this->getDatabase()->shopping_list()->createRow([
+				$shoppinglistRow = $this->DB->shopping_list()->createRow([
 					'product_id' => $expiredProduct->product_id,
 					'amount' => 1,
 					'shopping_list_id' => $listId,
@@ -151,7 +151,7 @@ class StockService extends BaseService
 			}
 			else
 			{
-				$location = $this->getDatabase()->locations()->where('id', $locationId)->fetch();
+				$location = $this->DB->locations()->where('id', $locationId)->fetch();
 			}
 
 			if (GROCY_FEATURE_FLAG_STOCK_PRODUCT_FREEZING && $locationId !== null && $location->is_freezer == 1 && $productDetails->product->default_best_before_days_after_freezing >= -1)
@@ -193,7 +193,7 @@ class StockService extends BaseService
 				for ($i = 1; $i <= $amount; $i++)
 				{
 					$stockId = uniqid('x');
-					$logRow = $this->getDatabase()->stock_log()->createRow([
+					$logRow = $this->DB->stock_log()->createRow([
 						'product_id' => $productId,
 						'amount' => 1,
 						'best_before_date' => $bestBeforeDate,
@@ -209,7 +209,7 @@ class StockService extends BaseService
 					]);
 					$logRow->save();
 
-					$stockRow = $this->getDatabase()->stock()->createRow([
+					$stockRow = $this->DB->stock()->createRow([
 						'product_id' => $productId,
 						'amount' => 1,
 						'best_before_date' => $bestBeforeDate,
@@ -233,7 +233,7 @@ class StockService extends BaseService
 
 						if (GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)
 						{
-							$webhookData['due_date'] = $this->getLocalizationService()->__t('DD') . ': ' . $bestBeforeDate;
+							$webhookData['due_date'] = LocalizationService::GetInstance()->__t('DD') . ': ' . $bestBeforeDate;
 						}
 
 						$runner = new WebhookRunner();
@@ -246,7 +246,7 @@ class StockService extends BaseService
 				// No or single label => one stock entry
 
 				$stockId = uniqid();
-				$logRow = $this->getDatabase()->stock_log()->createRow([
+				$logRow = $this->DB->stock_log()->createRow([
 					'product_id' => $productId,
 					'amount' => $amount,
 					'best_before_date' => $bestBeforeDate,
@@ -262,7 +262,7 @@ class StockService extends BaseService
 				]);
 				$logRow->save();
 
-				$stockRow = $this->getDatabase()->stock()->createRow([
+				$stockRow = $this->DB->stock()->createRow([
 					'product_id' => $productId,
 					'amount' => $amount,
 					'best_before_date' => $bestBeforeDate,
@@ -286,7 +286,7 @@ class StockService extends BaseService
 
 					if (GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)
 					{
-						$webhookData['due_date'] = $this->getLocalizationService()->__t('DD') . ': ' . $bestBeforeDate;
+						$webhookData['due_date'] = LocalizationService::GetInstance()->__t('DD') . ': ' . $bestBeforeDate;
 					}
 
 					$runner = new WebhookRunner();
@@ -321,10 +321,10 @@ class StockService extends BaseService
 
 		if ($quId == -1)
 		{
-			$quId = $this->getDatabase()->products($productId)->qu_id_purchase;
+			$quId = $this->DB->products($productId)->qu_id_purchase;
 		}
 
-		$alreadyExistingEntry = $this->getDatabase()->shopping_list()->where('product_id = :1 AND shopping_list_id = :2', $productId, $listId)->fetch();
+		$alreadyExistingEntry = $this->DB->shopping_list()->where('product_id = :1 AND shopping_list_id = :2', $productId, $listId)->fetch();
 		if ($alreadyExistingEntry)
 		{
 			// Update
@@ -337,7 +337,7 @@ class StockService extends BaseService
 		else
 		{
 			// Insert
-			$shoppinglistRow = $this->getDatabase()->shopping_list()->createRow([
+			$shoppinglistRow = $this->DB->shopping_list()->createRow([
 				'product_id' => $productId,
 				'amount' => $amount,
 				'qu_id' => $quId,
@@ -357,11 +357,11 @@ class StockService extends BaseService
 
 		if ($doneOnly)
 		{
-			$this->getDatabase()->shopping_list()->where('shopping_list_id = :1 AND IFNULL(done, 0) = 1', $listId)->delete();
+			$this->DB->shopping_list()->where('shopping_list_id = :1 AND IFNULL(done, 0) = 1', $listId)->delete();
 		}
 		else
 		{
-			$this->getDatabase()->shopping_list()->where('shopping_list_id = :1', $listId)->delete();
+			$this->DB->shopping_list()->where('shopping_list_id = :1', $listId)->delete();
 		}
 	}
 
@@ -440,8 +440,8 @@ class StockService extends BaseService
 				if ($allowSubproductSubstitution && $stockEntry->product_id != $productId)
 				{
 					// A sub product will be used -> use QU conversions
-					$subProduct = $this->getDatabase()->products($stockEntry->product_id);
-					$conversion = $this->getDatabase()->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $stockEntry->product_id, $productDetails->product->qu_id_stock, $subProduct->qu_id_stock)->fetch();
+					$subProduct = $this->DB->products($stockEntry->product_id);
+					$conversion = $this->DB->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $stockEntry->product_id, $productDetails->product->qu_id_stock, $subProduct->qu_id_stock)->fetch();
 					if ($conversion != null)
 					{
 						$amount = $amount * $conversion->factor;
@@ -451,7 +451,7 @@ class StockService extends BaseService
 				if ($amount >= $stockEntry->amount)
 				{
 					// Take the whole stock entry
-					$logRow = $this->getDatabase()->stock_log()->createRow([
+					$logRow = $this->DB->stock_log()->createRow([
 						'product_id' => $stockEntry->product_id,
 						'amount' => $stockEntry->amount * -1,
 						'best_before_date' => $stockEntry->best_before_date,
@@ -466,7 +466,8 @@ class StockService extends BaseService
 						'transaction_id' => $transactionId,
 						'user_id' => GROCY_USER_ID,
 						'location_id' => $stockEntry->location_id,
-						'note' => $stockEntry->note
+						'note' => $stockEntry->note,
+						'shopping_location_id' => $stockEntry->shopping_location_id
 					]);
 					$logRow->save();
 
@@ -486,7 +487,7 @@ class StockService extends BaseService
 					// Stock entry amount is > than needed amount -> split the stock entry resp. update the amount
 					$restStockAmount = $stockEntry->amount - $amount;
 
-					$logRow = $this->getDatabase()->stock_log()->createRow([
+					$logRow = $this->DB->stock_log()->createRow([
 						'product_id' => $stockEntry->product_id,
 						'amount' => $amount * -1,
 						'best_before_date' => $stockEntry->best_before_date,
@@ -501,7 +502,8 @@ class StockService extends BaseService
 						'transaction_id' => $transactionId,
 						'user_id' => GROCY_USER_ID,
 						'location_id' => $stockEntry->location_id,
-						'note' => $stockEntry->note
+						'note' => $stockEntry->note,
+						'shopping_location_id' => $stockEntry->shopping_location_id
 					]);
 					$logRow->save();
 
@@ -513,9 +515,9 @@ class StockService extends BaseService
 				}
 			}
 
-			if (boolval($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
+			if (boolval(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
 			{
-				$this->AddMissingProductsToShoppingList($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
+				$this->AddMissingProductsToShoppingList(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
 			}
 
 			return $transactionId;
@@ -528,7 +530,7 @@ class StockService extends BaseService
 
 	public function EditStockEntry(int $stockRowId, float $amount, $bestBeforeDate, $locationId, $shoppingLocationId, $price, $open, $purchasedDate, $note = null)
 	{
-		$stockRow = $this->getDatabase()->stock()->where('id = :1', $stockRowId)->fetch();
+		$stockRow = $this->DB->stock()->where('id = :1', $stockRowId)->fetch();
 		if ($stockRow === null)
 		{
 			throw new \Exception('Stock does not exist');
@@ -536,7 +538,7 @@ class StockService extends BaseService
 
 		$correlationId = uniqid();
 		$transactionId = uniqid();
-		$logOldRowForStockUpdate = $this->getDatabase()->stock_log()->createRow([
+		$logOldRowForStockUpdate = $this->DB->stock_log()->createRow([
 			'product_id' => $stockRow->product_id,
 			'amount' => $stockRow->amount,
 			'best_before_date' => $stockRow->best_before_date,
@@ -577,7 +579,7 @@ class StockService extends BaseService
 			'note' => $note
 		]);
 
-		$logNewRowForStockUpdate = $this->getDatabase()->stock_log()->createRow([
+		$logNewRowForStockUpdate = $this->DB->stock_log()->createRow([
 			'product_id' => $stockRow->product_id,
 			'amount' => $amount,
 			'best_before_date' => $bestBeforeDate,
@@ -617,7 +619,7 @@ class StockService extends BaseService
 			// Lookup was successful
 			if ($addFoundProduct === true)
 			{
-				if ($this->getDatabase()->products()->where('name = :1', $pluginOutput['name'])->fetch() !== null)
+				if ($this->DB->products()->where('name = :1', $pluginOutput['name'])->fetch() !== null)
 				{
 					throw new \Exception('Product "' . $pluginOutput['name'] . '" already exists');
 				}
@@ -634,7 +636,7 @@ class StockService extends BaseService
 						if (preg_match('/^https?:\/\//', $pluginOutput['__image_url']))
 						{
 							$webClient = new Client();
-							$response = $webClient->request('GET', $pluginOutput['__image_url'], ['headers' => ['User-Agent' => 'Grocy/' . $this->getApplicationService()->GetInstalledVersion()->Version . ' (https://grocy.info)']]);
+							$response = $webClient->request('GET', $pluginOutput['__image_url'], ['headers' => ['User-Agent' => 'Grocy/' . ApplicationService::GetInstance()->GetInstalledVersion()->Version . ' (https://grocy.info)']]);
 							$fileExtension = pathinfo(parse_url($pluginOutput['__image_url'], PHP_URL_PATH), PATHINFO_EXTENSION);
 
 							// Fallback to Content-Type header if file extension is missing
@@ -657,7 +659,7 @@ class StockService extends BaseService
 						if (!empty($fileExtension) && !empty($imageData))
 						{
 							$fileName = $pluginOutput['__barcode'] . '.' . $fileExtension;
-							file_put_contents($this->getFilesService()->GetFilePath('productpictures', $fileName), $imageData);
+							file_put_contents(FilesService::GetInstance()->GetFilePath('productpictures', $fileName), $imageData);
 							$productData['picture_file_name'] = $fileName;
 						}
 					}
@@ -667,27 +669,27 @@ class StockService extends BaseService
 					}
 				}
 
-				$newProductRow = $this->getDatabase()->products()->createRow($productData);
+				$newProductRow = $this->DB->products()->createRow($productData);
 				$newProductRow->save();
 
 				if (isset($pluginOutput['__userfields']) && is_array($pluginOutput['__userfields']) && count($pluginOutput['__userfields']) > 0)
 				{
-					$productUserfieldNames = array_column(UserfieldsService::getInstance()->GetFields('products'), 'name');
+					$productUserfieldNames = array_column(UserfieldsService::GetInstance()->GetFields('products'), 'name');
 					$userfields = array_intersect_key($pluginOutput['__userfields'], array_flip($productUserfieldNames));
 					if (count($userfields) > 0)
 					{
-						UserfieldsService::getInstance()->SetValues('products', $newProductRow->id, $userfields);
+						UserfieldsService::GetInstance()->SetValues('products', $newProductRow->id, $userfields);
 					}
 				}
 
-				$this->getDatabase()->product_barcodes()->createRow([
+				$this->DB->product_barcodes()->createRow([
 					'product_id' => $newProductRow->id,
 					'barcode' => $pluginOutput['__barcode']
 				])->save();
 
 				if ($pluginOutput['qu_id_stock'] != $pluginOutput['qu_id_purchase'])
 				{
-					$this->getDatabase()->quantity_unit_conversions()->createRow([
+					$this->DB->quantity_unit_conversions()->createRow([
 						'product_id' => $newProductRow->id,
 						'from_qu_id' => $pluginOutput['qu_id_purchase'],
 						'to_qu_id' => $pluginOutput['qu_id_stock'],
@@ -705,8 +707,8 @@ class StockService extends BaseService
 	public function GetCurrentStock($customWhere = '')
 	{
 		$sql = 'SELECT * FROM stock_current ' . $customWhere;
-		$currentStockMapped = $this->getDatabaseService()->ExecuteDbQuery($sql)->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_OBJ);
-		$relevantProducts = $this->getDatabase()->products()->where('id IN (SELECT product_id FROM (' . $sql . ') x)');
+		$currentStockMapped = DatabaseService::GetInstance()->ExecuteDbQuery($sql)->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_OBJ);
+		$relevantProducts = $this->DB->products()->where('id IN (SELECT product_id FROM (' . $sql . ') x)');
 
 		foreach ($relevantProducts as $product)
 		{
@@ -726,13 +728,13 @@ class StockService extends BaseService
 		}
 
 		$sql = 'SELECT IFNULL(sclc.location_id, p.location_id) AS location_id, p.id AS product_id, IFNULL(sclc.amount, 0) AS amount, IFNULL(sclc.amount_opened, 0) AS amount_opened FROM products p ' . $leftJoin . ' JOIN stock_current_location_content sclc ON sclc.product_id = p.id WHERE p.active = 1 ORDER BY p.name';
-		return $this->getDatabaseService()->ExecuteDbQuery($sql)->fetchAll(\PDO::FETCH_OBJ);
+		return DatabaseService::GetInstance()->ExecuteDbQuery($sql)->fetchAll(\PDO::FETCH_OBJ);
 	}
 
 	public function GetCurrentStockLocations()
 	{
 		$sql = 'SELECT * FROM stock_current_locations';
-		return $this->getDatabaseService()->ExecuteDbQuery($sql)->fetchAll(\PDO::FETCH_OBJ);
+		return DatabaseService::GetInstance()->ExecuteDbQuery($sql)->fetchAll(\PDO::FETCH_OBJ);
 	}
 
 	public function GetDueProducts(int $days = 5, bool $excludeOverdue = false)
@@ -754,9 +756,9 @@ class StockService extends BaseService
 
 	public function GetMissingProducts()
 	{
-		$missingProductsResponse = $this->getDatabaseService()->ExecuteDbQuery('SELECT * FROM stock_missing_products')->fetchAll(\PDO::FETCH_OBJ);
+		$missingProductsResponse = DatabaseService::GetInstance()->ExecuteDbQuery('SELECT * FROM stock_missing_products')->fetchAll(\PDO::FETCH_OBJ);
 
-		$relevantProducts = $this->getDatabase()->products()->where('id IN (SELECT id FROM stock_missing_products)');
+		$relevantProducts = $this->DB->products()->where('id IN (SELECT id FROM stock_missing_products)');
 		foreach ($relevantProducts as $product)
 		{
 			FindObjectInArrayByPropertyValue($missingProductsResponse, 'id', $product->id)->product = $product;
@@ -784,19 +786,19 @@ class StockService extends BaseService
 			$stockCurrentRow->is_aggregated_amount = 0;
 		}
 
-		$detailsRow = $this->getDatabase()->uihelper_product_details()->where('id', $productId)->fetch();
-		$product = $this->getDatabase()->products($productId);
-		$productBarcodes = $this->getDatabase()->product_barcodes()->where('product_id', $productId)->fetchAll();
-		$quPurchase = $this->getDatabase()->quantity_units($product->qu_id_purchase);
-		$quStock = $this->getDatabase()->quantity_units($product->qu_id_stock);
-		$quConsume = $this->getDatabase()->quantity_units($product->qu_id_consume);
-		$quPrice = $this->getDatabase()->quantity_units($product->qu_id_price);
-		$location = $this->getDatabase()->locations($product->location_id);
+		$detailsRow = $this->DB->uihelper_product_details()->where('id', $productId)->fetch();
+		$product = $this->DB->products($productId);
+		$productBarcodes = $this->DB->product_barcodes()->where('product_id', $productId)->fetchAll();
+		$quPurchase = $this->DB->quantity_units($product->qu_id_purchase);
+		$quStock = $this->DB->quantity_units($product->qu_id_stock);
+		$quConsume = $this->DB->quantity_units($product->qu_id_consume);
+		$quPrice = $this->DB->quantity_units($product->qu_id_price);
+		$location = $this->DB->locations($product->location_id);
 
 		$defaultConsumeLocation = null;
 		if (!empty($product->default_consume_location_id))
 		{
-			$defaultConsumeLocation = $this->getDatabase()->locations($product->default_consume_location_id);
+			$defaultConsumeLocation = $this->DB->locations($product->default_consume_location_id);
 		}
 
 		return [
@@ -844,7 +846,7 @@ class StockService extends BaseService
 			return $gc->GetId();
 		}
 
-		$potentialProduct = $this->getDatabase()->product_barcodes()->where('barcode = :1 COLLATE NOCASE', $barcode)->fetch();
+		$potentialProduct = $this->DB->product_barcodes()->where('barcode = :1 COLLATE NOCASE', $barcode)->fetch();
 		if ($potentialProduct === null)
 		{
 			throw new \Exception("No product with barcode $barcode found");
@@ -861,9 +863,9 @@ class StockService extends BaseService
 		}
 
 		$returnData = [];
-		$shoppingLocations = $this->getDatabase()->shopping_locations();
+		$shoppingLocations = $this->DB->shopping_locations();
 
-		$rows = $this->getDatabase()->products_price_history()->where('product_id = :1', $productId)->orderBy('purchased_date', 'DESC');
+		$rows = $this->DB->products_price_history()->where('product_id = :1', $productId)->orderBy('purchased_date', 'DESC');
 		foreach ($rows as $row)
 		{
 			$returnData[] = [
@@ -890,7 +892,7 @@ class StockService extends BaseService
 			$sqlWhereAndOpen = 'AND open = 0';
 		}
 
-		return $this->getDatabase()->stock_next_use()->where($sqlWhereProductId . ' ' . $sqlWhereAndOpen);
+		return $this->DB->stock_next_use()->where($sqlWhereProductId . ' ' . $sqlWhereAndOpen);
 	}
 
 	public function GetLocationStockEntries($locationId)
@@ -900,7 +902,7 @@ class StockService extends BaseService
 			throw new \Exception('Location does not exist');
 		}
 
-		return $this->getDatabase()->stock()->where('location_id', $locationId);
+		return $this->DB->stock()->where('location_id', $locationId);
 	}
 
 	public function GetProductStockEntriesForLocation($productId, $locationId, $excludeOpened = false, $allowSubproductSubstitution = false)
@@ -917,12 +919,12 @@ class StockService extends BaseService
 			$sqlWhereProductId = '(product_id IN (SELECT sub_product_id FROM products_resolved WHERE parent_product_id = ' . $productId . ') OR product_id = ' . $productId . ')';
 		}
 
-		return $this->getDatabase()->stock_current_locations()->where($sqlWhereProductId);
+		return $this->DB->stock_current_locations()->where($sqlWhereProductId);
 	}
 
 	public function GetStockEntry($entryId)
 	{
-		return $this->getDatabase()->stock()->where('id', $entryId)->fetch();
+		return $this->DB->stock()->where('id', $entryId)->fetch();
 	}
 
 	public function InventoryProduct(int $productId, float $newAmount, $bestBeforeDate, $locationId = null, $price = null, $shoppingLocationId = null, $purchasedDate = null, $stockLabelType = 0, $note = null)
@@ -996,7 +998,7 @@ class StockService extends BaseService
 			throw new \Exception('Product does not exist or is inactive');
 		}
 
-		$product = $this->getDatabase()->products($productId);
+		$product = $this->DB->products($productId);
 
 		if ($product->disable_open == 1)
 		{
@@ -1056,7 +1058,7 @@ class StockService extends BaseService
 
 					if (GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)
 					{
-						$webhookData['due_date'] = $this->getLocalizationService()->__t('DD') . ': ' . $newBestBeforeDate;
+						$webhookData['due_date'] = LocalizationService::GetInstance()->__t('DD') . ': ' . $newBestBeforeDate;
 					}
 
 					$runner = new WebhookRunner();
@@ -1067,8 +1069,8 @@ class StockService extends BaseService
 			if ($allowSubproductSubstitution && $stockEntry->product_id != $productId)
 			{
 				// A sub product will be used -> use QU conversions
-				$subProduct = $this->getDatabase()->products($stockEntry->product_id);
-				$conversion = $this->getDatabase()->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $stockEntry->product_id, $product->qu_id_stock, $subProduct->qu_id_stock)->fetch();
+				$subProduct = $this->DB->products($stockEntry->product_id);
+				$conversion = $this->DB->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $stockEntry->product_id, $product->qu_id_stock, $subProduct->qu_id_stock)->fetch();
 				if ($conversion != null)
 				{
 					$amount = $amount * $conversion->factor;
@@ -1078,7 +1080,7 @@ class StockService extends BaseService
 			if ($amount >= $stockEntry->amount)
 			{
 				// Mark the whole stock entry as opened
-				$logRow = $this->getDatabase()->stock_log()->createRow([
+				$logRow = $this->DB->stock_log()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $stockEntry->amount,
 					'best_before_date' => $stockEntry->best_before_date,
@@ -1108,7 +1110,7 @@ class StockService extends BaseService
 				// Stock entry amount is > than needed amount -> split the stock entry
 				$restStockAmount = $stockEntry->amount - $amount;
 
-				$newStockRow = $this->getDatabase()->stock()->createRow([
+				$newStockRow = $this->DB->stock()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $restStockAmount,
 					'best_before_date' => $stockEntry->best_before_date,
@@ -1121,7 +1123,7 @@ class StockService extends BaseService
 				]);
 				$newStockRow->save();
 
-				$logRow = $this->getDatabase()->stock_log()->createRow([
+				$logRow = $this->DB->stock_log()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $amount,
 					'best_before_date' => $stockEntry->best_before_date,
@@ -1158,9 +1160,9 @@ class StockService extends BaseService
 			}
 		}
 
-		if (boolval($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
+		if (boolval(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount')))
 		{
-			$this->AddMissingProductsToShoppingList($this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
+			$this->AddMissingProductsToShoppingList(UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'shopping_list_auto_add_below_min_stock_amount_list_id'));
 		}
 
 		return $transactionId;
@@ -1173,12 +1175,12 @@ class StockService extends BaseService
 			throw new \Exception('Shopping list does not exist');
 		}
 
-		$productRow = $this->getDatabase()->shopping_list()->where('product_id = :1', $productId)->fetch();
+		$productRow = $this->DB->shopping_list()->where('product_id = :1', $productId)->fetch();
 
 		// If no entry was found with for this product, we return gracefully
 		if ($productRow != null && !empty($productRow))
 		{
-			$decimals = $this->getUsersService()->GetUserSetting(GROCY_USER_ID, 'stock_decimal_places_amounts');
+			$decimals = UsersService::GetInstance()->GetUserSetting(GROCY_USER_ID, 'stock_decimal_places_amounts');
 			$newAmount = $productRow->amount - $amount;
 
 			if ($newAmount < floatval('0.' . str_repeat('0', $decimals - ($decimals <= 0 ? 0 : 1)) . '1'))
@@ -1201,14 +1203,14 @@ class StockService extends BaseService
 
 		$result_product = [];
 		$result_quantity = [];
-		$rowsShoppingListProducts = $this->getDatabase()->uihelper_shopping_list()->where('shopping_list_id = :1', $listId)->fetchAll();
+		$rowsShoppingListProducts = $this->DB->uihelper_shopping_list()->where('shopping_list_id = :1', $listId)->fetchAll();
 		foreach ($rowsShoppingListProducts as $row)
 		{
 			$isValidProduct = ($row->product_id != null && $row->product_id != '');
 			if ($isValidProduct)
 			{
-				$product = $this->getDatabase()->products()->where('id = :1', $row->product_id)->fetch();
-				$conversion = $this->getDatabase()->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $product->id, $product->qu_id_stock, $row->qu_id)->fetch();
+				$product = $this->DB->products()->where('id = :1', $row->product_id)->fetch();
+				$conversion = $this->DB->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $product->id, $product->qu_id_stock, $row->qu_id)->fetch();
 
 				$factor = 1.0;
 				if ($conversion != null)
@@ -1309,7 +1311,7 @@ class StockService extends BaseService
 			$amount = abs($amount - $productDetails->stock_amount - $productDetails->product->tare_weight);
 		}
 
-		$productStockAmountAtFromLocation = $this->getDatabase()->stock()->where('product_id = :1 AND location_id = :2', $productId, $locationIdFrom)->sum('amount');
+		$productStockAmountAtFromLocation = $this->DB->stock()->where('product_id = :1 AND location_id = :2', $productId, $locationIdFrom)->sum('amount');
 		$potentialStockEntriesAtFromLocation = $this->GetProductStockEntriesForLocation($productId, $locationIdFrom);
 
 		if ($amount > $productStockAmountAtFromLocation)
@@ -1337,8 +1339,8 @@ class StockService extends BaseService
 			$newBestBeforeDate = $stockEntry->best_before_date;
 			if (GROCY_FEATURE_FLAG_STOCK_PRODUCT_FREEZING)
 			{
-				$locationFrom = $this->getDatabase()->locations()->where('id', $locationIdFrom)->fetch();
-				$locationTo = $this->getDatabase()->locations()->where('id', $locationIdTo)->fetch();
+				$locationFrom = $this->DB->locations()->where('id', $locationIdFrom)->fetch();
+				$locationTo = $this->DB->locations()->where('id', $locationIdTo)->fetch();
 
 				// Product was moved from a non-freezer to freezer location -> freeze
 				if ($locationFrom->is_freezer == 0 && $locationTo->is_freezer == 1 && ($productDetails->product->default_best_before_days_after_freezing > 0 || $productDetails->product->default_best_before_days_after_freezing == -1))
@@ -1370,7 +1372,7 @@ class StockService extends BaseService
 
 					if (GROCY_FEATURE_FLAG_STOCK_BEST_BEFORE_DATE_TRACKING)
 					{
-						$webhookData['due_date'] = $this->getLocalizationService()->__t('DD') . ': ' . $newBestBeforeDate;
+						$webhookData['due_date'] = LocalizationService::GetInstance()->__t('DD') . ': ' . $newBestBeforeDate;
 					}
 
 					$runner = new WebhookRunner();
@@ -1382,7 +1384,7 @@ class StockService extends BaseService
 			if ($amount >= $stockEntry->amount)
 			{
 				// Take the whole stock entry
-				$logRowForLocationFrom = $this->getDatabase()->stock_log()->createRow([
+				$logRowForLocationFrom = $this->DB->stock_log()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $stockEntry->amount * -1,
 					'best_before_date' => $stockEntry->best_before_date,
@@ -1400,7 +1402,7 @@ class StockService extends BaseService
 				]);
 				$logRowForLocationFrom->save();
 
-				$logRowForLocationTo = $this->getDatabase()->stock_log()->createRow([
+				$logRowForLocationTo = $this->DB->stock_log()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $stockEntry->amount,
 					'best_before_date' => $newBestBeforeDate,
@@ -1430,7 +1432,7 @@ class StockService extends BaseService
 				// Stock entry amount is > than needed amount -> split the stock entry resp. update the amount
 				$restStockAmount = $stockEntry->amount - $amount;
 
-				$logRowForLocationFrom = $this->getDatabase()->stock_log()->createRow([
+				$logRowForLocationFrom = $this->DB->stock_log()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $amount * -1,
 					'best_before_date' => $stockEntry->best_before_date,
@@ -1448,7 +1450,7 @@ class StockService extends BaseService
 				]);
 				$logRowForLocationFrom->save();
 
-				$logRowForLocationTo = $this->getDatabase()->stock_log()->createRow([
+				$logRowForLocationTo = $this->DB->stock_log()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $amount,
 					'best_before_date' => $newBestBeforeDate,
@@ -1472,7 +1474,7 @@ class StockService extends BaseService
 				]);
 
 				// The transferred amount gets into a new stock entry
-				$stockEntryNew = $this->getDatabase()->stock()->createRow([
+				$stockEntryNew = $this->DB->stock()->createRow([
 					'product_id' => $stockEntry->product_id,
 					'amount' => $amount,
 					'best_before_date' => $newBestBeforeDate,
@@ -1496,7 +1498,7 @@ class StockService extends BaseService
 
 	public function UndoBooking($bookingId, $skipCorrelatedBookings = false)
 	{
-		$logRow = $this->getDatabase()->stock_log()->where('id = :1 AND undone = 0', $bookingId)->fetch();
+		$logRow = $this->DB->stock_log()->where('id = :1 AND undone = 0', $bookingId)->fetch();
 		if ($logRow == null)
 		{
 			throw new \Exception('Booking does not exist or was already undone');
@@ -1505,7 +1507,7 @@ class StockService extends BaseService
 		// Undo all correlated bookings first, in order from newest first to the oldest
 		if (!$skipCorrelatedBookings && !empty($logRow->correlation_id))
 		{
-			$correlatedBookings = $this->getDatabase()->stock_log()->where('undone = 0 AND correlation_id = :1', $logRow->correlation_id)->orderBy('id', 'DESC')->fetchAll();
+			$correlatedBookings = $this->DB->stock_log()->where('undone = 0 AND correlation_id = :1', $logRow->correlation_id)->orderBy('id', 'DESC')->fetchAll();
 			foreach ($correlatedBookings as $correlatedBooking)
 			{
 				$this->UndoBooking($correlatedBooking->id, true);
@@ -1514,7 +1516,7 @@ class StockService extends BaseService
 			return;
 		}
 
-		$hasSubsequentBookings = $this->getDatabase()->stock_log()->where('stock_id = :1 AND id != :2 AND (correlation_id IS NOT NULL OR correlation_id != :3) AND id > :2 AND undone = 0', $logRow->stock_id, $logRow->id, $logRow->correlation_id)->count() > 0;
+		$hasSubsequentBookings = $this->DB->stock_log()->where('stock_id = :1 AND id != :2 AND (correlation_id IS NOT NULL OR correlation_id != :3) AND id > :2 AND undone = 0', $logRow->stock_id, $logRow->id, $logRow->correlation_id)->count() > 0;
 		if ($hasSubsequentBookings)
 		{
 			throw new \Exception('Booking has subsequent dependent bookings, undo not possible');
@@ -1523,7 +1525,7 @@ class StockService extends BaseService
 		if ($logRow->transaction_type === self::TRANSACTION_TYPE_PURCHASE || ($logRow->transaction_type === self::TRANSACTION_TYPE_INVENTORY_CORRECTION && $logRow->amount > 0))
 		{
 			// Remove corresponding stock entry
-			$stockRows = $this->getDatabase()->stock()->where('stock_id', $logRow->stock_id);
+			$stockRows = $this->DB->stock()->where('stock_id', $logRow->stock_id);
 			$stockRows->delete();
 
 			// Update log entry
@@ -1535,7 +1537,7 @@ class StockService extends BaseService
 		elseif ($logRow->transaction_type === self::TRANSACTION_TYPE_CONSUME || ($logRow->transaction_type === self::TRANSACTION_TYPE_INVENTORY_CORRECTION && $logRow->amount < 0))
 		{
 			// Add corresponding amount back to stock
-			$stockRow = $this->getDatabase()->stock()->createRow([
+			$stockRow = $this->DB->stock()->createRow([
 				'product_id' => $logRow->product_id,
 				'amount' => $logRow->amount * -1,
 				'best_before_date' => $logRow->best_before_date,
@@ -1545,7 +1547,8 @@ class StockService extends BaseService
 				'opened_date' => $logRow->opened_date,
 				'open' => $logRow->opened_date !== null,
 				'location_id' => $logRow->location_id,
-				'note' => $logRow->note
+				'note' => $logRow->note,
+				'shopping_location_id' => $logRow->shopping_location_id
 			]);
 			$stockRow->save();
 
@@ -1557,7 +1560,7 @@ class StockService extends BaseService
 		}
 		elseif ($logRow->transaction_type === self::TRANSACTION_TYPE_TRANSFER_TO)
 		{
-			$stockRow = $this->getDatabase()->stock()->where('stock_id = :1 AND location_id = :2', $logRow->stock_id, $logRow->location_id)->fetch();
+			$stockRow = $this->DB->stock()->where('stock_id = :1 AND location_id = :2', $logRow->stock_id, $logRow->location_id)->fetch();
 			if ($stockRow === null)
 			{
 				throw new \Exception('Booking does not exist or was already undone');
@@ -1585,10 +1588,10 @@ class StockService extends BaseService
 		elseif ($logRow->transaction_type === self::TRANSACTION_TYPE_TRANSFER_FROM)
 		{
 			// Add corresponding amount back to stock
-			$stockRow = $this->getDatabase()->stock()->where('stock_id = :1 AND location_id = :2', $logRow->stock_id, $logRow->location_id)->fetch();
+			$stockRow = $this->DB->stock()->where('stock_id = :1 AND location_id = :2', $logRow->stock_id, $logRow->location_id)->fetch();
 			if ($stockRow === null)
 			{
-				$stockRow = $this->getDatabase()->stock()->createRow([
+				$stockRow = $this->DB->stock()->createRow([
 					'product_id' => $logRow->product_id,
 					'amount' => $logRow->amount * -1,
 					'best_before_date' => $logRow->best_before_date,
@@ -1596,7 +1599,8 @@ class StockService extends BaseService
 					'stock_id' => $logRow->stock_id,
 					'price' => $logRow->price,
 					'opened_date' => $logRow->opened_date,
-					'note' => $logRow->note
+					'note' => $logRow->note,
+					'shopping_location_id' => $logRow->shopping_location_id
 				]);
 				$stockRow->save();
 			}
@@ -1616,7 +1620,7 @@ class StockService extends BaseService
 		elseif ($logRow->transaction_type === self::TRANSACTION_TYPE_PRODUCT_OPENED)
 		{
 			// Remove opened flag from corresponding stock entry
-			$stockRows = $this->getDatabase()->stock()->where('stock_id = :1 AND amount = :2 AND purchased_date = :3', $logRow->stock_id, $logRow->amount, $logRow->purchased_date)->limit(1);
+			$stockRows = $this->DB->stock()->where('stock_id = :1 AND amount = :2 AND purchased_date = :3', $logRow->stock_id, $logRow->amount, $logRow->purchased_date)->limit(1);
 			$stockRows->update([
 				'open' => 0,
 				'opened_date' => null,
@@ -1640,7 +1644,7 @@ class StockService extends BaseService
 		elseif ($logRow->transaction_type === self::TRANSACTION_TYPE_STOCK_EDIT_OLD)
 		{
 			// Make sure there is a stock row still
-			$stockRow = $this->getDatabase()->stock()->where('id = :1', $logRow->stock_row_id)->fetch();
+			$stockRow = $this->DB->stock()->where('id = :1', $logRow->stock_row_id)->fetch();
 
 			if ($stockRow == null)
 			{
@@ -1679,7 +1683,7 @@ class StockService extends BaseService
 
 	public function UndoTransaction($transactionId)
 	{
-		$transactionBookings = $this->getDatabase()->stock_log()->where('undone = 0 AND transaction_id = :1', $transactionId)->orderBy('id', 'DESC')->fetchAll();
+		$transactionBookings = $this->DB->stock_log()->where('undone = 0 AND transaction_id = :1', $transactionId)->orderBy('id', 'DESC')->fetchAll();
 
 		if (count($transactionBookings) === 0)
 		{
@@ -1709,50 +1713,50 @@ class StockService extends BaseService
 			throw new \Exception('$productIdToKeep cannot equal $productIdToRemove');
 		}
 
-		$this->getDatabaseService()->GetDbConnectionRaw()->beginTransaction();
+		DatabaseService::GetInstance()->GetDbConnectionRaw()->beginTransaction();
 		try
 		{
-			$productToKeep = $this->getDatabase()->products($productIdToKeep);
-			$productToRemove = $this->getDatabase()->products($productIdToRemove);
-			$conversion = $this->getDatabase()->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $productToRemove->id, $productToRemove->qu_id_stock, $productToKeep->qu_id_stock)->fetch();
+			$productToKeep = $this->DB->products($productIdToKeep);
+			$productToRemove = $this->DB->products($productIdToRemove);
+			$conversion = $this->DB->cache__quantity_unit_conversions_resolved()->where('product_id = :1 AND from_qu_id = :2 AND to_qu_id = :3', $productToRemove->id, $productToRemove->qu_id_stock, $productToKeep->qu_id_stock)->fetch();
 			$factor = 1.0;
 			if ($conversion != null)
 			{
 				$factor = $conversion->factor;
 			}
 
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE stock SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE stock_log SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE product_barcodes SET product_id = ' . $productIdToKeep . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE quantity_unit_conversions SET product_id = ' . $productIdToKeep . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE recipes_pos SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE recipes SET product_id = ' . $productIdToKeep . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE meal_plan SET product_id = ' . $productIdToKeep . ', product_amount = product_amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('UPDATE shopping_list SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
-			$this->getDatabaseService()->ExecuteDbStatement('DELETE FROM products WHERE id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE stock SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE stock_log SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE product_barcodes SET product_id = ' . $productIdToKeep . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE quantity_unit_conversions SET product_id = ' . $productIdToKeep . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE recipes_pos SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE recipes SET product_id = ' . $productIdToKeep . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE meal_plan SET product_id = ' . $productIdToKeep . ', product_amount = product_amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE shopping_list SET product_id = ' . $productIdToKeep . ', amount = amount * ' . $factor . ' WHERE product_id = ' . $productIdToRemove);
+			DatabaseService::GetInstance()->ExecuteDbStatement('DELETE FROM products WHERE id = ' . $productIdToRemove);
 		}
 		catch (\Exception $ex)
 		{
-			$this->getDatabaseService()->GetDbConnectionRaw()->rollback();
+			DatabaseService::GetInstance()->GetDbConnectionRaw()->rollback();
 			throw $ex;
 		}
-		$this->getDatabaseService()->GetDbConnectionRaw()->commit();
+		DatabaseService::GetInstance()->GetDbConnectionRaw()->commit();
 	}
 
 	public function CompactStockEntries($productId = null)
 	{
 		if ($productId == null)
 		{
-			$splittedStockEntries = $this->getDatabase()->stock_splits();
+			$splittedStockEntries = $this->DB->stock_splits();
 		}
 		else
 		{
-			$splittedStockEntries = $this->getDatabase()->stock_splits()->where('product_id = :1', $productId);
+			$splittedStockEntries = $this->DB->stock_splits()->where('product_id = :1', $productId);
 		}
 
 		foreach ($splittedStockEntries as $splittedStockEntry)
 		{
-			$this->getDatabaseService()->GetDbConnectionRaw()->beginTransaction();
+			DatabaseService::GetInstance()->GetDbConnectionRaw()->beginTransaction();
 			try
 			{
 				$stockIds = explode(',', $splittedStockEntry->stock_id_group);
@@ -1760,8 +1764,8 @@ class StockService extends BaseService
 				{
 					if ($stockId != $splittedStockEntry->stock_id_to_keep)
 					{
-						$this->getDatabaseService()->ExecuteDbStatement('UPDATE stock SET stock_id = \'' . $splittedStockEntry->stock_id_to_keep . '\' WHERE stock_id = \'' . $stockId . '\'');
-						$this->getDatabaseService()->ExecuteDbStatement('UPDATE stock_log SET stock_id = \'' . $splittedStockEntry->stock_id_to_keep . '\' WHERE stock_id = \'' . $stockId . '\'');
+						DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE stock SET stock_id = \'' . $splittedStockEntry->stock_id_to_keep . '\' WHERE stock_id = \'' . $stockId . '\'');
+						DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE stock_log SET stock_id = \'' . $splittedStockEntry->stock_id_to_keep . '\' WHERE stock_id = \'' . $stockId . '\'');
 					}
 				}
 
@@ -1770,20 +1774,20 @@ class StockService extends BaseService
 				{
 					if ($stockEntryId != $splittedStockEntry->id_to_keep)
 					{
-						$this->getDatabaseService()->ExecuteDbStatement('DELETE FROM stock WHERE id = ' . $stockEntryId);
+						DatabaseService::GetInstance()->ExecuteDbStatement('DELETE FROM stock WHERE id = ' . $stockEntryId);
 					}
 					else
 					{
-						$this->getDatabaseService()->ExecuteDbStatement('UPDATE stock SET amount = ' . $splittedStockEntry->total_amount . ' WHERE id = ' . $splittedStockEntry->id_to_keep);
+						DatabaseService::GetInstance()->ExecuteDbStatement('UPDATE stock SET amount = ' . $splittedStockEntry->total_amount . ' WHERE id = ' . $splittedStockEntry->id_to_keep);
 					}
 				}
 			}
 			catch (\Exception $ex)
 			{
-				$this->getDatabaseService()->GetDbConnectionRaw()->rollback();
+				DatabaseService::GetInstance()->GetDbConnectionRaw()->rollback();
 				throw $ex;
 			}
-			$this->getDatabaseService()->GetDbConnectionRaw()->commit();
+			DatabaseService::GetInstance()->GetDbConnectionRaw()->commit();
 		}
 	}
 
@@ -1801,12 +1805,12 @@ class StockService extends BaseService
 		if (file_exists($userPluginPath))
 		{
 			require_once $userPluginPath;
-			return new $pluginName($this->getDatabase()->locations()->where('active = 1')->fetchAll(), $this->getDatabase()->quantity_units()->where('active = 1')->fetchAll(), $this->getUsersService()->GetUserSettings(GROCY_USER_ID));
+			return new $pluginName($this->DB->locations()->where('active = 1')->fetchAll(), $this->DB->quantity_units()->where('active = 1')->fetchAll(), UsersService::GetInstance()->GetUserSettings(GROCY_USER_ID));
 		}
 		elseif (file_exists($standardPluginPath))
 		{
 			require_once $standardPluginPath;
-			return new $pluginName($this->getDatabase()->locations()->where('active = 1')->fetchAll(), $this->getDatabase()->quantity_units()->where('active = 1')->fetchAll(), $this->getUsersService()->GetUserSettings(GROCY_USER_ID));
+			return new $pluginName($this->DB->locations()->where('active = 1')->fetchAll(), $this->DB->quantity_units()->where('active = 1')->fetchAll(), UsersService::GetInstance()->GetUserSettings(GROCY_USER_ID));
 		}
 		else
 		{
@@ -1816,19 +1820,19 @@ class StockService extends BaseService
 
 	private function LocationExists($locationId)
 	{
-		$locationRow = $this->getDatabase()->locations()->where('id = :1', $locationId)->where('active = 1')->fetch();
+		$locationRow = $this->DB->locations()->where('id = :1', $locationId)->where('active = 1')->fetch();
 		return $locationRow !== null;
 	}
 
 	private function ProductExists($productId)
 	{
-		$productRow = $this->getDatabase()->products()->where('id = :1 and active = 1', $productId)->fetch();
+		$productRow = $this->DB->products()->where('id = :1 and active = 1', $productId)->fetch();
 		return $productRow !== null;
 	}
 
 	private function ShoppingListExists($listId)
 	{
-		$shoppingListRow = $this->getDatabase()->shopping_lists()->where('id = :1', $listId)->fetch();
+		$shoppingListRow = $this->DB->shopping_lists()->where('id = :1', $listId)->fetch();
 		return $shoppingListRow !== null;
 	}
 }

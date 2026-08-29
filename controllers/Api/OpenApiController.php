@@ -1,9 +1,11 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
 use Grocy\Services\ApiKeyService;
+use Grocy\Services\ApplicationService;
+use Grocy\Services\UserfieldsService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -17,15 +19,15 @@ class OpenApiController extends BaseApiController
 			$selectedKeyId = $request->getQueryParams()['key'];
 		}
 
-		$apiKeys = $this->getDatabase()->api_keys();
-		if (!User::hasPermissions(User::PERMISSION_ADMIN))
+		$apiKeys = $this->DB->api_keys();
+		if (!User::HasPermissions(User::PERMISSION_ADMIN))
 		{
 			$apiKeys = $apiKeys->where('user_id', GROCY_USER_ID);
 		}
 
-		return $this->renderPage($response, 'manageapikeys', [
+		return $this->RenderPage($response, 'manageapikeys', [
 			'apiKeys' => $apiKeys,
-			'users' => $this->getDatabase()->users(),
+			'users' => $this->DB->users(),
 			'selectedKeyId' => $selectedKeyId
 		]);
 	}
@@ -38,16 +40,16 @@ class OpenApiController extends BaseApiController
 			$description = $request->getQueryParams()['description'];
 		}
 
-		$newApiKey = $this->getApiKeyService()->CreateApiKey(ApiKeyService::API_KEY_TYPE_DEFAULT, $description);
-		$newApiKeyId = $this->getApiKeyService()->GetApiKeyId($newApiKey);
+		$newApiKey = ApiKeyService::GetInstance()->CreateApiKey(ApiKeyService::API_KEY_TYPE_DEFAULT, $description);
+		$newApiKeyId = ApiKeyService::GetInstance()->GetApiKeyId($newApiKey);
 		return $response->withRedirect($this->AppContainer->get('UrlManager')->ConstructUrl("/manageapikeys?key=$newApiKeyId"));
 	}
 
 	public function DocumentationSpec(Request $request, Response $response, array $args)
 	{
-		$spec = $this->getOpenApiSpec();
+		$spec = $this->GetOpenApispec();
 
-		$applicationService = $this->getApplicationService();
+		$applicationService = ApplicationService::GetInstance();
 		$versionInfo = $applicationService->GetInstalledVersion();
 		$spec->info->version = $versionInfo->Version;
 		$spec->info->description = str_replace('PlaceHolderManageApiKeysUrl', $this->AppContainer->get('UrlManager')->ConstructUrl('/manageapikeys'), $spec->info->description);
@@ -55,7 +57,7 @@ class OpenApiController extends BaseApiController
 
 		$spec->components->schemas->ExposedEntity_IncludingUserEntities = clone $spec->components->schemas->StringEnumTemplate;
 		;
-		foreach ($this->getUserfieldsService()->GetEntities() as $userEntity)
+		foreach (UserfieldsService::GetInstance()->GetEntities() as $userEntity)
 		{
 			array_push($spec->components->schemas->ExposedEntity_IncludingUserEntities->enum, $userEntity);
 		}
@@ -107,6 +109,6 @@ class OpenApiController extends BaseApiController
 
 	public function DocumentationUi(Request $request, Response $response, array $args)
 	{
-		return $this->render($response, 'openapiui');
+		return $this->Render($response, 'openapiui');
 	}
 }

@@ -34,23 +34,6 @@ msgstr "Skříňka s cukrovím"
 msgid "Tinned food cupboard"
 msgstr "Skříňka s konzervami"
 
-msgid "Fridge"
-msgstr "Chladnička"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Kus"
-msgstr[1] "Kusů"
-msgstr[2] "Kusů"
-msgstr[3] "Kusů"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Balení"
-msgstr[1] "Balení"
-msgstr[2] "Balení"
-msgstr[3] "Balení"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Sklenice"

@@ -2,7 +2,7 @@
 
 // This is executed inside DatabaseMigrationService class/context
 
-$db = $this->getDatabaseService();
+$db = \Grocy\Services\DatabaseService::GetInstance();
 
 // Compatibility migration for installations where a custom 0255 existed,
 // so upstream 0255 (trigger migration) was skipped.

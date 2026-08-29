@@ -2,6 +2,9 @@
 
 namespace Grocy\Controllers;
 
+use Grocy\Services\TasksService;
+use Grocy\Services\UserfieldsService;
+use Grocy\Services\UsersService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -9,16 +12,16 @@ class TasksController extends BaseController
 {
 	public function Overview(Request $request, Response $response, array $args)
 	{
-		$usersService = $this->getUsersService();
+		$usersService = UsersService::GetInstance();
 		$nextXDays = $usersService->GetUserSettings(GROCY_USER_ID)['tasks_due_soon_days'];
 
 		if (isset($request->getQueryParams()['include_done']))
 		{
-			$tasks = $this->getDatabase()->tasks()->orderBy('name', 'COLLATE NOCASE');
+			$tasks = $this->DB->tasks()->orderBy('name', 'COLLATE NOCASE');
 		}
 		else
 		{
-			$tasks = $this->getTasksService()->GetCurrent();
+			$tasks = TasksService::GetInstance()->GetCurrent();
 		}
 
 		foreach ($tasks as $task)
@@ -41,13 +44,13 @@ class TasksController extends BaseController
 			}
 		}
 
-		return $this->renderPage($response, 'tasks', [
+		return $this->RenderPage($response, 'tasks', [
 			'tasks' => $tasks,
 			'nextXDays' => $nextXDays,
-			'taskCategories' => $this->getDatabase()->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
-			'users' => $this->getDatabase()->users(),
-			'userfields' => $this->getUserfieldsService()->GetFields('tasks'),
-			'userfieldValues' => $this->getUserfieldsService()->GetAllValues('tasks')
+			'taskCategories' => $this->DB->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
+			'users' => $usersService->GetUsersAsDto(),
+			'userfields' => UserfieldsService::GetInstance()->GetFields('tasks'),
+			'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('tasks')
 		]);
 	}
 
@@ -55,17 +58,17 @@ class TasksController extends BaseController
 	{
 		if (isset($request->getQueryParams()['include_disabled']))
 		{
-			$categories = $this->getDatabase()->task_categories()->orderBy('name', 'COLLATE NOCASE');
+			$categories = $this->DB->task_categories()->orderBy('name', 'COLLATE NOCASE');
 		}
 		else
 		{
-			$categories = $this->getDatabase()->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE');
+			$categories = $this->DB->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE');
 		}
 
-		return $this->renderPage($response, 'taskcategories', [
+		return $this->RenderPage($response, 'taskcategories', [
 			'taskCategories' => $categories,
-			'userfields' => $this->getUserfieldsService()->GetFields('task_categories'),
-			'userfieldValues' => $this->getUserfieldsService()->GetAllValues('task_categories')
+			'userfields' => UserfieldsService::GetInstance()->GetFields('task_categories'),
+			'userfieldValues' => UserfieldsService::GetInstance()->GetAllValues('task_categories')
 		]);
 	}
 
@@ -73,17 +76,17 @@ class TasksController extends BaseController
 	{
 		if ($args['categoryId'] == 'new')
 		{
-			return $this->renderPage($response, 'taskcategoryform', [
+			return $this->RenderPage($response, 'taskcategoryform', [
 				'mode' => 'create',
-				'userfields' => $this->getUserfieldsService()->GetFields('task_categories')
+				'userfields' => UserfieldsService::GetInstance()->GetFields('task_categories')
 			]);
 		}
 		else
 		{
-			return $this->renderPage($response, 'taskcategoryform', [
-				'category' => $this->getDatabase()->task_categories($args['categoryId']),
+			return $this->RenderPage($response, 'taskcategoryform', [
+				'category' => $this->DB->task_categories($args['categoryId']),
 				'mode' => 'edit',
-				'userfields' => $this->getUserfieldsService()->GetFields('task_categories')
+				'userfields' => UserfieldsService::GetInstance()->GetFields('task_categories')
 			]);
 		}
 	}
@@ -92,27 +95,27 @@ class TasksController extends BaseController
 	{
 		if ($args['taskId'] == 'new')
 		{
-			return $this->renderPage($response, 'taskform', [
+			return $this->RenderPage($response, 'taskform', [
 				'mode' => 'create',
-				'taskCategories' => $this->getDatabase()->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
-				'users' => $this->getDatabase()->users()->orderBy('username'),
-				'userfields' => $this->getUserfieldsService()->GetFields('tasks')
+				'taskCategories' => $this->DB->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
+				'users' => $this->DB->users()->orderBy('username'),
+				'userfields' => UserfieldsService::GetInstance()->GetFields('tasks')
 			]);
 		}
 		else
 		{
-			return $this->renderPage($response, 'taskform', [
-				'task' => $this->getDatabase()->tasks($args['taskId']),
+			return $this->RenderPage($response, 'taskform', [
+				'task' => $this->DB->tasks($args['taskId']),
 				'mode' => 'edit',
-				'taskCategories' => $this->getDatabase()->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
-				'users' => $this->getDatabase()->users()->orderBy('username'),
-				'userfields' => $this->getUserfieldsService()->GetFields('tasks')
+				'taskCategories' => $this->DB->task_categories()->where('active = 1')->orderBy('name', 'COLLATE NOCASE'),
+				'users' => $this->DB->users()->orderBy('username'),
+				'userfields' => UserfieldsService::GetInstance()->GetFields('tasks')
 			]);
 		}
 	}
 
 	public function TasksSettings(Request $request, Response $response, array $args)
 	{
-		return $this->renderPage($response, 'taskssettings');
+		return $this->RenderPage($response, 'taskssettings');
 	}
 }

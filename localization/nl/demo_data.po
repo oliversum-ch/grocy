@@ -47,19 +47,6 @@ msgstr "Snoepjeskast"
 msgid "Tinned food cupboard"
 msgstr "Blikkenkast"
 
-msgid "Fridge"
-msgstr "Koelkast"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Stuk"
-msgstr[1] "Stuks"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "pak"
-msgstr[1] "pakken"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Glas"

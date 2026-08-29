@@ -40,21 +40,6 @@ msgstr "Estante de los dulces"
 msgid "Tinned food cupboard"
 msgstr "Estante de las latas"
 
-msgid "Fridge"
-msgstr "Refrigerador"
-
-msgid "Piece"
-msgid_plural "Pieces"
-msgstr[0] "Pieza"
-msgstr[1] "Piezas"
-msgstr[2] "Piezas"
-
-msgid "Pack"
-msgid_plural "Packs"
-msgstr[0] "Paquetes"
-msgstr[1] "Paquetes"
-msgstr[2] "Paquetes"
-
 msgid "Glass"
 msgid_plural "Glasses"
 msgstr[0] "Vaso"

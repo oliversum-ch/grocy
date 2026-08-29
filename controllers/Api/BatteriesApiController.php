@@ -1,10 +1,11 @@
 <?php
 
-namespace Grocy\Controllers;
+namespace Grocy\Controllers\Api;
 
 use Grocy\Controllers\Users\User;
-use Grocy\Helpers\WebhookRunner;
 use Grocy\Helpers\Grocycode;
+use Grocy\Helpers\WebhookRunner;
+use Grocy\Services\BatteriesService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -14,7 +15,7 @@ class BatteriesApiController extends BaseApiController
 	{
 		try
 		{
-			return $this->ApiResponse($response, $this->getBatteriesService()->GetBatteryDetails($args['batteryId']));
+			return $this->ApiResponse($response, BatteriesService::GetInstance()->GetBatteryDetails($args['batteryId']));
 		}
 		catch (\Exception $ex)
 		{
@@ -24,12 +25,12 @@ class BatteriesApiController extends BaseApiController
 
 	public function Current(Request $request, Response $response, array $args)
 	{
-		return $this->FilteredApiResponse($response, $this->getBatteriesService()->GetCurrent(), $request->getQueryParams());
+		return $this->FilteredApiResponse($response, BatteriesService::GetInstance()->GetCurrent(), $request->getQueryParams());
 	}
 
 	public function TrackChargeCycle(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_BATTERIES_TRACK_CHARGE_CYCLE);
+		User::CheckPermission($request, User::PERMISSION_BATTERIES_TRACK_CHARGE_CYCLE);
 
 		$requestBody = $this->GetParsedAndFilteredRequestBody($request);
 
@@ -41,8 +42,8 @@ class BatteriesApiController extends BaseApiController
 				$trackedTime = $requestBody['tracked_time'];
 			}
 
-			$chargeCycleId = $this->getBatteriesService()->TrackChargeCycle($args['batteryId'], $trackedTime);
-			return $this->ApiResponse($response, $this->getDatabase()->battery_charge_cycles($chargeCycleId));
+			$chargeCycleId = BatteriesService::GetInstance()->TrackChargeCycle($args['batteryId'], $trackedTime);
+			return $this->ApiResponse($response, $this->DB->battery_charge_cycles($chargeCycleId));
 		}
 		catch (\Exception $ex)
 		{
@@ -52,11 +53,11 @@ class BatteriesApiController extends BaseApiController
 
 	public function UndoChargeCycle(Request $request, Response $response, array $args)
 	{
-		User::checkPermission($request, User::PERMISSION_BATTERIES_UNDO_CHARGE_CYCLE);
+		User::CheckPermission($request, User::PERMISSION_BATTERIES_UNDO_CHARGE_CYCLE);
 
 		try
 		{
-			$this->ApiResponse($response, $this->getBatteriesService()->UndoChargeCycle($args['chargeCycleId']));
+			$this->ApiResponse($response, BatteriesService::GetInstance()->UndoChargeCycle($args['chargeCycleId']));
 			return $this->EmptyApiResponse($response);
 		}
 		catch (\Exception $ex)
@@ -69,7 +70,7 @@ class BatteriesApiController extends BaseApiController
 	{
 		try
 		{
-			$batteryDetails = (object)$this->getBatteriesService()->GetBatteryDetails($args['batteryId']);
+			$batteryDetails = (object)BatteriesService::GetInstance()->GetBatteryDetails($args['batteryId']);
 
 			$webhookData = array_merge([
 				'battery' => $batteryDetails->battery->name,

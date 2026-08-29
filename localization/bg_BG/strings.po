@@ -1,8 +1,8 @@
 # Translators:
-# Plamen Stoyanov <fireto@gmail.com>, 2020
-# Mihail Andreev, 2020
 # Krasimir Nedelchev <kaykayehnn+transifex@gmail.com>, 2020
 # Steliyan Stoyanov, 2025
+# Plamen Stoyanov <fireto@gmail.com>, 2026
+# Mihail Andreev, 2026
 # 
 msgid ""
 msgstr ""
@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-01T17:59:17+00:00\n"
 "PO-Revision-Date: 2019-05-01 17:42+0000\n"
-"Last-Translator: Steliyan Stoyanov, 2025\n"
+"Last-Translator: Mihail Andreev, 2026\n"
 "Language-Team: Bulgarian (Bulgaria) (https://app.transifex.com/grocy/teams/93189/bg_BG/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -692,11 +692,8 @@ msgstr "Група продукти"
 msgid "Are you sure you want to delete product group \"%s\"?"
 msgstr "Сигурни ли сте, че искате да изтриете продуктова група \"%s\"?"
 
-msgid "Stay logged in permanently"
-msgstr "Останете постоянно вписан"
-
-msgid "When not set, you will get logged out at latest after 30 days"
-msgstr "Ако не е отбелязано, ще бъдете отписан след поне 30 дни"
+msgid "Remember Me"
+msgstr ""
 
 msgid "Status"
 msgstr "Статус"
@@ -1669,9 +1666,6 @@ msgstr ""
 msgid "Is freezer"
 msgstr "Е фризер"
 
-msgid "This cannot be the same as the \"From\" location"
-msgstr "Това не може да бъде същото като местоположението „От“."
-
 msgid "Thawed"
 msgstr "Размразен"
 
@@ -1729,9 +1723,6 @@ msgstr "Изтрийте този елемент"
 msgid "Show an icon if the product is already on the shopping list"
 msgstr "Показване на икона, ако продуктът вече е в списъка за пазаруване"
 
-msgid "Calories"
-msgstr "Калории"
-
 msgid "means %1$s per %2$s"
 msgstr "означава %1$s на %2$s"
 
@@ -1783,8 +1774,8 @@ msgstr ""
 msgid "Clear filter"
 msgstr "Изчисти филтър"
 
-msgid "Permissions for user %s"
-msgstr "Разрешения за потребител %s"
+msgid "Permissions"
+msgstr ""
 
 msgid "Are you sure you want to remove full permissions for yourself?"
 msgstr ""
@@ -2836,4 +2827,44 @@ msgstr "Списък с действия"
 msgid ""
 "After this product was once in stock and when the desired quantity unit "
 "cannot be selected here, first create a corresponding unit conversion"
+msgstr ""
+
+# Default / initially created location
+msgid "Fridge"
+msgstr "Хладилник"
+
+# Default / initially created quantity unit
+msgid "Piece"
+msgid_plural "Pieces"
+msgstr[0] "Брой"
+msgstr[1] "Броя"
+
+# Default / initially created quantity unit
+msgid "Pack"
+msgid_plural "Packs"
+msgstr[0] "Опаковка"
+msgstr[1] "Опаковки"
+
+msgid "Manage user sessions"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Token type"
+msgstr ""
+
+msgid "Token hash"
+msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "This session"
+msgstr ""
+
+msgid "Are you sure you want to delete the selected session?"
+msgstr ""
+
+msgid "Last access"
 msgstr ""
