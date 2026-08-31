@@ -154,6 +154,7 @@ class ReceiptImportParser
 		$currentIndex = null;
 		$roundingAdjustment = $this->ParseRoundingAdjustment($lines);
 		$subtotal = $this->ParseGenericSubtotal($lines);
+		$isMigrosReceipt = str_starts_with($retailer['key'], 'migros');
 		if ($subtotal !== null)
 		{
 			$subtotalRounding = round($total['amount'] - $subtotal, 2);
@@ -177,7 +178,11 @@ class ReceiptImportParser
 				continue;
 			}
 
-			$item = $this->ParseGenericItemLine($line);
+			$item = $isMigrosReceipt ? $this->ParseMigrosItemLine($line) : null;
+			if ($item === null)
+			{
+				$item = $this->ParseGenericItemLine($line);
+			}
 			if ($item === null)
 			{
 				$unpricedItem = count($items) > 0 ? $this->ParseGenericUnpricedItemLine($line) : null;
@@ -298,6 +303,39 @@ class ReceiptImportParser
 			'listed_unit_price' => $listedUnitPrice,
 			'gross_total' => $this->Money($matches[2]),
 			'discount_total' => 0.0,
+			'price_inferred' => false
+		];
+	}
+
+	private function ParseMigrosItemLine(string $line): ?array
+	{
+		$money = '\d{1,6}(?:[.,]\d{2}|\s+\d{2})';
+		$pattern = '/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(' . $money . ')(?:\s+(' . $money . '))?\s+(' . $money . ')\s+\d+$/u';
+		if (!preg_match($pattern, $line, $matches))
+		{
+			return null;
+		}
+
+		$label = trim($matches[1]);
+		$quantity = $this->Number($matches[2]);
+		$listedUnitPrice = $this->Money($matches[3]);
+		$discountTotal = ($matches[4] ?? '') === '' ? 0.0 : $this->Money($matches[4]);
+		$netTotal = $this->Money($matches[5]);
+		if ($label === '' || !preg_match('/[\p{L}]/u', $label) || $this->IsNonProductLine($label)
+			|| $quantity <= 0 || $listedUnitPrice <= 0 || $discountTotal < 0 || $netTotal <= 0
+			|| abs(round($quantity * $listedUnitPrice - $discountTotal, 2) - $netTotal) > 0.02)
+		{
+			return null;
+		}
+
+		return [
+			'raw_label' => $label,
+			'normalized_label' => $this->NormalizeLabel($label),
+			'receipt_quantity' => $quantity,
+			'receipt_unit' => 'piece',
+			'listed_unit_price' => $listedUnitPrice,
+			'gross_total' => round($netTotal + $discountTotal, 2),
+			'discount_total' => $discountTotal,
 			'price_inferred' => false
 		];
 	}
@@ -460,7 +498,7 @@ class ReceiptImportParser
 			return 100;
 		}
 
-		if (preg_match('/\b(?:zwischen(?:summe|total)|sub[- ]?total|sous[- ]?total|netto|mwst|vat|tva|iva|tax|rabatt|discount|coupon|ersparnis|preisvorteil|remise|sconto)\b/ui', $label))
+		if (preg_match('/\b(?:zwischen(?:summe|total)|sub[- ]?total|sous[- ]?total|netto|mwst|vat|tva|iva|tax|rabatt|discount|coupon|ersparnis|preisvorteil|sparen|remise|sconto)\b/ui', $label))
 		{
 			return 0;
 		}
@@ -803,6 +841,7 @@ class ReceiptImportParser
 	{
 		return preg_match('/^(?:
 			Zwischen(?:summe|total)|Sub[- ]?total|Sous[- ]?total|Run(?:d(?:ung)?)?|Round(?:ing)?|Arrondi|
+			(?:Sie\s+)?sparen\s+total|
 			ALDI\s+PREIS|zu\s+zahlen|Grand\s+Total|Total|Gesamt(?:betrag)?|Summe|Endbetrag|Amount\s+due|To\s+pay|A\s+payer|Totale|
 			Total-EFT|Kartenzahlung|Karte|Card|Cash|Bar|Bargeld|Change|Rückgeld|Retourgeld|
 			Netto|MwSt|MWST|VAT|TVA|IVA|Tax|A\s+\d+[.,]\d+\s*%\s*MwSt|

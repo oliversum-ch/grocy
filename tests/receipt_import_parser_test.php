@@ -248,6 +248,27 @@ assertSameValue(2, count($genericReceipt['items']), 'Generic line item count');
 assertNear(3.75, $genericReceipt['receipt_total'], 'Generic receipt total');
 assertSameValue(true, $genericReceipt['is_reconciled'], 'Generic receipt reconciliation');
 
+$migrosReceipt = $parser->Parse(implode("\n", [
+	'GENOSSENSCHAFT MIGROS ZÜRICH',
+	'M Stadelhofen',
+	'Artikelbezeichnung Menge Preis Gespart Total #',
+	'Delicious pieces 1 2.45 2.45 1',
+	'Veganes Cordon Bleu 2 3.80 2.50 5.10 1',
+	'Sie sparen total 2.50',
+	'Total CHF 7.55',
+	'31.08.2026 10:20'
+]));
+assertSameValue('migros_ch', $migrosReceipt['retailer_key'], 'Migros retailer key');
+assertSameValue(2, count($migrosReceipt['items']), 'Migros savings summary is not a product line');
+assertSameValue('Delicious pieces', $migrosReceipt['items'][0]['raw_label'], 'Migros first product label');
+assertSameValue('Veganes Cordon Bleu', $migrosReceipt['items'][1]['raw_label'], 'Migros discounted product label');
+assertNear(2, $migrosReceipt['items'][1]['receipt_quantity'], 'Migros discounted product quantity');
+assertNear(3.80, $migrosReceipt['items'][1]['listed_unit_price'], 'Migros listed unit price');
+assertNear(2.50, $migrosReceipt['items'][1]['discount_total'], 'Migros product discount');
+assertNear(5.10, $migrosReceipt['items'][1]['net_total'], 'Migros discounted product total');
+assertNear(7.55, $migrosReceipt['receipt_total'], 'Migros receipt total');
+assertNear(7.55, $migrosReceipt['parsed_total'], 'Migros receipt reconciliation');
+
 $quantityReceipt = $parser->Parse(implode("\n", [
 	'Neighbourhood Foods',
 	'2026-08-15 09:10',
