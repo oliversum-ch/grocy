@@ -15,7 +15,11 @@ class LoginController extends BaseController
 
 	public function Logout(Request $request, Response $response, array $args)
 	{
-		SessionService::GetInstance()->DeleteToken(SessionService::SESSION_TOKEN_TYPE_ACCESS, $_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_ACCESS]);
+		if (isset($_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_ACCESS]))
+		{
+			SessionService::GetInstance()->DeleteToken(SessionService::SESSION_TOKEN_TYPE_ACCESS, $_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_ACCESS]);
+		}
+
 		if (isset($_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_REMEMBER_ME]))
 		{
 			SessionService::GetInstance()->DeleteToken(SessionService::SESSION_TOKEN_TYPE_REMEMBER_ME, $_COOKIE[SessionService::SESSION_TOKEN_COOKIE_NAME_REMEMBER_ME]);
