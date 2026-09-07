@@ -20,7 +20,7 @@ $("#search").on("keyup", Delay(function ()
 		value = "";
 	}
 
-	productsTable.search(value).draw();
+	productsTable.search(value.accentNeutralise()).draw();
 }, Grocy.FormFocusDelay));
 
 $("#product-group-filter").on("change", function ()
@@ -32,7 +32,7 @@ $("#product-group-filter").on("change", function ()
 	}
 	else
 	{
-		productsTable.column(productsTable.colReorder.transpose(6)).search("^" + $.fn.dataTable.util.escapeRegex(value) + "$", true, false).draw();
+		productsTable.column(productsTable.colReorder.transpose(6)).search("^" + $.fn.dataTable.util.escapeRegex(value.accentNeutralise()) + "$", true, false).draw();
 	}
 
 });
@@ -172,6 +172,24 @@ $("#merge-products-save-button").on("click", function (e)
 		function (xhr)
 		{
 			Grocy.FrontendHelpers.ShowGenericError('Error while merging', xhr.response);
+		}
+	);
+});
+
+$(".product-copy-button").on('click', function (e)
+{
+	e.preventDefault();
+
+	var objectId = $(e.currentTarget).attr("data-product-id");
+
+	Grocy.Api.Post("stock/products/" + objectId.toString() + "/copy", {},
+		function (result)
+		{
+			window.location.href = U("/product/" + result.created_object_id.toString());
+		},
+		function (xhr)
+		{
+			Grocy.FrontendHelpers.ShowGenericError('Error while saving, probably this item already exists', xhr.response);
 		}
 	);
 });

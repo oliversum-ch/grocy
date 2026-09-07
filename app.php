@@ -46,6 +46,7 @@ try
 }
 catch (\Grocy\Helpers\EInvalidConfig $ex)
 {
+	http_response_code(500);
 	exit('Invalid setting in config.php: ' . $ex->getMessage());
 }
 
@@ -62,7 +63,13 @@ if (!file_exists($viewcachePath))
 $migrationFiles = glob(__DIR__ . '/migrations/*.sql');
 sort($migrationFiles);
 $migrationFingerprint = implode('|', array_map('basename', $migrationFiles));
-$hash = hash('sha256', file_get_contents(__DIR__ . '/version.json') . GROCY_BASE_URL . GROCY_BASE_PATH . $migrationFingerprint);
+$hashInput = file_get_contents(__DIR__ . '/version.json') . GROCY_BASE_URL . GROCY_BASE_PATH . $migrationFingerprint;
+if (GROCY_MODE === 'dev')
+{
+	// For dev mode use routes.php to track changes
+	$hashInput .= file_get_contents(__DIR__ . '/routes.php');
+}
+$hash = hash('sha256', $hashInput);
 $hashCacheFile = $viewcachePath . "/$hash.txt";
 if (!file_exists($hashCacheFile))
 {
