@@ -79,6 +79,36 @@ assertNear(2.55, $commaParsed['items'][0]['listed_unit_price'], 'OCR decimal com
 $brokenTotal = preg_replace('/zu zahlen 25[.]74/', 'zu zahlen 25.80', $fixture);
 assertThrows(fn() => $parser->Parse($brokenTotal), 'does not match receipt total', 'Mismatched totals must be rejected');
 
+$lidlPercentageDiscountText = implode("\n", [
+	'Digitaler Kassenbon',
+	'www.lidl.ch/Service & Hilfe',
+	'CHF',
+	'Softfrucht Datteln 6.69 A',
+	'3 x 2.23',
+	'Lidl Plus Rabatt -1.05',
+	'TN Gärtnersalat 1.59 A',
+	'Rabatt 20% -0.32',
+	'Gallus Brot 2.99 A',
+	'Lidl Plus Rabatt -0.30',
+	'Eistee Zitrone Zero RFA 0.59 A',
+	'Salatsaucen Italian Dres 1.99 A',
+	'Sultaninen Türkei 0.99 A',
+	'Vegan plakken Mediterraa 1.49 A',
+	'zu zahlen 14.66',
+	'Karte 14.66',
+	'10.10.2026 07:54:14',
+	'Gesamter Preisvorteil 1.67',
+	'0326 095583/88 10.10.26 07:53'
+]);
+$lidlPercentageDiscountReceipt = $parser->Parse($lidlPercentageDiscountText);
+assertSameValue(7, count($lidlPercentageDiscountReceipt['items']), 'Lidl percentage discount is not a product');
+assertNear(3, $lidlPercentageDiscountReceipt['items'][0]['receipt_quantity'], 'Lidl dates quantity');
+assertSameValue('TN Gärtnersalat', $lidlPercentageDiscountReceipt['items'][1]['raw_label'], 'Lidl salad label');
+assertNear(0.32, $lidlPercentageDiscountReceipt['items'][1]['discount_total'], 'Lidl printed percentage discount amount');
+assertNear(1.27, $lidlPercentageDiscountReceipt['items'][1]['net_total'], 'Lidl discounted salad total');
+assertNear(1.67, $lidlPercentageDiscountReceipt['discount_total'], 'Lidl all discount types combined');
+assertNear(14.66, $lidlPercentageDiscountReceipt['parsed_total'], 'Lidl percentage discount reconciliation');
+
 $aldiFixture = file_get_contents(__DIR__ . '/fixtures/aldi-ch-20260813.txt');
 $aldiReceipt = $parser->Parse($aldiFixture);
 assertSameValue('aldi_ch', $aldiReceipt['retailer_key'], 'Aldi retailer key');

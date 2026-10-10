@@ -671,7 +671,7 @@ class ReceiptImportParser
 				continue;
 			}
 
-			if ($currentIndex !== null && preg_match('/^Lidl Plus (?:Rabatt|Discount)\s+-?' . self::MONEY_PATTERN . '$/ui', $line, $matches))
+			if ($currentIndex !== null && preg_match('/^(?:Lidl Plus\s+)?(?:Rabatt|Discount)(?:\s+\d+(?:[.,]\d+)?\s*%)?\s+-?' . self::MONEY_PATTERN . '$/ui', $line, $matches))
 			{
 				$items[$currentIndex]['discount_total'] += $this->Money($matches[1]);
 				continue;
