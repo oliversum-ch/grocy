@@ -149,6 +149,8 @@ class ReceiptImportParser
 		$receiptDate = $this->ParseGenericDate($text);
 		$total = $this->ParseGenericTotal($lines);
 		$currency = $this->DetectCurrency($text);
+		$isGermanLidlLayout = $currency === 'EUR' && in_array($retailer['key'], ['lidl', 'lidl_de'], true);
+		$depositRefundTotal = 0.0;
 		$items = [];
 		$unpricedItems = [];
 		$currentIndex = null;
@@ -168,12 +170,24 @@ class ReceiptImportParser
 		{
 			$line = $lines[$lineIndex];
 
+			if ($isGermanLidlLayout && preg_match('/^Pfandrückgabe\s+-\s*' . self::MONEY_PATTERN . '(?:\s+[A-Z])?$/ui', $line, $refund))
+			{
+				$depositRefundTotal += $this->Money($refund[1]);
+				$currentIndex = null;
+				// The following quantity detail describes the same refund, not another line.
+				if (preg_match('/^-\s*\d+\s*[x×]\s*' . self::MONEY_PATTERN . '$/ui', $lines[$lineIndex + 1] ?? ''))
+				{
+					$lineIndex++;
+				}
+				continue;
+			}
+
 			if ($currentIndex !== null && $this->ApplyGenericQuantityLine($line, $items[$currentIndex]))
 			{
 				continue;
 			}
 
-			if ($currentIndex !== null && $this->ApplyGenericDiscountLine($line, $items[$currentIndex]))
+			if ($currentIndex !== null && $this->ApplyGenericDiscountLine($line, $items[$currentIndex], $isGermanLidlLayout))
 			{
 				continue;
 			}
@@ -181,7 +195,7 @@ class ReceiptImportParser
 			$item = $isMigrosReceipt ? $this->ParseMigrosItemLine($line) : null;
 			if ($item === null)
 			{
-				$item = $this->ParseGenericItemLine($line);
+				$item = $this->ParseGenericItemLine($line, $isGermanLidlLayout);
 			}
 			if ($item === null)
 			{
@@ -204,7 +218,7 @@ class ReceiptImportParser
 			$items,
 			$unpricedItems,
 			$this->ParseDeclaredItemCount($lines),
-			$total['amount'],
+			$total['amount'] + $depositRefundTotal,
 			$roundingAdjustment
 		);
 		foreach ($items as $lineIndex => &$item)
@@ -219,7 +233,8 @@ class ReceiptImportParser
 		}
 
 		$receiptTotal = $total['amount'];
-		$parsedTotal = $this->FinalizeItems($items);
+		$depositRefundTotal = round($depositRefundTotal, 2);
+		$parsedTotal = round($this->FinalizeItems($items) - $depositRefundTotal, 2);
 		$difference = round($receiptTotal - $parsedTotal, 2);
 
 		if (abs($difference) > 0.0001 && abs($difference) <= 0.05 && ($roundingAdjustment === null || abs($roundingAdjustment - $difference) <= 0.01))
@@ -233,7 +248,7 @@ class ReceiptImportParser
 			{
 				$items[$lastIndex]['gross_total'] = round($items[$lastIndex]['gross_total'] + $difference, 2);
 			}
-			$parsedTotal = $this->FinalizeItems($items);
+			$parsedTotal = round($this->FinalizeItems($items) - $depositRefundTotal, 2);
 		}
 
 		$difference = round($parsedTotal - $receiptTotal, 2);
@@ -254,12 +269,13 @@ class ReceiptImportParser
 			'receipt_total' => $receiptTotal,
 			'parsed_total' => $parsedTotal,
 			'discount_total' => $discountTotal,
+			'deposit_refund_total' => $depositRefundTotal,
 			'is_reconciled' => true,
 			'items' => $items
 		];
 	}
 
-	private function ParseGenericItemLine(string $line): ?array
+	private function ParseGenericItemLine(string $line, bool $isGermanLidlLayout = false): ?array
 	{
 		$line = preg_replace('/([\p{L}\d])\s+[)OQ][.,](\d{2})(\s+[A-Z0-9*])?$/ui', '$1 0.$2$3', $line);
 		$pattern = '/^(.+?)\s+(?:(?:CHF|EUR|USD|GBP|Fr[.]?)\s*)?' . self::FLEXIBLE_MONEY_PATTERN . '(?:\s+[A-Z0-9*])?$/ui';
@@ -269,7 +285,7 @@ class ReceiptImportParser
 		}
 
 		$label = trim($matches[1]);
-		if ($this->IsNonProductLine($label))
+		if ($this->IsNonProductLine($label) || ($isGermanLidlLayout && preg_match('/^Pfandrückgabe\b/ui', $label)))
 		{
 			return null;
 		}
@@ -279,7 +295,13 @@ class ReceiptImportParser
 		$unit = 'piece';
 		$listedUnitPrice = null;
 
-		if (preg_match('/^(\d+(?:[.,]\d+)?)\s*[xX*]\s+(.+)$/u', $label, $quantityMatches))
+		if ($isGermanLidlLayout && preg_match('/^(.+?)\s+' . self::MONEY_PATTERN . '\s*[x×]\s*([1-9]\d*)$/ui', $label, $inlineQuantity))
+		{
+			$label = $inlineQuantity[1];
+			$listedUnitPrice = $this->Money($inlineQuantity[2]);
+			$quantity = $this->Number($inlineQuantity[3]);
+		}
+		elseif (preg_match('/^(\d+(?:[.,]\d+)?)\s*[xX*]\s+(.+)$/u', $label, $quantityMatches))
 		{
 			$quantity = $this->Number($quantityMatches[1]);
 			$label = trim($quantityMatches[2]);
@@ -421,8 +443,13 @@ class ReceiptImportParser
 		return true;
 	}
 
-	private function ApplyGenericDiscountLine(string $line, array &$item): bool
+	private function ApplyGenericDiscountLine(string $line, array &$item, bool $isGermanLidlLayout): bool
 	{
+		if ($isGermanLidlLayout && preg_match('/^Preisvorteil\s+-\s*' . self::MONEY_PATTERN . '$/ui', $line, $matches))
+		{
+			$item['discount_total'] = round($item['discount_total'] + $this->Money($matches[1]), 2);
+			return true;
+		}
 		if (!preg_match('/\b(?:rabatt|discount|coupon|aktion|ersparnis|remise|sconto)\b/ui', $line))
 		{
 			return false;

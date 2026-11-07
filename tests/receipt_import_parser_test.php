@@ -109,6 +109,26 @@ assertNear(1.27, $lidlPercentageDiscountReceipt['items'][1]['net_total'], 'Lidl 
 assertNear(1.67, $lidlPercentageDiscountReceipt['discount_total'], 'Lidl all discount types combined');
 assertNear(14.66, $lidlPercentageDiscountReceipt['parsed_total'], 'Lidl percentage discount reconciliation');
 
+$germanLidlFixture = file_get_contents(__DIR__ . '/fixtures/lidl-de-20261106.txt');
+$germanLidl = $parser->Parse($germanLidlFixture);
+assertSameValue('EUR', $germanLidl['currency'], 'German Lidl receipt currency');
+assertSameValue('2026-11-06', $germanLidl['receipt_date'], 'German Lidl receipt date');
+assertSameValue(24, count($germanLidl['items']), 'Deposit refunds and quantity details are not products');
+assertNear(91.42, $germanLidl['receipt_total'], 'Printed total before the separate VAT refund');
+assertNear(91.42, $germanLidl['parsed_total'], 'German Lidl reconciliation');
+assertNear(1.75, $germanLidl['deposit_refund_total'], 'Both deposit refunds counted once');
+assertNear(9.79, $germanLidl['discount_total'], 'German Lidl discounts');
+$germanLidlItems = array_column($germanLidl['items'], null, 'raw_label');
+assertNear(2, $germanLidlItems['Veganes Sortime']['receipt_quantity'], 'German Lidl inline quantity and clean product label');
+assertNear(1.99, $germanLidlItems['Veganes Sortime']['listed_unit_price'], 'German Lidl inline unit price');
+assertNear(8, $germanLidlItems['Erdnüsse Mais Mix']['receipt_quantity'], 'German Lidl multipack quantity');
+assertNear(5.52, $germanLidlItems['Erdnüsse Mais Mix']['net_total'], 'Preisvorteil belongs to the preceding product');
+assertThrows(
+	fn() => $parser->Parse(str_replace('Preisvorteil -6,40', '', $germanLidlFixture)),
+	'does not match receipt total',
+	'Missing German Lidl discount must not be inferred from the receipt total'
+);
+
 $aldiFixture = file_get_contents(__DIR__ . '/fixtures/aldi-ch-20260813.txt');
 $aldiReceipt = $parser->Parse($aldiFixture);
 assertSameValue('aldi_ch', $aldiReceipt['retailer_key'], 'Aldi retailer key');

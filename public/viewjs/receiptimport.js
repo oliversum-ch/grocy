@@ -1077,7 +1077,10 @@ if (typeof window !== 'undefined')
 		$('#receipt-date').text(formatDate(State.preview.receipt_date));
 		$('#receipt-total').text(formatCurrency(State.preview.receipt_total));
 		$('#receipt-discounts').text(formatCurrency(State.preview.discount_total));
-		$('#receipt-reconciliation-detail').text(__t('%1$s across %2$s receipt lines', formatCurrency(State.preview.parsed_total), State.preview.items.length));
+		const depositRefund = Number(State.preview.deposit_refund_total) || 0;
+		$('#receipt-reconciliation-detail').text(depositRefund > 0
+			? __t('%1$s from %2$s product lines after a %3$s deposit refund', formatCurrency(State.preview.parsed_total), State.preview.items.length, formatCurrency(depositRefund))
+			: __t('%1$s across %2$s receipt lines', formatCurrency(State.preview.parsed_total), State.preview.items.length));
 		renderDuplicateWarning();
 		selectLikelyShoppingLocation();
 
